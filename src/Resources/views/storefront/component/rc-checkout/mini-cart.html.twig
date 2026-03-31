@@ -1,0 +1,61 @@
+{% set rc = page.extensions.rcCheckoutEnhancer %}
+{% if rc and rc.miniCartEnabled %}
+    {% set cart = page.cart %}
+    {% set lineItems = cart.lineItems.filterType('product') %}
+
+    <div class="rc-checkout-mini-cart card mb-3">
+        <div class="card-header">
+            <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#rcMiniCartCollapse"
+                    aria-expanded="true">
+                <strong>{{ 'rcCheckout.miniCartTitle'|trans({'%count%': lineItems.count}) }}</strong>
+                <span class="rc-checkout-mini-cart__toggle-icon">▾</span>
+            </button>
+        </div>
+
+        <div class="collapse show" id="rcMiniCartCollapse">
+            <div class="card-body p-2">
+                {% for lineItem in lineItems %}
+                    <div class="rc-checkout-mini-cart__item d-flex align-items-center mb-2">
+                        {% if lineItem.cover %}
+                            <img src="{{ lineItem.cover.url }}"
+                                 alt="{{ lineItem.label|e('html_attr') }}"
+                                 class="rc-checkout-mini-cart__image me-2"
+                                 loading="lazy">
+                        {% endif %}
+                        <div class="rc-checkout-mini-cart__details flex-grow-1">
+                            <div class="rc-checkout-mini-cart__name small">{{ lineItem.label|e('html') }}</div>
+                            <div class="rc-checkout-mini-cart__meta text-muted" style="font-size: 0.8em;">
+                                {{ lineItem.quantity }}x {{ lineItem.price.unitPrice|currency }}
+                            </div>
+                        </div>
+                        <div class="rc-checkout-mini-cart__price small fw-bold text-nowrap">
+                            {{ lineItem.price.totalPrice|currency }}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <hr class="my-2">
+
+                <div class="d-flex justify-content-between small">
+                    <span>{{ 'rcCheckout.miniCartSubtotal'|trans }}</span>
+                    <span>{{ cart.price.positionPrice|currency }}</span>
+                </div>
+
+                {% for delivery in cart.deliveries %}
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>{{ 'rcCheckout.miniCartShipping'|trans }}</span>
+                        <span>{{ delivery.shippingCosts.totalPrice|currency }}</span>
+                    </div>
+                {% endfor %}
+
+                <div class="d-flex justify-content-between fw-bold mt-1">
+                    <span>{{ 'rcCheckout.miniCartTotal'|trans }}</span>
+                    <span>{{ cart.price.totalPrice|currency }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}

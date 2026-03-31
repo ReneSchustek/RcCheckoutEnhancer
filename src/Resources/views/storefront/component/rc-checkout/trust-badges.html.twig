@@ -1,0 +1,19 @@
+{% set rc = page.extensions.rcCheckoutEnhancer %}
+{% if rc and rc.trustBadgesEnabled and rc.trustBadges|length > 0 %}
+    <div class="rc-checkout-trust-badges mb-3">
+        {% for badge in rc.trustBadges %}
+            <span class="rc-checkout-trust-badges__item">
+                {% if badge.icon == 'lock' %}
+                    {% sw_icon 'lock' style { size: 'xs' } %}
+                {% elseif badge.icon == 'truck' %}
+                    {% sw_icon 'truck' style { size: 'xs' } %}
+                {% elseif badge.icon == 'undo' %}
+                    {% sw_icon 'undo' style { size: 'xs' } %}
+                {% elseif badge.icon == 'star' %}
+                    {% sw_icon 'star' style { size: 'xs' } %}
+                {% endif %}
+                {{ badge.text|e('html') }}
+            </span>
+        {% endfor %}
+    </div>
+{% endif %}

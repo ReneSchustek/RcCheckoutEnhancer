@@ -1,0 +1,21 @@
+{
+    "rcCheckout": {
+        "progressLabel": "Checkout progress",
+        "progressStep1": "Cart",
+        "progressStep2": "Address & Shipping",
+        "progressStep3": "Review & Order",
+        "progressStep4": "Complete",
+        "miniCartTitle": "Your order (%count%)",
+        "miniCartSubtotal": "Subtotal",
+        "miniCartShipping": "Shipping",
+        "miniCartTotal": "Total",
+        "summaryTitle": "Order summary",
+        "summaryAddress": "Shipping address",
+        "summaryShipping": "Shipping method",
+        "summaryPayment": "Payment method",
+        "summaryTotal": "Total",
+        "summaryInclVat": "incl. %vat% VAT",
+        "summaryDeliveryTime": "Estimated delivery",
+        "summaryChange": "Change"
+    }
+}

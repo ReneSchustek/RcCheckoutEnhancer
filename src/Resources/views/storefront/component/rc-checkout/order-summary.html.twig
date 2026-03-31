@@ -1,0 +1,85 @@
+{% set rc = page.extensions.rcCheckoutEnhancer %}
+{% if rc and rc.orderSummaryEnabled %}
+    <div class="rc-checkout-order-summary card mb-3">
+        <div class="card-body">
+            <h6 class="card-title mb-3">{{ 'rcCheckout.summaryTitle'|trans }}</h6>
+
+            {# Lieferadresse #}
+            {% set address = context.shippingLocation.address %}
+            {% if address %}
+                <div class="rc-checkout-order-summary__row mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">{{ 'rcCheckout.summaryAddress'|trans }}</div>
+                            <div class="small">
+                                {{ address.firstName }} {{ address.lastName }}<br>
+                                {{ address.street }}<br>
+                                {{ address.zipcode }} {{ address.city }}
+                            </div>
+                        </div>
+                        <a href="{{ path('frontend.checkout.confirm.page') }}#addressSelection"
+                           class="btn btn-sm btn-outline-secondary">
+                            {{ 'rcCheckout.summaryChange'|trans }}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Versandart #}
+            {% set shippingMethod = context.shippingMethod %}
+            {% if shippingMethod %}
+                <div class="rc-checkout-order-summary__row mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">{{ 'rcCheckout.summaryShipping'|trans }}</div>
+                            <div class="small">
+                                {{ shippingMethod.translated.name }}
+                                {% for delivery in page.cart.deliveries %}
+                                    – {{ delivery.shippingCosts.totalPrice|currency }}
+                                {% endfor %}
+                            </div>
+                            {% if rc.deliveryTimeEnabled and rc.estimatedDeliveryTime %}
+                                <div class="small text-muted fst-italic">
+                                    {{ 'rcCheckout.summaryDeliveryTime'|trans }}: {{ rc.estimatedDeliveryTime|e('html') }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <a href="{{ path('frontend.checkout.confirm.page') }}#shippingMethodSelection"
+                           class="btn btn-sm btn-outline-secondary">
+                            {{ 'rcCheckout.summaryChange'|trans }}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Zahlungsart #}
+            {% set paymentMethod = context.paymentMethod %}
+            {% if paymentMethod %}
+                <div class="rc-checkout-order-summary__row mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="small text-muted">{{ 'rcCheckout.summaryPayment'|trans }}</div>
+                            <div class="small">{{ paymentMethod.translated.name }}</div>
+                        </div>
+                        <a href="{{ path('frontend.checkout.confirm.page') }}#paymentMethodSelection"
+                           class="btn btn-sm btn-outline-secondary">
+                            {{ 'rcCheckout.summaryChange'|trans }}
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+
+            {# Gesamtbetrag #}
+            <hr class="my-2">
+            <div class="d-flex justify-content-between fw-bold">
+                <span>{{ 'rcCheckout.summaryTotal'|trans }}</span>
+                <span>{{ page.cart.price.totalPrice|currency }}</span>
+            </div>
+            {% if context.taxState == 'gross' %}
+                <div class="small text-muted text-end">
+                    {{ 'rcCheckout.summaryInclVat'|trans({'%vat%': page.cart.price.calculatedTaxes.getAmount|currency}) }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

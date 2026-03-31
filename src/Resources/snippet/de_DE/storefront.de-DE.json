@@ -1,0 +1,21 @@
+{
+    "rcCheckout": {
+        "progressLabel": "Bestellfortschritt",
+        "progressStep1": "Warenkorb",
+        "progressStep2": "Adresse & Versand",
+        "progressStep3": "Prüfen & Bestellen",
+        "progressStep4": "Abgeschlossen",
+        "miniCartTitle": "Ihre Bestellung (%count%)",
+        "miniCartSubtotal": "Zwischensumme",
+        "miniCartShipping": "Versand",
+        "miniCartTotal": "Gesamt",
+        "summaryTitle": "Bestellübersicht",
+        "summaryAddress": "Lieferadresse",
+        "summaryShipping": "Versandart",
+        "summaryPayment": "Zahlungsart",
+        "summaryTotal": "Gesamtbetrag",
+        "summaryInclVat": "inkl. %vat% MwSt.",
+        "summaryDeliveryTime": "Geschätzte Lieferzeit",
+        "summaryChange": "Ändern"
+    }
+}

@@ -1,0 +1,22 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
+
+{% block base_main_inner %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/progress-bar.html.twig' %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/trust-badges.html.twig' %}
+    {{ parent() }}
+{% endblock %}
+
+{% block page_checkout_confirm_container %}
+    <div class="row">
+        <div class="{% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %}col-lg-8{% else %}col-12{% endif %}">
+            {{ parent() }}
+        </div>
+
+        {% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
+            <div class="col-lg-4">
+                {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/mini-cart.html.twig' %}
+                {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/order-summary.html.twig' %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

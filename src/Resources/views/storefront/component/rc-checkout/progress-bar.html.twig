@@ -1,0 +1,36 @@
+{% set rc = page.extensions.rcCheckoutEnhancer %}
+{% if rc and rc.progressBarEnabled %}
+    {% set currentStep = rc.currentStep %}
+    {% set labels = rc.stepLabels %}
+
+    {% set steps = [
+        { num: 1, label: labels.step1 ?: ('rcCheckout.progressStep1'|trans), url: path('frontend.checkout.cart.page') },
+        { num: 2, label: labels.step2 ?: ('rcCheckout.progressStep2'|trans), url: null },
+        { num: 3, label: labels.step3 ?: ('rcCheckout.progressStep3'|trans), url: path('frontend.checkout.confirm.page') },
+        { num: 4, label: labels.step4 ?: ('rcCheckout.progressStep4'|trans), url: null }
+    ] %}
+
+    <nav class="rc-checkout-progress mb-4" aria-label="{{ 'rcCheckout.progressLabel'|trans }}">
+        <ol class="rc-checkout-progress__list">
+            {% for step in steps %}
+                {% set isDone = step.num < currentStep %}
+                {% set isActive = step.num == currentStep %}
+                {% set isFuture = step.num > currentStep %}
+
+                <li class="rc-checkout-progress__step{% if isDone %} is-done{% endif %}{% if isActive %} is-active{% endif %}{% if isFuture %} is-future{% endif %}">
+                    {% if isDone and step.url %}
+                        <a href="{{ step.url }}" class="rc-checkout-progress__link">
+                            <span class="rc-checkout-progress__indicator">✓</span>
+                            <span class="rc-checkout-progress__label">{{ step.label }}</span>
+                        </a>
+                    {% else %}
+                        <span class="rc-checkout-progress__link">
+                            <span class="rc-checkout-progress__indicator">{{ step.num }}</span>
+                            <span class="rc-checkout-progress__label">{{ step.label }}</span>
+                        </span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </nav>
+{% endif %}

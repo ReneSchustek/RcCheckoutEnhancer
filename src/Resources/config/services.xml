@@ -7,5 +7,10 @@
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
         </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
     </services>
 </container>

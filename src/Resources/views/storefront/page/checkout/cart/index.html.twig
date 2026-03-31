@@ -1,0 +1,7 @@
+{% sw_extends '@Storefront/storefront/page/checkout/cart/index.html.twig' %}
+
+{% block base_main_inner %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/progress-bar.html.twig' %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/trust-badges.html.twig' %}
+    {{ parent() }}
+{% endblock %}
