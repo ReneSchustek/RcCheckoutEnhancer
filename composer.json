@@ -1,0 +1,31 @@
+{
+    "name": "ruhrcoder/rc-checkout-enhancer",
+    "description": "Verbessert den Shopware-Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht / Enhances Shopware checkout with progress bar, trust badges and order summary",
+    "type": "shopware-platform-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ruhrcoder"
+        }
+    ],
+    "require": {
+        "shopware/core": "~6.7.0 || ~6.8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ruhrcoder\\RcCheckoutEnhancer\\": "src/"
+        }
+    },
+    "extra": {
+        "shopware-plugin-class": "Ruhrcoder\\RcCheckoutEnhancer\\RcCheckoutEnhancer",
+        "label": {
+            "de-DE": "RC Checkout Enhancer",
+            "en-GB": "RC Checkout Enhancer"
+        },
+        "description": {
+            "de-DE": "Verbessert den Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht.",
+            "en-GB": "Enhances the checkout with progress bar, trust badges and order summary."
+        }
+    }
+}
