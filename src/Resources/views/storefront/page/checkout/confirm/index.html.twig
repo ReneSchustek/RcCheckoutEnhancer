@@ -7,16 +7,16 @@
 {% endblock %}
 
 {% block page_checkout_confirm_container %}
-    <div class="row">
-        <div class="{% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %}col-lg-8{% else %}col-12{% endif %}">
+    <div class="rc-checkout-confirm-layout{% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %} rc-checkout-confirm-layout--with-sidebar{% endif %}">
+        <div class="rc-checkout-confirm-layout__main">
             {{ parent() }}
         </div>
 
         {% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
-            <div class="col-lg-4">
+            <aside class="rc-checkout-confirm-layout__sidebar">
                 {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/mini-cart.html.twig' %}
                 {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/order-summary.html.twig' %}
-            </div>
+            </aside>
         {% endif %}
     </div>
 {% endblock %}

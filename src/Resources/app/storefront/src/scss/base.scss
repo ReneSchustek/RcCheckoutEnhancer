@@ -6,7 +6,6 @@
         list-style: none;
         padding: 0;
         margin: 0;
-        counter-reset: step;
     }
 
     &__step {
@@ -125,6 +124,31 @@
             height: 14px;
             color: var(--bs-success, #198754);
         }
+    }
+}
+
+// === Confirm-Layout (Sidebar neben Hauptinhalt) ===
+
+.rc-checkout-confirm-layout--with-sidebar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.rc-checkout-confirm-layout__main {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.rc-checkout-confirm-layout__sidebar {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+}
+
+@media (max-width: 991.98px) {
+    .rc-checkout-confirm-layout__sidebar {
+        flex: 0 0 100%;
+        max-width: 100%;
     }
 }
 
