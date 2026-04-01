@@ -62,7 +62,7 @@ git push "$GITHUB_REMOTE" "${TEMP_BRANCH}:${SOURCE_BRANCH}" --force
 
 # --- Aufraeumen ---
 
-git checkout --quiet "$SOURCE_BRANCH"
+git checkout --force --quiet "$SOURCE_BRANCH"
 git branch -D "$TEMP_BRANCH" --quiet
 
 echo ""
