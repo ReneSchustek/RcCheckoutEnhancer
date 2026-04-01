@@ -2,7 +2,7 @@
     "rcCheckout": {
         "progressLabel": "Bestellfortschritt",
         "progressStep1": "Warenkorb",
-        "progressStep2": "Adresse & Versand",
+        "progressStep2": "Anmelden",
         "progressStep3": "Prüfen & Bestellen",
         "progressStep4": "Abgeschlossen",
         "miniCartTitle": "Ihre Bestellung (%count%)",

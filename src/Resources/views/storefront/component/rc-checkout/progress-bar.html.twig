@@ -5,7 +5,7 @@
 
     {% set steps = [
         { num: 1, label: labels.step1 ?: ('rcCheckout.progressStep1'|trans), url: path('frontend.checkout.cart.page') },
-        { num: 2, label: labels.step2 ?: ('rcCheckout.progressStep2'|trans), url: null },
+        { num: 2, label: labels.step2 ?: ('rcCheckout.progressStep2'|trans), url: path('frontend.checkout.register.page') },
         { num: 3, label: labels.step3 ?: ('rcCheckout.progressStep3'|trans), url: path('frontend.checkout.confirm.page') },
         { num: 4, label: labels.step4 ?: ('rcCheckout.progressStep4'|trans), url: null }
     ] %}

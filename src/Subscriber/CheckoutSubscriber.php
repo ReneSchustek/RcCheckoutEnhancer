@@ -9,6 +9,7 @@ use Shopware\Core\Framework\Struct\ArrayEntity;
 use Shopware\Storefront\Page\Checkout\Cart\CheckoutCartPageLoadedEvent;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
 use Shopware\Storefront\Page\Checkout\Finish\CheckoutFinishPageLoadedEvent;
+use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CheckoutSubscriber implements EventSubscriberInterface
@@ -22,17 +23,19 @@ final class CheckoutSubscriber implements EventSubscriberInterface
     {
         return [
             CheckoutCartPageLoadedEvent::class => 'onCheckoutPage',
+            CheckoutRegisterPageLoadedEvent::class => 'onCheckoutPage',
             CheckoutConfirmPageLoadedEvent::class => 'onCheckoutPage',
             CheckoutFinishPageLoadedEvent::class => 'onCheckoutPage',
         ];
     }
 
-    public function onCheckoutPage(CheckoutCartPageLoadedEvent|CheckoutConfirmPageLoadedEvent|CheckoutFinishPageLoadedEvent $event): void
+    public function onCheckoutPage(CheckoutCartPageLoadedEvent|CheckoutRegisterPageLoadedEvent|CheckoutConfirmPageLoadedEvent|CheckoutFinishPageLoadedEvent $event): void
     {
         $salesChannelId = $event->getSalesChannelContext()->getSalesChannel()->getId();
 
         $step = match (true) {
             $event instanceof CheckoutCartPageLoadedEvent => 1,
+            $event instanceof CheckoutRegisterPageLoadedEvent => 2,
             $event instanceof CheckoutConfirmPageLoadedEvent => 3,
             $event instanceof CheckoutFinishPageLoadedEvent => 4,
             default => 1,
