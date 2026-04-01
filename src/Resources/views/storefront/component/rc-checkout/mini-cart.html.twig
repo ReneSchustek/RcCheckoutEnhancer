@@ -27,7 +27,7 @@
                         {% endif %}
                         <div class="rc-checkout-mini-cart__details flex-grow-1">
                             <div class="rc-checkout-mini-cart__name small">{{ lineItem.label|e('html') }}</div>
-                            <div class="rc-checkout-mini-cart__meta text-muted" style="font-size: 0.8em;">
+                            <div class="rc-checkout-mini-cart__meta text-muted">
                                 {{ lineItem.quantity }}x {{ lineItem.price.unitPrice|currency }}
                             </div>
                         </div>
