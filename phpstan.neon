@@ -7,4 +7,3 @@ parameters:
     bootstrapFiles:
         - vendor/autoload.php
     ignoreErrors: []
-    checkMissingIterableValueType: true
