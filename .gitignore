@@ -21,3 +21,9 @@ config/secrets/
 /vendor/
 /var/
 /node_modules/
+
+# KI-Konfiguration und -Artefakte (niemals committen)
+.ai/
+CLAUDE.md
+brief-template.md
+.gitignore-template
