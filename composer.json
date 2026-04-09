@@ -28,8 +28,8 @@
     "extra": {
         "shopware-plugin-class": "Ruhrcoder\\RcCheckoutEnhancer\\RcCheckoutEnhancer",
         "label": {
-            "de-DE": "RC Checkout Enhancer",
-            "en-GB": "RC Checkout Enhancer"
+            "de-DE": "Checkout-Optimierung",
+            "en-GB": "Checkout Enhancement"
         },
         "description": {
             "de-DE": "Verbessert den Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht.",
