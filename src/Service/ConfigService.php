@@ -6,7 +6,7 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
-final class ConfigService
+class ConfigService
 {
     private const PLUGIN_CONFIG_KEY = 'RcCheckoutEnhancer.config';
 

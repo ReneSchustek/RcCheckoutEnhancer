@@ -1,4 +1,4 @@
-# RcCheckoutEnhancer – Checkout verbessern für Shopware 6
+﻿# RcCheckoutEnhancer – Checkout verbessern für Shopware 6
 
 Verbessert den Shopware-Standard-Checkout mit Fortschrittsanzeige, Vertrauenssignalen, Mini-Warenkorb und Bestellzusammenfassung. Alle Features per Admin konfigurierbar.
 
@@ -48,3 +48,15 @@ Im Admin unter **Einstellungen > System > Plugins > RC Checkout Enhancer**:
 ## Lizenz
 
 MIT
+
+<!-- TRIAGE-WORKFLOW: auto-managed by triage-deploy.ps1 -->
+## Triage und Reviews
+
+- **Watcher starten:** `.\triage-watch.ps1` (bzw. `.\triage-watch-php.ps1` / `.\triage-watch-shopware.ps1`) im Projekt-Root
+- **Review on-demand:** `.\triage-review.ps1` -- laedt Projekt-Regeln aus `.ai/rules/` und uebergibt sie an Ollama
+- **Enterprise-Review (ERP-2026):** in Claude Code anfragen -- Claude orchestriert, Ollama macht mechanische Sub-Tasks
+- **Status-Dateien:** `.ai/triage-status.json`, `.ai/triage-escalation.md`, `.ai/reviews/*.md`, `.ai/erp/*.md`
+
+Volle Doku: `F:\Entwicklung\_Anleitungen\allgemein\triage-workflow.md`
+Routing-Regeln: `.ai/rules/ollama-delegation.md` und `.ai/rules/enterprise-review.md`
+<!-- /TRIAGE-WORKFLOW -->
