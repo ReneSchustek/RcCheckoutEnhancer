@@ -2,6 +2,14 @@
 
 # Changelog
 
+## [1.2.3] - 2026-05-13 — Build-Hygiene
+
+> **Deployment:** Kein Live-Eingriff. Reines Repo-Cleanup.
+
+### Geaendert
+- `composer.json`: kosmetischer `extra.audit.ignore`-Block entfernt. Composer liest Ignore-Regeln aus `config.audit.ignore`, nicht aus `extra` — der Block hatte nie eine Wirkung und war Muell.
+- `.gitignore`: `composer.lock` ergaenzt (Library-Plugins haben keinen committed Lock, `php.md:101`). Der Lock war hier zwar nie tracked, der Eintrag schliesst die Luecke praeventiv.
+
 ## [1.2.2] - 2026-05-13 — Hotfix
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`
