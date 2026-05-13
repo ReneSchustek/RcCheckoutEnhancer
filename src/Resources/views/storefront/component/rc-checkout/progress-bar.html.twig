@@ -3,11 +3,21 @@
     {% set currentStep = rc.currentStep %}
     {% set labels = rc.stepLabels %}
 
+    {# Step 2 ist je nach Session unterschiedlich erreichbar:
+       - eingeloggter Kunde (kein Gast) -> /account/address (Adressuebersicht im Konto)
+       - Gast oder anonym vor Register -> /checkout/register (Standardroute)
+       Gaeste duerfen NICHT auf /account/address -> Shopware leitet auf Login, der wieder zurueck, -> Redirect-Loop. #}
+    {% set customer = context.customer %}
+    {% set isGuest = customer is not null and customer.guest %}
+    {% set step2Url = (customer is not null and not isGuest)
+        ? path('frontend.account.address.page')
+        : path('frontend.checkout.register.page') %}
+
     {% set steps = [
         { num: 1, label: labels.step1 ?: ('rcCheckout.progressStep1'|trans), url: path('frontend.checkout.cart.page') },
-        { num: 2, label: labels.step2 ?: ('rcCheckout.progressStep2'|trans), url: path('frontend.checkout.register.page') },
-        { num: 3, label: labels.step3 ?: ('rcCheckout.progressStep3'|trans), url: path('frontend.checkout.confirm.page') },
-        { num: 4, label: labels.step4 ?: ('rcCheckout.progressStep4'|trans), url: null }
+        { num: 2, label: labels.step2 ?: ('rcCheckout.progressStep2'|trans), url: step2Url, disabled: isGuest },
+        { num: 3, label: labels.step3 ?: ('rcCheckout.progressStep3'|trans), url: path('frontend.checkout.confirm.page'), disabled: false },
+        { num: 4, label: labels.step4 ?: ('rcCheckout.progressStep4'|trans), url: null, disabled: false }
     ] %}
 
     <nav class="rc-checkout-progress mb-4" aria-label="{{ 'rcCheckout.progressLabel'|trans }}">
@@ -16,16 +26,17 @@
                 {% set isDone = step.num < currentStep %}
                 {% set isActive = step.num == currentStep %}
                 {% set isFuture = step.num > currentStep %}
+                {% set isClickable = isDone and step.url and not (step.disabled ?? false) %}
 
                 <li class="rc-checkout-progress__step{% if isDone %} is-done{% endif %}{% if isActive %} is-active{% endif %}{% if isFuture %} is-future{% endif %}">
-                    {% if isDone and step.url %}
+                    {% if isClickable %}
                         <a href="{{ step.url }}" class="rc-checkout-progress__link">
                             <span class="rc-checkout-progress__indicator">✓</span>
                             <span class="rc-checkout-progress__label">{{ step.label }}</span>
                         </a>
                     {% else %}
                         <span class="rc-checkout-progress__link">
-                            <span class="rc-checkout-progress__indicator">{{ step.num }}</span>
+                            <span class="rc-checkout-progress__indicator">{% if isDone %}✓{% else %}{{ step.num }}{% endif %}</span>
                             <span class="rc-checkout-progress__label">{{ step.label }}</span>
                         </span>
                     {% endif %}

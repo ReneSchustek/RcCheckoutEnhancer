@@ -2,6 +2,22 @@
 
 # Changelog
 
+## [1.2.2] - 2026-05-13 — Hotfix
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`
+
+### Behoben (kritisch)
+- **ERR_TOO_MANY_REDIRECTS fuer Gast-Sessions in v1.2.1.** Die in v1.2.1 eingefuehrte Verlinkung von Step 2 auf `frontend.account.address.page` funktioniert nur fuer echte Kunden. Gaeste haben in Shopware keinen Zugriff auf das Konto -- Shopware leitet sie zur Login-Page, die sie als "schon eingeloggt" zurueck zu `/account/address` schickt -> Redirect-Loop.
+- Korrigiert: Step 2 wird bei Gast-Sessions NICHT mehr verlinkt (Span statt Anchor). Der Gast aendert seine Adresse weiter ueber die Inline-Edit-Buttons auf der Confirm-Page. Echte Kunden (eingeloggt, `customer.guest = false`) bekommen weiterhin `frontend.account.address.page`.
+
+## [1.2.1] - 2026-05-13 — zurueckgezogen
+
+> **Hinweis:** Diese Version wurde durch v1.2.2 ersetzt, weil der Link bei Gaesten eine Redirect-Schleife erzeugte. Nicht einsetzen.
+
+### Behoben
+- **Step 2 der Progressbar leitete eingeloggte Sessions ins Leere.** Der Link zeigte auf `frontend.checkout.register.page`. Diese Route leitet aber bei jeder aktiven Session weiter -- bei eingeloggten Kunden zum Confirm, bei Gaesten auf die "Gastsitzung beenden"-Seite. Damit konnte ein Kunde aus dem Confirm-Step nicht mehr zurueck zu seinen Adressen, um sich z.B. zu vertippen.
+- Ab v1.2.1 erkennt das Template eingeloggte Sessions (Gast + Kunde) und linkt Step 2 stattdessen auf `frontend.account.address.page`.
+
 ## [1.2.0] - 2026-05-12
 
 > **Deployment:** `composer install && php bin/console cache:clear`
