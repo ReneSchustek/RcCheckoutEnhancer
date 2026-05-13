@@ -21,6 +21,8 @@ config/secrets/
 /vendor/
 /var/
 /node_modules/
+/composer.lock
+/.phpunit.cache/
 
 # KI-Konfiguration und -Artefakte (niemals committen)
 .ai/

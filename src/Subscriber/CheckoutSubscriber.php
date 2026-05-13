@@ -38,7 +38,6 @@ final class CheckoutSubscriber implements EventSubscriberInterface
             $event instanceof CheckoutRegisterPageLoadedEvent => 2,
             $event instanceof CheckoutConfirmPageLoadedEvent => 3,
             $event instanceof CheckoutFinishPageLoadedEvent => 4,
-            default => 1,
         };
 
         $labels = $this->configService->getProgressStepLabels($salesChannelId);
