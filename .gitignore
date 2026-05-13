@@ -24,8 +24,3 @@ config/secrets/
 /composer.lock
 /.phpunit.cache/
 
-# KI-Konfiguration und -Artefakte (niemals committen)
-.ai/
-CLAUDE.md
-brief-template.md
-.gitignore-template
