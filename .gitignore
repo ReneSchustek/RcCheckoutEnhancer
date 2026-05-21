@@ -32,3 +32,10 @@ brief-template.md
 
 # composer.lock — Library-Plugin (php.md:101)
 composer.lock
+
+# ============================================================
+# BRIEF35 — Defense-in-Depth: fehlende Goldene-Regel-Pfade
+# ============================================================
+.claude/
+brief.md
+coverage-snapshot.sh
