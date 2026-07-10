@@ -1,6 +1,15 @@
 
-
 # Changelog
+
+## [1.2.4] - 2026-06-27
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`. **Vor Live-Deploy Confirm-Seite im Browser prüfen** (Mini-Cart + Order-Summary sichtbar).
+
+### Behoben
+
+- **Mini-Cart & Order-Summary erscheinen wieder auf der Bestätigungsseite:** Das Plugin überschrieb `page_checkout_confirm_container` — einen Block, den der Storefront-Core in keiner unterstützten Version kennt → der Sidebar-Override war ein stiller No-Op, die zwei Features renderten nie. Jetzt wird der real existierende Core-Block `page_checkout_confirm` umschlossen (`{{ parent() }}` erhalten). 4 Pinning-Tests sichern gegen Rückfall.
+- **BFSG/WCAG 2.2 AA:** Der aktive Fortschritts-Schritt trägt jetzt `aria-current="step"`, einen visually-hidden Status („aktueller Schritt"/„abgeschlossen") und ein `aria-hidden`-Glyph — Screenreader-Nutzer erfahren ihren Standort.
+- **Order-Summary-Sichtbarkeit entkoppelt:** Die Sidebar erscheint bei `miniCartEnabled` **oder** `orderSummaryEnabled`; jede Komponente prüft weiter ihr eigenes Flag (vorher schaltete das Mini-Cart-Flag die Bestellübersicht mit ab).
 
 ## [1.2.3] - 2026-05-13 — Build-Hygiene
 
@@ -42,12 +51,6 @@
 - `config.allow-plugins` mit `symfony/runtime: true` (Voraussetzung fuer non-interactive `composer install`)
 - `scripts.quality` als Aggregat (cs-check + phpstan + test) ergaenzt
 - Skripte verwenden `vendor/bin/...` (Windows-portabel)
-
-### Quality-Gates verifiziert
-- PHP CS Fixer: 0 Verstoesse
-- PHPStan Level 8: 0 Errors (vorher 21)
-- PHPUnit: 24 Tests, 63 Assertions (vorher 7 Errors)
-- composer audit: 0 Advisories
 
 ### Suite-Vorbereitung (Phase 4.4)
 - Plugin ist Vorbild fuer das `Module/ProgressBar`-, `Module/TrustBadges`- und `Module/OrderSummary`-Sub-Modul der `RcCheckoutSuite` v1.0.0. Code wird per Namespace-Patch in die Suite uebertragen.
