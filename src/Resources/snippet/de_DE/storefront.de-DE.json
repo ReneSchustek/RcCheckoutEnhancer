@@ -5,6 +5,8 @@
         "progressStep2": "Anmelden",
         "progressStep3": "Prüfen & Bestellen",
         "progressStep4": "Abgeschlossen",
+        "statusDone": "abgeschlossen",
+        "statusCurrent": "aktueller Schritt",
         "miniCartTitle": "Ihre Bestellung (%count%)",
         "miniCartSubtotal": "Zwischensumme",
         "miniCartShipping": "Versand",

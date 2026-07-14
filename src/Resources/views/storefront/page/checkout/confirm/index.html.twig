@@ -6,13 +6,18 @@
     {{ parent() }}
 {% endblock %}
 
-{% block page_checkout_confirm_container %}
-    <div class="rc-checkout-confirm-layout{% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %} rc-checkout-confirm-layout--with-sidebar{% endif %}">
+{# Wir umschliessen den real existierenden Core-Block `page_checkout_confirm`
+   (ein zuvor genutzter Wrapper-Block existierte in keiner Core-Version → toter
+   No-Op). Sidebar sichtbar, sobald Mini-Cart ODER Order-Summary aktiv ist;
+   jedes Partial prueft sein Flag selbst. #}
+{% block page_checkout_confirm %}
+    {% set rcSidebar = page.extensions.rcCheckoutEnhancer.miniCartEnabled or page.extensions.rcCheckoutEnhancer.orderSummaryEnabled %}
+    <div class="rc-checkout-confirm-layout{% if rcSidebar %} rc-checkout-confirm-layout--with-sidebar{% endif %}">
         <div class="rc-checkout-confirm-layout__main">
             {{ parent() }}
         </div>
 
-        {% if page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
+        {% if rcSidebar %}
             <aside class="rc-checkout-confirm-layout__sidebar">
                 {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/mini-cart.html.twig' %}
                 {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/order-summary.html.twig' %}

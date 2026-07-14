@@ -28,16 +28,19 @@
                 {% set isFuture = step.num > currentStep %}
                 {% set isClickable = isDone and step.url and not (step.disabled ?? false) %}
 
-                <li class="rc-checkout-progress__step{% if isDone %} is-done{% endif %}{% if isActive %} is-active{% endif %}{% if isFuture %} is-future{% endif %}">
+                <li class="rc-checkout-progress__step{% if isDone %} is-done{% endif %}{% if isActive %} is-active{% endif %}{% if isFuture %} is-future{% endif %}"{% if isActive %} aria-current="step"{% endif %}>
+                    {% set rcStatus = isDone ? ('rcCheckout.statusDone'|trans) : (isActive ? ('rcCheckout.statusCurrent'|trans) : '') %}
                     {% if isClickable %}
                         <a href="{{ step.url }}" class="rc-checkout-progress__link">
-                            <span class="rc-checkout-progress__indicator">✓</span>
+                            <span class="rc-checkout-progress__indicator" aria-hidden="true">✓</span>
                             <span class="rc-checkout-progress__label">{{ step.label }}</span>
+                            {% if rcStatus %}<span class="visually-hidden">{{ rcStatus }}</span>{% endif %}
                         </a>
                     {% else %}
                         <span class="rc-checkout-progress__link">
-                            <span class="rc-checkout-progress__indicator">{% if isDone %}✓{% else %}{{ step.num }}{% endif %}</span>
+                            <span class="rc-checkout-progress__indicator" aria-hidden="true">{% if isDone %}✓{% else %}{{ step.num }}{% endif %}</span>
                             <span class="rc-checkout-progress__label">{{ step.label }}</span>
+                            {% if rcStatus %}<span class="visually-hidden">{{ rcStatus }}</span>{% endif %}
                         </span>
                     {% endif %}
                 </li>

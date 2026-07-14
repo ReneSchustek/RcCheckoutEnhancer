@@ -6,11 +6,12 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
+// Bewusst nicht final: wird in Subscriber-Tests als Test-Double gemockt.
 class ConfigService
 {
     private const PLUGIN_CONFIG_KEY = 'RcCheckoutEnhancer.config';
 
-    /** @var array<string, mixed> */
+    /** @var array<string, mixed> Request-interner Dedup-Cache; Events feuern nur im HTTP-Request (kein Worker-Leak). */
     private array $cache = [];
 
     public function __construct(
