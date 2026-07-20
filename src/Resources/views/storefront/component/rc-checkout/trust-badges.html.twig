@@ -3,12 +3,15 @@
     <div class="rc-checkout-trust-badges mb-3">
         {% for badge in rc.trustBadges %}
             <span class="rc-checkout-trust-badges__item">
+                {# Admin-freundliche Namen (lock/undo) auf real existierende SW-6.7-Core-Icons mappen:
+                   'lock' und 'undo' gibt es im Icon-Pack nicht (nur lock-closed bzw. arrow-360-left),
+                   ein sw_icon auf einen fehlenden Namen rendert stumm leer (source ignore_missing). #}
                 {% if badge.icon == 'lock' %}
-                    {% sw_icon 'lock' style { size: 'xs' } %}
+                    {% sw_icon 'lock-closed' style { size: 'xs' } %}
                 {% elseif badge.icon == 'truck' %}
                     {% sw_icon 'truck' style { size: 'xs' } %}
                 {% elseif badge.icon == 'undo' %}
-                    {% sw_icon 'undo' style { size: 'xs' } %}
+                    {% sw_icon 'arrow-360-left' style { size: 'xs' } %}
                 {% elseif badge.icon == 'star' %}
                     {% sw_icon 'star' style { size: 'xs' } %}
                 {% endif %}

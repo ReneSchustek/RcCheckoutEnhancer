@@ -1,6 +1,18 @@
 
 # Changelog
 
+## [1.2.5] - 2026-07-20
+
+> **Deployment:** `php bin/console cache:clear`.
+
+### Behoben
+
+- **Trust-Badge-Icons erscheinen wieder:** Die Standard-Icons `lock` und `undo` gibt es im Shopware-6.7-Icon-Pack nicht — die Vertrauenssignale wurden out-of-the-box teilweise ohne Icon (nur Text) angezeigt. Die Namen werden jetzt intern auf real existierende Core-Icons abgebildet (`lock-closed` bzw. `arrow-360-left`); bestehende Konfigurationen mit `lock`/`undo` funktionieren unverändert.
+
+### Geändert
+
+- **Regressions-Sperre:** Der Contract-Test deckt jetzt auch die Checkout-Overrides für Warenkorb-, Adress- und Abschluss-Seite (`base_main_inner`) gegen die Phantom-Block-Klasse ab.
+
 ## [1.2.4] - 2026-06-27
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`. **Vor Live-Deploy Confirm-Seite im Browser prüfen** (Mini-Cart + Order-Summary sichtbar).
