@@ -40,12 +40,12 @@ final class ConfirmTemplateContractTest extends TestCase
     }
 
     /**
-     * Die Seitenleiste zeigt ausschliesslich den Warenkorb.
+     * Die Seitenleiste zeigt ausschließlich den Warenkorb.
      *
      * Sie enthielt zusätzlich eine Bestellübersicht mit Adresse, Versand- und Zahlungsart —
-     * alles Angaben, die der Hauptbereich vollständig und mit funktionierenden Aendern-Wegen
+     * alles Angaben, die der Hauptbereich vollständig und mit funktionierenden Ändern-Wegen
      * führt. Doppelte Anzeige derselben Sache auf einer Seite irritiert und wird für
-     * Screenreader zur doppelten Vorlesung; ihre eigenen Aendern-Schaltflächen sprangen
+     * Screenreader zur doppelten Vorlesung; ihre eigenen Ändern-Schaltflächen sprangen
      * ausserdem auf Anker, die es im Dokument nicht gibt. Dieser Test hält fest, dass sie
      * nicht zurückkehrt.
      */
