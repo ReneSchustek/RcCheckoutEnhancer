@@ -1,0 +1,6 @@
+{% sw_extends '@Storefront/storefront/page/checkout/finish/index.html.twig' %}
+
+{% block base_main_inner %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/progress-bar.html.twig' %}
+    {{ parent() }}
+{% endblock %}

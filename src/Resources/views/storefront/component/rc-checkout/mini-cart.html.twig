@@ -1,0 +1,72 @@
+{% set rc = page.extensions.rcCheckoutEnhancer %}
+{% if rc and rc.miniCartEnabled %}
+    {% set cart = page.cart %}
+    {% set lineItems = cart.lineItems.filterType('product') %}
+
+    <div class="rc-checkout-mini-cart card mb-3">
+        <div class="card-header">
+            <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#rcMiniCartCollapse"
+                    aria-expanded="true">
+                <strong>{{ 'rcCheckout.miniCartTitle'|trans({'%count%': lineItems.count}) }}</strong>
+                <span class="rc-checkout-mini-cart__toggle-icon">▾</span>
+            </button>
+        </div>
+
+        <div class="collapse show" id="rcMiniCartCollapse">
+            <div class="card-body p-2">
+                {# Positionen ueber das Core-Template rendern statt ueber eigenes Markup.
+                   Grund: Plugins haengen ihre Positionsangaben an die Bloecke dieses Templates —
+                   RcColorPicker etwa die gewaehlte RAL-Farbe an
+                   `component_line_item_type_product_label`. Eigenes Markup umgeht diesen
+                   Erweiterungspunkt: Solange die Leiste die einzige Warenkorb-Darstellung auf der
+                   Seite ist, fehlte dem Kunden die Farbe genau auf der Seite, auf der er bestaetigt.
+
+                   `displayMode: 'offcanvas'` ist die kompakte Core-Variante, die auch der
+                   Offcanvas-Warenkorb nutzt — dieselbe Darstellung, die der Kunde schon kennt.
+                   Aendern-/Entfernen-Wege bleiben aus: Die Leiste zeigt den Warenkorb, sie
+                   bearbeitet ihn nicht. #}
+                <ul class="rc-checkout-mini-cart__items list-unstyled mb-0">
+                    {% for lineItem in lineItems %}
+                        {# `showSubtotal: true`, obwohl die Leiste die Summe darunter noch einmal
+                           nennt: Der Positionspreis ist der Block, an dem Preis-Erweiterungen
+                           haengen. RcDualPrice setzt seinen Netto-Zweitpreis in
+                           `component_line_item_type_product_col_total_price`. Mit `false` rendert
+                           der Core diesen Block gar nicht -- gemessen: Warenkorb zeigt den
+                           Zweitpreis zweimal, die Confirm-Seite keinmal. Das ist derselbe Fehler
+                           wie bei der Farbe, nur eine Ebene tiefer: Nicht das eigene Markup umging
+                           den Erweiterungspunkt, sondern ein abgeschalteter Block. #}
+                        {% sw_include '@Storefront/storefront/component/line-item/type/product.html.twig' with {
+                            lineItem: lineItem,
+                            displayMode: 'offcanvas',
+                            showRemoveButton: false,
+                            showSubtotal: true,
+                            nestingLevel: 0
+                        } %}
+                    {% endfor %}
+                </ul>
+
+                <hr class="my-2">
+
+                <div class="d-flex justify-content-between small">
+                    <span>{{ 'rcCheckout.miniCartSubtotal'|trans }}</span>
+                    <span>{{ cart.price.positionPrice|currency }}</span>
+                </div>
+
+                {% for delivery in cart.deliveries %}
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>{{ 'rcCheckout.miniCartShipping'|trans }}</span>
+                        <span>{{ delivery.shippingCosts.totalPrice|currency }}</span>
+                    </div>
+                {% endfor %}
+
+                <div class="d-flex justify-content-between fw-bold mt-1">
+                    <span>{{ 'rcCheckout.miniCartTotal'|trans }}</span>
+                    <span>{{ cart.price.totalPrice|currency }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}

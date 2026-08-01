@@ -1,0 +1,44 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
+
+{% block base_main_inner %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/progress-bar.html.twig' %}
+    {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/trust-badges.html.twig' %}
+    {{ parent() }}
+{% endblock %}
+
+{# Wir umschliessen den real existierenden Core-Block `page_checkout_confirm`
+   (ein zuvor genutzter Wrapper-Block existierte in keiner Core-Version → toter
+   No-Op).
+
+   Die Seitenleiste haengt allein am Mini-Warenkorb. Die frueher hier ebenfalls
+   eingebundene Bestelluebersicht ist entfallen: Sie wiederholte Adresse, Versand-
+   und Zahlungsart samt Gesamtbetrag, die der Hauptbereich vollstaendig und mit
+   funktionierenden Aendern-Wegen zeigt — und ihre eigenen Aendern-Schaltflaechen
+   sprangen auf Anker, die es im Dokument nicht gibt. #}
+{% block page_checkout_confirm %}
+    {% set rcSidebar = page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
+    <div class="rc-checkout-confirm-layout{% if rcSidebar %} rc-checkout-confirm-layout--with-sidebar{% endif %}">
+        <div class="rc-checkout-confirm-layout__main">
+            {{ parent() }}
+        </div>
+
+        {% if rcSidebar %}
+            <aside class="rc-checkout-confirm-layout__sidebar">
+                {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/mini-cart.html.twig' %}
+            </aside>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{# Zeigt die Seitenleiste den Warenkorb, blendet der Hauptbereich seine eigene
+   Positionstabelle aus. Sonst stuende dieselbe Bestellung zweimal auf einer Seite —
+   einmal als Tabelle, einmal als Karte. Doppelte Anzeige derselben Sache irritiert,
+   verlaengert die Seite und laesst Screenreader alles zweimal vorlesen.
+
+   Damit ergeben sich genau zwei saubere Varianten, die sich gegeneinander messen lassen:
+   ohne Leiste die Tabelle im Hauptbereich, mit Leiste die Karte daneben. #}
+{% block page_checkout_confirm_product_table %}
+    {% if not page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

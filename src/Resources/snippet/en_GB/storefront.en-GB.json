@@ -1,0 +1,15 @@
+{
+    "rcCheckout": {
+        "progressLabel": "Checkout progress",
+        "progressStep1": "Cart",
+        "progressStep2": "Login",
+        "progressStep3": "Review & Order",
+        "progressStep4": "Complete",
+        "statusDone": "completed",
+        "statusCurrent": "current step",
+        "miniCartTitle": "Your order (%count%)",
+        "miniCartSubtotal": "Subtotal",
+        "miniCartShipping": "Shipping",
+        "miniCartTotal": "Total"
+    }
+}

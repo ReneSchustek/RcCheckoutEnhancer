@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <title lang="de-DE">Fortschrittsanzeige</title>
+        <title lang="en-GB">Progress Bar</title>
+
+        <input-field type="bool">
+            <name>progressBarEnabled</name>
+            <label lang="de-DE">Fortschrittsanzeige aktivieren</label>
+            <label lang="en-GB">Enable progress bar</label>
+            <helpText lang="de-DE">Zeigt eine Schritt-für-Schritt-Anzeige im Checkout.</helpText>
+            <helpText lang="en-GB">Shows a step-by-step indicator in the checkout.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep1</name>
+            <label lang="de-DE">Schritt 1 – Bezeichnung</label>
+            <label lang="en-GB">Step 1 – Label</label>
+            <placeholder lang="de-DE">Warenkorb</placeholder>
+            <placeholder lang="en-GB">Cart</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep2</name>
+            <label lang="de-DE">Schritt 2 – Bezeichnung</label>
+            <label lang="en-GB">Step 2 – Label</label>
+            <placeholder lang="de-DE">Anmelden</placeholder>
+            <placeholder lang="en-GB">Login</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep3</name>
+            <label lang="de-DE">Schritt 3 – Bezeichnung</label>
+            <label lang="en-GB">Step 3 – Label</label>
+            <placeholder lang="de-DE">Prüfen &amp; Bestellen</placeholder>
+            <placeholder lang="en-GB">Review &amp; Order</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep4</name>
+            <label lang="de-DE">Schritt 4 – Bezeichnung</label>
+            <label lang="en-GB">Step 4 – Label</label>
+            <placeholder lang="de-DE">Abgeschlossen</placeholder>
+            <placeholder lang="en-GB">Complete</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Vertrauenssignale</title>
+        <title lang="en-GB">Trust Badges</title>
+
+        <input-field type="bool">
+            <name>trustBadgesEnabled</name>
+            <label lang="de-DE">Vertrauenssignale aktivieren</label>
+            <label lang="en-GB">Enable trust badges</label>
+            <helpText lang="de-DE">Zeigt konfigurierbare Vertrauenssignale im Checkout.</helpText>
+            <helpText lang="en-GB">Shows configurable trust badges in the checkout.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="textarea">
+            <name>trustBadges</name>
+            <label lang="de-DE">Vertrauenssignale (eines pro Zeile)</label>
+            <label lang="en-GB">Trust badges (one per line)</label>
+            <helpText lang="de-DE">Format: icon;Text (Icon optional). Verfügbare Icons: lock, truck, undo, star. Beispiel: lock;Sichere Bestellung</helpText>
+            <helpText lang="en-GB">Format: icon;Text (icon optional). Available icons: lock, truck, undo, star. Example: lock;Secure order</helpText>
+            <defaultValue>lock;Sichere Bestellung (SSL-verschlüsselt)
+truck;Kostenloser Versand ab 50 €
+undo;14 Tage Widerrufsrecht</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Warenkorbübersicht</title>
+        <title lang="en-GB">Cart Overview</title>
+
+        <input-field type="bool">
+            <name>miniCartEnabled</name>
+            <label lang="de-DE">Mini-Warenkorb im Checkout anzeigen</label>
+            <label lang="en-GB">Show mini cart in checkout</label>
+            <helpText lang="de-DE">Zeigt eine kompakte Warenkorbübersicht auf der Bestätigungsseite.</helpText>
+            <helpText lang="en-GB">Shows a compact cart overview on the confirmation page.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Bestellzusammenfassung</title>
+        <title lang="en-GB">Order Summary</title>
+
+
+        <input-field type="bool">
+            <name>deliveryTimeEnabled</name>
+            <label lang="de-DE">Geschätzte Lieferzeit anzeigen</label>
+            <label lang="en-GB">Show estimated delivery time</label>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>estimatedDeliveryTime</name>
+            <label lang="de-DE">Geschätzte Lieferzeit</label>
+            <label lang="en-GB">Estimated delivery time</label>
+            <placeholder lang="de-DE">3-5 Werktage</placeholder>
+            <placeholder lang="en-GB">3-5 business days</placeholder>
+            <helpText lang="de-DE">Wird nur angezeigt wenn das Lieferzeit-Feature aktiv ist.</helpText>
+            <helpText lang="en-GB">Only shown when the delivery time feature is active.</helpText>
+        </input-field>
+    </card>
+</config>

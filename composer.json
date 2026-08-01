@@ -1,0 +1,63 @@
+{
+    "name": "ruhrcoder/rc-checkout-enhancer",
+    "description": "Verbessert den Shopware-Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht / Enhances Shopware checkout with progress bar, trust badges and order summary",
+    "type": "shopware-platform-plugin",
+    "version": "1.3.2",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ruhrcoder (René Schustek)",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "shopware/core": "~6.7.0 || ~6.8.0",
+        "shopware/storefront": "~6.7.0 || ~6.8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "phpstan/phpstan": "^2.1",
+        "friendsofphp/php-cs-fixer": "^3.64"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ruhrcoder\\RcCheckoutEnhancer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Ruhrcoder\\RcCheckoutEnhancer\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": true
+        },
+        "platform": {
+            "php": "8.2.0"
+        }
+    },
+    "scripts": {
+        "cs-check": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "vendor/bin/php-cs-fixer fix",
+        "phpstan": "vendor/bin/phpstan analyse --memory-limit=512M",
+        "test": "vendor/bin/phpunit",
+        "quality": [
+            "@cs-check",
+            "@phpstan",
+            "@test"
+        ]
+    },
+    "extra": {
+        "shopware-plugin-class": "Ruhrcoder\\RcCheckoutEnhancer\\RcCheckoutEnhancer",
+        "label": {
+            "de-DE": "Checkout-Optimierung",
+            "en-GB": "Checkout Enhancement"
+        },
+        "description": {
+            "de-DE": "Verbessert den Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht.",
+            "en-GB": "Enhances the checkout with progress bar, trust badges and order summary."
+        }
+    }
+}
