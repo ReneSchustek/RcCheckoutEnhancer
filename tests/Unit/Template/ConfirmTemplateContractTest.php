@@ -8,9 +8,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Pinning-Tests gegen die Confirm-Seiten-Integration. Hintergrund: das Plugin
- * ueberschrieb urspruenglich `page_checkout_confirm_container` — einen Block, den
- * der Storefront-Core in keiner unterstuetzten Version kennt — wodurch Mini-Cart
- * und Order-Summary auf der Bestaetigungsseite still nicht rendern. Diese Tests
+ * überschrieb ursprünglich `page_checkout_confirm_container` — einen Block, den
+ * der Storefront-Core in keiner unterstützten Version kennt — wodurch Mini-Cart
+ * und Order-Summary auf der Bestätigungsseite still nicht rendern. Diese Tests
  * halten die Korrektur fest, bis ein voller Render-Smoke-Test steht.
  */
 final class ConfirmTemplateContractTest extends TestCase
@@ -42,17 +42,17 @@ final class ConfirmTemplateContractTest extends TestCase
     /**
      * Die Seitenleiste zeigt ausschliesslich den Warenkorb.
      *
-     * Sie enthielt zusaetzlich eine Bestelluebersicht mit Adresse, Versand- und Zahlungsart —
-     * alles Angaben, die der Hauptbereich vollstaendig und mit funktionierenden Aendern-Wegen
-     * fuehrt. Doppelte Anzeige derselben Sache auf einer Seite irritiert und wird fuer
-     * Screenreader zur doppelten Vorlesung; ihre eigenen Aendern-Schaltflaechen sprangen
-     * ausserdem auf Anker, die es im Dokument nicht gibt. Dieser Test haelt fest, dass sie
-     * nicht zurueckkehrt.
+     * Sie enthielt zusätzlich eine Bestellübersicht mit Adresse, Versand- und Zahlungsart —
+     * alles Angaben, die der Hauptbereich vollständig und mit funktionierenden Aendern-Wegen
+     * führt. Doppelte Anzeige derselben Sache auf einer Seite irritiert und wird für
+     * Screenreader zur doppelten Vorlesung; ihre eigenen Aendern-Schaltflächen sprangen
+     * ausserdem auf Anker, die es im Dokument nicht gibt. Dieser Test hält fest, dass sie
+     * nicht zurückkehrt.
      */
     /**
      * Zeigt die Leiste den Warenkorb, darf der Hauptbereich seine Positionstabelle nicht
      * ebenfalls rendern — sonst steht dieselbe Bestellung zweimal auf der Seite. Der Test
-     * haelt beide Haelften der Regel fest: Block ueberschrieben UND an die Leiste gekoppelt.
+     * hält beide Hälften der Regel fest: Block überschrieben UND an die Leiste gekoppelt.
      */
     public function testProductTableIsSuppressedWhileSidebarShowsTheCart(): void
     {
@@ -74,10 +74,10 @@ final class ConfirmTemplateContractTest extends TestCase
     }
 
     /**
-     * Die drei weiteren Checkout-Overrides (cart/address/finish) haengen ihre Progress-Bar/
+     * Die drei weiteren Checkout-Overrides (cart/address/finish) hängen ihre Progress-Bar/
      * Trust-Badges an den Basis-Block `base_main_inner` (aus base.html.twig, transitiv geerbt).
-     * Verschwindet der Block im Core, wuerde das Markup still nicht rendern — dieselbe
-     * Phantom-Klasse wie der historische Confirm-Bug. Hier gegen Rueckfall gepinnt.
+     * Verschwindet der Block im Core, würde das Markup still nicht rendern — dieselbe
+     * Phantom-Klasse wie der historische Confirm-Bug. Hier gegen Rückfall gepinnt.
      *
      * @return array<string, array{0: string}>
      */

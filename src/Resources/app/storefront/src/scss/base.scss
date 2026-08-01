@@ -151,8 +151,8 @@
         max-width: 100%;
         // Auf schmalen Bildschirmen VOR den Hauptbereich: Die Leiste ist die einzige Stelle,
         // an der der Kunde seine Bestellung sieht — der Hauptbereich zeigt seine
-        // Positionstabelle nicht mehr, solange die Leiste laeuft. Ohne diese Umkehrung
-        // staende der Warenkorb am Handy hinter AGB, Adressen, Zahlungs- und Versandart,
+        // Positionstabelle nicht mehr, solange die Leiste läuft. Ohne diese Umkehrung
+        // stände der Warenkorb am Handy hinter AGB, Adressen, Zahlungs- und Versandart,
         // also ganz unten.
         order: -1;
     }
@@ -172,8 +172,8 @@
     // Die Positionen kommen aus dem Core-Template (displayMode 'offcanvas'), damit die
     // Positionsangaben anderer Plugins mitkommen — etwa die RAL-Farbe von RcColorPicker.
     // Der Offcanvas-Warenkorb hat mehr Breite als diese Leiste, deshalb hier enger gefasst.
-    // Bewusst nur Groessen und Abstaende: Farben und Typografie bleiben beim Theme, sonst
-    // faellt die Leiste bei einem Theme-Wechsel aus dem Rahmen.
+    // Bewusst nur Größen und Abstände: Farben und Typografie bleiben beim Theme, sonst
+    // fällt die Leiste bei einem Theme-Wechsel aus dem Rahmen.
     &__items {
         .line-item {
             padding: 0.5rem 0;
@@ -195,8 +195,8 @@
             font-size: 0.875rem;
         }
 
-        // Der Offcanvas-Modus stellt Mengen-Auswahl und Produktnummer dar. Beides gehoert
-        // in den Warenkorb, nicht auf die Bestaetigungsseite: Geaendert wird dort nicht mehr.
+        // Der Offcanvas-Modus stellt Mengen-Auswahl und Produktnummer dar. Beides gehört
+        // in den Warenkorb, nicht auf die Bestätigungsseite: Geändert wird dort nicht mehr.
         .line-item-quantity-select,
         .line-item-ordernumber {
             display: none;

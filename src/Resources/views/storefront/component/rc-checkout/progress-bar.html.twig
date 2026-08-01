@@ -4,9 +4,9 @@
     {% set labels = rc.stepLabels %}
 
     {# Step 2 ist je nach Session unterschiedlich erreichbar:
-       - eingeloggter Kunde (kein Gast) -> /account/address (Adressuebersicht im Konto)
+       - eingeloggter Kunde (kein Gast) -> /account/address (Adressübersicht im Konto)
        - Gast oder anonym vor Register -> /checkout/register (Standardroute)
-       Gaeste duerfen NICHT auf /account/address -> Shopware leitet auf Login, der wieder zurueck, -> Redirect-Loop. #}
+       Gäste duerfen NICHT auf /account/address -> Shopware leitet auf Login, der wieder zurück, -> Redirect-Loop. #}
     {% set customer = context.customer %}
     {% set isGuest = customer is not null and customer.guest %}
     {% set step2Url = (customer is not null and not isGuest)
