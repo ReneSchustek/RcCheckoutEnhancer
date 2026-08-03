@@ -46,6 +46,24 @@ class ConfigService
     }
 
     /**
+     * Der Experiment-Schlüssel, an dem dieses Plugin teilnimmt — leer heißt: an keinem.
+     *
+     * Das Feld heißt in jedem teilnehmenden Plugin gleich (`abExperimentKey`). RcAbTesting
+     * sammelt die Schlüssel über diese Namenskonvention ein; ein Plugin trägt sich damit selbst
+     * ein, ohne dass RcAbTesting es kennen muss.
+     */
+    public function getAbExperimentKey(?string $salesChannelId = null): string
+    {
+        return trim((string) $this->get('.abExperimentKey', '', $salesChannelId));
+    }
+
+    /** Die Variante, bei der sich das Plugin zurückhält — die Vergleichsgruppe. */
+    public function getAbSuppressVariant(?string $salesChannelId = null): string
+    {
+        return trim((string) $this->get('.abSuppressVariant', '', $salesChannelId));
+    }
+
+    /**
      * Parst die Vertrauenssignale aus der Konfiguration.
      * Format pro Zeile: icon;Text (icon optional)
      * Beispiel: lock;Sichere Bestellung (SSL-verschlüsselt)

@@ -1,5 +1,9 @@
 {% set rc = page.extensions.rcCheckoutEnhancer %}
-{% if rc and rc.progressBarEnabled %}
+{# Vergleichsgruppe eines laufenden A/B-Tests: Dieser Baustein bleibt weg. Die
+   Entscheidung fällt beim Rendern, weil der Verkaufskanal-Kontext beim Seitenaufbau
+   noch nicht steht — siehe ab-suppressed.html.twig. #}
+{% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
+{% if not rcSuppressed and rc and rc.progressBarEnabled %}
     {% set currentStep = rc.currentStep %}
     {% set labels = rc.stepLabels %}
 

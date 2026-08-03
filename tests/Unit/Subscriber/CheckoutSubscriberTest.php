@@ -178,4 +178,88 @@ final class CheckoutSubscriberTest extends TestCase
             'step1' => '', 'step2' => '', 'step3' => '', 'step4' => '',
         ]);
     }
+
+    /**
+     * Was: Die Angaben, aus denen die Vorlage ihre Entscheidung baut.
+     * Warum: Der Abonnent unterdrückt **nicht** selbst. Er kann es nicht: Shopware legt den
+     *        Verkaufskanal-Kontext erst an, wenn ihn jemand anfordert — beim Seitenaufbau gibt
+     *        es ihn noch nicht, und die Zuordnung schlägt dort still fehl (am 2026-08-03 am
+     *        laufenden Shop gemessen). Entschieden wird deshalb beim Rendern; hier stehen nur
+     *        die Angaben dafür.
+     * Erwartet: Schlüssel und Variante werden durchgereicht.
+     */
+    #[Test]
+    public function theExperimentSettingsArePassedToTheTemplate(): void
+    {
+        $this->configService->method('getAbExperimentKey')->willReturn('checkout-ux');
+        $this->configService->method('getAbSuppressVariant')->willReturn('control');
+
+        $page = new CheckoutCartPage();
+        $this->subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent(
+            $page,
+            $this->salesChannelContext,
+            new Request(),
+        ));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertSame('checkout-ux', $extension->get('abExperimentKey'));
+        self::assertSame('control', $extension->get('abSuppressVariant'));
+    }
+
+    /**
+     * Was: Ohne konfiguriertes Experiment.
+     * Warum: **Der Schalter, der die Vorlage vor einem Absturz bewahrt.** `abActive` ist die
+     *        Erlaubnis, `ab_variant()` aufzurufen — eine Funktion, die es ohne RcAbTesting nicht
+     *        gibt. Twig bricht bei einer unbekannten Funktion schon beim Übersetzen ab; wäre
+     *        `abActive` fälschlich wahr, stünde der ganze Checkout.
+     * Erwartet: `abActive` ist falsch.
+     */
+    #[Test]
+    public function withoutAConfiguredExperimentTheTemplateGateStaysClosed(): void
+    {
+        $this->configService->method('getAbExperimentKey')->willReturn('');
+        $this->configService->method('getAbSuppressVariant')->willReturn('');
+
+        $page = new CheckoutCartPage();
+        $this->subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent(
+            $page,
+            $this->salesChannelContext,
+            new Request(),
+        ));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertFalse($extension->get('abActive'));
+    }
+
+    /**
+     * Was: Experiment konfiguriert, RcAbTesting aber nicht installiert.
+     * Warum: Ein stehengebliebener Eintrag in den Einstellungen darf den Checkout nicht
+     *        umlegen. Geprüft wird das über einen Klassennamen als **Zeichenkette** — für die
+     *        statische Analyse unsichtbar, und Fremd-Plugins schließt es nicht aus.
+     * Erwartet: `abActive` bleibt falsch, solange die Klasse fehlt.
+     */
+    #[Test]
+    public function aStaleSettingWithoutTheAbPluginDoesNotOpenTheGate(): void
+    {
+        self::assertFalse(
+            class_exists('Ruhrcoder\\RcAbTesting\\Twig\\Extension\\RcAbTwigExtension'),
+            'Voraussetzung dieses Tests: RcAbTesting ist im Testlauf nicht geladen',
+        );
+
+        $this->configService->method('getAbExperimentKey')->willReturn('checkout-ux');
+        $this->configService->method('getAbSuppressVariant')->willReturn('control');
+
+        $page = new CheckoutCartPage();
+        $this->subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent(
+            $page,
+            $this->salesChannelContext,
+            new Request(),
+        ));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertFalse($extension->get('abActive'));
+    }
 }

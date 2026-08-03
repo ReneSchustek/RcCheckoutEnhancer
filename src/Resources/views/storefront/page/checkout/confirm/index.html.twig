@@ -16,7 +16,9 @@
    funktionierenden Ändern-Wegen zeigt — und ihre eigenen Ändern-Schaltflächen
    sprangen auf Anker, die es im Dokument nicht gibt. #}
 {% block page_checkout_confirm %}
-    {% set rcSidebar = page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
+    {% set rc = page.extensions.rcCheckoutEnhancer %}
+    {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
+    {% set rcSidebar = not rcSuppressed and rc.miniCartEnabled %}
     <div class="rc-checkout-confirm-layout{% if rcSidebar %} rc-checkout-confirm-layout--with-sidebar{% endif %}">
         <div class="rc-checkout-confirm-layout__main">
             {{ parent() }}
@@ -38,7 +40,13 @@
    Damit ergeben sich genau zwei saubere Varianten, die sich gegeneinander messen lassen:
    ohne Leiste die Tabelle im Hauptbereich, mit Leiste die Karte daneben. #}
 {% block page_checkout_confirm_product_table %}
-    {% if not page.extensions.rcCheckoutEnhancer.miniCartEnabled %}
+    {# **Der wichtigste Punkt am ganzen A/B-Test.** Hält sich die Leiste zurück, muss die Tabelle
+       zurückkommen — sonst sähe die Vergleichsgruppe auf der Bestätigungsseite gar keinen
+       Warenkorb. Das wäre derselbe Fehler wie am 2026-07-28, nur schlimmer: damals fehlte eine
+       Angabe, hier fehlte die ganze Übersicht. #}
+    {% set rc = page.extensions.rcCheckoutEnhancer %}
+    {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
+    {% if rcSuppressed or not rc.miniCartEnabled %}
         {{ parent() }}
     {% endif %}
 {% endblock %}

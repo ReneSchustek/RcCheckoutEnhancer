@@ -8,8 +8,12 @@
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
         </service>
 
+        <!-- `request_stack` statt einer A/B-Abhängigkeit: Die Varianten-Zuordnung wird als
+             Angabe am Request gelesen, nicht über einen Dienst eines anderen Plugins. Damit
+             braucht es hier keine Verdrahtung, die ohne RcAbTesting ins Leere liefe. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="request_stack"/>
             <tag name="kernel.event_subscriber"/>
         </service>
     </services>

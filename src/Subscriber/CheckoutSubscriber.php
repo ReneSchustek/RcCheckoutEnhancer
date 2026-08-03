@@ -14,6 +14,20 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class CheckoutSubscriber implements EventSubscriberInterface
 {
+    /**
+     * Die Twig-Erweiterung von RcAbTesting — als **Zeichenkette**, nicht als Klassenverweis.
+     *
+     * Zwei Gründe: Ein PHP-Typ aus einem anderen Plugin ist für die statische Analyse nicht
+     * auffindbar (jedes Plugin wird im Gate für sich geprüft, mit eigenem `vendor`), und er
+     * würde Fremd-Plugins ausschließen, die ihn gar nicht kennen können. `class_exists()` nimmt
+     * eine Zeichenkette; für die Analyse ist das unsichtbar.
+     *
+     * Geprüft wird das, weil die Vorlage sonst `ab_variant()` aufriefe — eine Funktion, die es
+     * ohne RcAbTesting nicht gibt. Twig bricht bei einer unbekannten Funktion schon beim
+     * Übersetzen ab, und dann steht der ganze Checkout.
+     */
+    private const AB_TWIG_EXTENSION = 'Ruhrcoder\\RcAbTesting\\Twig\\Extension\\RcAbTwigExtension';
+
     public function __construct(
         private readonly ConfigService $configService,
     ) {
@@ -32,6 +46,8 @@ final class CheckoutSubscriber implements EventSubscriberInterface
     public function onCheckoutPage(CheckoutCartPageLoadedEvent|CheckoutRegisterPageLoadedEvent|CheckoutConfirmPageLoadedEvent|CheckoutFinishPageLoadedEvent $event): void
     {
         $salesChannelId = $event->getSalesChannelContext()->getSalesChannel()->getId();
+
+        $experimentKey = $this->configService->getAbExperimentKey($salesChannelId);
 
         $step = match (true) {
             $event instanceof CheckoutCartPageLoadedEvent => 1,
@@ -52,6 +68,12 @@ final class CheckoutSubscriber implements EventSubscriberInterface
             'miniCartEnabled' => $this->configService->isMiniCartEnabled($salesChannelId),
             'deliveryTimeEnabled' => $this->configService->isDeliveryTimeEnabled($salesChannelId),
             'estimatedDeliveryTime' => $this->configService->getEstimatedDeliveryTime($salesChannelId),
+            // Für den A/B-Test: Die Vorlage entscheidet, ob sie sich zurückhält — hier stehen
+            // nur die Angaben dafür. `abActive` ist die Erlaubnis, `ab_variant()` überhaupt
+            // aufzurufen.
+            'abExperimentKey' => $experimentKey,
+            'abSuppressVariant' => $this->configService->getAbSuppressVariant($salesChannelId),
+            'abActive' => $experimentKey !== '' && class_exists(self::AB_TWIG_EXTENSION),
         ]));
     }
 }

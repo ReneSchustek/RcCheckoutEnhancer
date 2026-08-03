@@ -1,0 +1,18 @@
+{# Gibt `1` aus, wenn dieser Besucher zur Vergleichsgruppe eines laufenden Experiments gehört —
+   sonst nichts. Gedacht für `{% set x = include(...)|trim == '1' %}`.
+
+   **Diese Datei ist der einzige Ort im Plugin, an dem `ab_variant()` steht.** Die Funktion gibt
+   es nur mit RcAbTesting, und Twig bricht bei einer unbekannten Funktion schon beim Übersetzen
+   ab — nicht erst beim Aufruf. Stünde der Aufruf in einer Vorlage, die immer übersetzt wird,
+   stünde ohne RcAbTesting der ganze Checkout.
+
+   Twig übersetzt jede Vorlage einzeln und erst beim ersten Einbinden. Solange die aufrufende
+   Seite `rc.abActive` prüft — und das ist genau dann wahr, wenn ein Experiment konfiguriert
+   **und** RcAbTesting installiert ist —, wird diese Datei nie übersetzt und die Funktion nie
+   gesucht.
+
+   Warum die Entscheidung hier fällt und nicht im PHP: Shopware legt den Verkaufskanal-Kontext
+   erst an, wenn ihn jemand anfordert. Beim Seitenaufbau gibt es ihn noch nicht, die Zuordnung
+   schlägt dort still fehl (am 2026-08-03 gemessen). Beim Rendern steht er längst. #}
+{%- set cp = page.extensions.rcCheckoutEnhancer -%}
+{%- if ab_variant(cp.abExperimentKey) == cp.abSuppressVariant -%}1{%- endif -%}

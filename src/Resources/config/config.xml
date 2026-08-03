@@ -117,4 +117,25 @@ undo;14 Tage Widerrufsrecht</defaultValue>
             <helpText lang="en-GB">Only shown when the delivery time feature is active.</helpText>
         </input-field>
     </card>
+
+    <card>
+        <title lang="de-DE">A/B-Test</title>
+        <title lang="en-GB">A/B test</title>
+
+        <input-field type="text">
+            <name>abExperimentKey</name>
+            <label lang="de-DE">Experiment-Schlüssel</label>
+            <label lang="en-GB">Experiment key</label>
+            <helpText lang="de-DE">Technischer Schlüssel eines Experiments aus RcAbTesting. Leer lassen, wenn dieses Plugin an keinem Test teilnimmt — dann ändert sich nichts. Das Feld heißt in jedem teilnehmenden Plugin gleich; RcAbTesting sammelt die Schlüssel darüber ein.</helpText>
+            <helpText lang="en-GB">Technical key of an experiment from RcAbTesting. Leave empty if this plugin does not take part — nothing changes then. The field has the same name in every participating plugin; RcAbTesting collects the keys from it.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>abSuppressVariant</name>
+            <label lang="de-DE">Variante ohne Checkout-Optimierung</label>
+            <label lang="en-GB">Variant without checkout enhancements</label>
+            <helpText lang="de-DE">Besucher dieser Variante bekommen den Standard-Checkout ohne Fortschrittsleiste, Vertrauenssignale und Warenkorb-Leiste — die Vergleichsgruppe. Üblich: \`control\`.</helpText>
+            <helpText lang="en-GB">Visitors in this variant get the plain checkout without progress bar, trust badges and cart sidebar — the control group. Usually: \`control\`.</helpText>
+        </input-field>
+    </card>
 </config>

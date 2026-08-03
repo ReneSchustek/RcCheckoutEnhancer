@@ -1,6 +1,19 @@
 
 # Changelog
 
+## [1.5.0] - 2026-08-03 — Die Checkout-Optimierung lässt sich gegen den Standard testen
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`. Ohne konfiguriertes Experiment ändert sich nichts.
+
+### Hinzugefügt
+
+- **Die Checkout-Optimierung kann sich für eine Vergleichsgruppe zurückhalten.** Damit lässt sich messen, ob Fortschrittsleiste, Vertrauenssignale und Warenkorb-Leiste tatsächlich mehr Bestellungen bringen als der Standard-Checkout. Zwei neue Einstellungsfelder legen fest, an welchem Experiment das Plugin teilnimmt und bei welcher Gruppe es sich zurückhält. Beide leer — die Vorgabe — heißt: Es ändert sich nichts.
+- **Hält sich die Warenkorb-Leiste zurück, kommt die gewohnte Bestelltabelle zurück.** Sonst sähe die Vergleichsgruppe auf der Bestätigungsseite gar keinen Warenkorb mehr.
+
+### Sonstiges
+
+- Ohne das A/B-Plugin bleibt alles unverändert, auch wenn in den Einstellungen noch ein Experiment steht.
+
 ## [1.4.0] - 2026-08-03 — Die Fortschrittsleiste ist wieder lesbar
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console theme:compile && php bin/console cache:clear`. Der `theme:compile` ist nötig: Die Änderungen liegen im Stylesheet.
