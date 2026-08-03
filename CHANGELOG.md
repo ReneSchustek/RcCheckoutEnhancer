@@ -1,6 +1,21 @@
 
 # Changelog
 
+## [1.4.0] - 2026-08-03 — Die Fortschrittsleiste ist wieder lesbar
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console theme:compile && php bin/console cache:clear`. Der `theme:compile` ist nötig: Die Änderungen liegen im Stylesheet.
+
+### Behoben
+
+- **Die Ziffer des noch nicht erreichten Schritts war kaum lesbar.** Gemessen gegen die tatsächlichen Farbwerte des Themes: **2,10:1** — die Barrierefreiheits-Norm verlangt 4,5:1. Auch die Beschriftung lag mit 3,81:1 darunter. Beide stehen jetzt auf einem dunkleren Grauton und erreichen 4,51:1 und 8,18:1. Die Leiste wirkt dadurch etwas weniger gedämpft — lesbar schlägt dezent.
+- **Der Umschalter der Warenkorb-Leiste war für Vorlesehilfen unvollständig beschrieben.** Er sagte, dass etwas auf- und zuklappt, aber nicht was. Zusätzlich wurde das Pfeilzeichen mitgelesen, obwohl es nur Schmuck ist.
+- **Wer Bewegung im System abbestellt hat, bekommt jetzt keine.** Der Umschalter dreht sein Zeichen nicht mehr.
+
+### Sonstiges
+
+- Der Smoke-Test prüft jetzt am echten Checkout, dass die Warenkorb-Leiste die Positionsangaben anderer Erweiterungen mitträgt — etwa die gewählte Farbe. Diese Angabe war Ende Juli einmal verschwunden; sie kann es jetzt nicht mehr unbemerkt.
+- README-Abschnitt „Plugin-Interaktion": welche Seiten und Blöcke das Plugin erweitert, was von anderen Erweiterungen in der Leiste ankommt, und die Zusage, auf die sie sich verlassen können.
+
 ## [1.3.2] - 2026-07-30 — Zweitpreise stehen wieder in der Seitenleiste
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`.

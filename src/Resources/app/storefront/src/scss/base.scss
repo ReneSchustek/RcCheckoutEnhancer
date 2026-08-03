@@ -59,7 +59,16 @@
         font-weight: 600;
         margin-bottom: 4px;
         background: var(--bs-gray-300, #dee2e6);
-        color: var(--bs-gray-600, #6c757d);
+        // gray-700 statt gray-600 — gemessen, nicht geschätzt.
+        //
+        // Mit Bootstraps Vorgabewerten sah gray-600 auf gray-300 mit 3,60:1 schon knapp aus.
+        // Mit den Werten des Trummer-Themes (gray-600 = #798490, gray-300 = #bcc1c7) sind es
+        // **2,10:1** — WCAG 1.4.3 verlangt bei 13,6 px fett 4,5:1. Der noch nicht erreichte
+        // Schritt war damit kaum lesbar. gray-700 kommt dort auf 4,51:1.
+        //
+        // Die Lehre: Ein Kontrastpaar aus zwei Theme-Variablen ist keine Zusage. Beide können
+        // sich unabhängig ändern, und niemand misst danach nach.
+        color: var(--bs-gray-700, #495057);
 
         .is-done & {
             background: var(--bs-success, #198754);
@@ -74,7 +83,10 @@
 
     &__label {
         font-size: 0.75rem;
-        color: var(--bs-gray-600, #6c757d);
+        // Ebenfalls gray-700: Auf Weiß erreicht der gray-600 des Themes (#798490) nur 3,81:1,
+        // nötig sind 4,5:1. Der gedämpfte Eindruck geht damit etwas verloren — lesbar schlägt
+        // dezent. Die Unterscheidung der Schritte trägt ohnehin der Kreis, nicht die Schriftfarbe.
+        color: var(--bs-gray-700, #495057);
 
         .is-active & {
             color: var(--bs-primary, #0d6efd);
@@ -163,6 +175,12 @@
 .rc-checkout-mini-cart {
     &__toggle-icon {
         transition: transform 0.2s ease;
+
+        // Wer Bewegung abbestellt hat, bekommt keine. Die Drehung ist klein, aber die
+        // Voreinstellung des Systems zu ignorieren ist eine Entscheidung gegen den Nutzer.
+        @media (prefers-reduced-motion: reduce) {
+            transition: none;
+        }
     }
 
     .collapsed &__toggle-icon {

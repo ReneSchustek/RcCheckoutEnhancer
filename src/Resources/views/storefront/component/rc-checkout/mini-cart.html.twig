@@ -5,13 +5,21 @@
 
     <div class="rc-checkout-mini-cart card mb-3">
         <div class="card-header">
+            {# `aria-controls` benennt den Bereich, den der Schalter auf- und zuklappt. Ohne die
+               Angabe weiß eine Vorlesehilfe zwar, dass hier etwas ausklappt, aber nicht was —
+               `aria-expanded` allein beschreibt einen Zustand ohne Gegenstand.
+
+               Das ▾ ist Schmuck und trägt keine Aussage: Der Zustand steht bereits in
+               `aria-expanded`. Ohne `aria-hidden` läse eine Vorlesehilfe zusätzlich
+               „Dreieck nach unten" vor. #}
             <button class="btn btn-link w-100 text-start text-decoration-none d-flex justify-content-between align-items-center"
                     type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#rcMiniCartCollapse"
+                    aria-controls="rcMiniCartCollapse"
                     aria-expanded="true">
                 <strong>{{ 'rcCheckout.miniCartTitle'|trans({'%count%': lineItems.count}) }}</strong>
-                <span class="rc-checkout-mini-cart__toggle-icon">▾</span>
+                <span class="rc-checkout-mini-cart__toggle-icon" aria-hidden="true">▾</span>
             </button>
         </div>
 
