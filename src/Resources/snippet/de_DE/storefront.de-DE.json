@@ -10,7 +10,12 @@
         "miniCartTitle": "Ihre Bestellung (%count%)",
         "miniCartSubtotal": "Zwischensumme",
         "miniCartShipping": "Versand",
-        "miniCartTotal": "Gesamt"
+        "miniCartTotal": "Gesamt",
+        "enquiryHint": "Leider können wir diesen Warenkorb über unseren normalen Versandweg nicht an Sie liefern. Bitte kontaktieren Sie uns für eine individuelle Lösung. Wir werden uns schnellstmöglich bei Ihnen melden.",
+        "enquiryHintPickupOnly": "Für diesen Warenkorb können wir nur die Selbstabholung anbieten. Wenn Sie eine Lieferung wünschen, erstellen wir Ihnen gern ein Angebot.",
+        "enquiryButton": "Angebot anfragen",
+        "enquiryButtonDelivery": "Lieferung anfragen",
+        "enquiryCartTaken": "Ihr Warenkorb wurde übernommen. Sie können den Text unten ergänzen, bevor Sie absenden."
     },
     "rc-checkout": {
         "freeShipping": {

@@ -1,0 +1,35 @@
+{% sw_extends '@Storefront/storefront/element/cms-element-form/form-types/contact-form.html.twig' %}
+
+{# Befüllt das Kommentarfeld mit dem Warenkorb, wenn der Kunde über den Anfrageweg aus dem
+   Bestellvorgang hierherkommt.
+
+   Sichtbar und änderbar, nicht in einem versteckten Feld: Der Kunde soll wissen, was er
+   absendet — und er soll es ergänzen können. Ein verstecktes Feld wäre bequemer und falsch.
+
+   Ohne Übernahme bleibt alles beim Kern (`{{ parent() }}`): Diese Vorlage liegt auf jeder
+   Kontaktseite, nicht nur auf der aus dem Bestellvorgang aufgerufenen. #}
+{% block cms_form_contact_comment_textarea %}
+    {% set rcEnquirySummary = page.extensions.rcShippingEnquiry is defined ? page.extensions.rcShippingEnquiry.summary : null %}
+
+    {% if rcEnquirySummary %}
+        <div class="col-12">
+            <div class="rc-shipping-enquiry-note alert alert-info" role="status">
+                {{ 'rcCheckout.enquiryCartTaken'|trans }}
+            </div>
+        </div>
+
+        {% sw_include '@Storefront/storefront/component/form/form-textarea.html.twig' with {
+            label: 'contact.commentLabel'|trans,
+            id: formPrefix ~ '-form-comment',
+            name: 'comment',
+            value: rcEnquirySummary,
+            placeholder: 'contact.commentPlaceholder'|trans,
+            violationPath: '/comment',
+            validationRules: 'required',
+            rows: 12,
+            additionalClass: 'col-12',
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

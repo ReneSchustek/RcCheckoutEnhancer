@@ -1,0 +1,25 @@
+{# Der Anfrageweg: Bleibt keine Versandart übrig, steht hier statt der Sackgasse ein
+   Hinweis mit einer Schaltfläche, die den Warenkorb in das Kontaktformular überträgt.
+
+   Kein Javascript: ein gewöhnliches Formular. Dieser Weg ist der letzte, der einem Kunden
+   bleibt, bevor er abbricht — er darf nicht daran scheitern, dass ein Skript klemmt. #}
+{% set rcEnquiry = page.extensions.rcShippingEnquiry %}
+{% if rcEnquiry %}
+    <div class="rc-shipping-enquiry alert alert-warning" role="status">
+        {# Bleibt die Abholung wählbar, wäre „wir können nicht liefern" falsch — es geht ja
+           etwas. Der eingestellte Text schlägt beide Vorgaben, wie bei der Vertrauenszeile. #}
+        <p class="rc-shipping-enquiry__hint">
+            {{ rcEnquiry.hint ?: (rcEnquiry.pickupOnly ? 'rcCheckout.enquiryHintPickupOnly'|trans : 'rcCheckout.enquiryHint'|trans) }}
+        </p>
+
+        <form action="{{ path('frontend.rc-checkout.shipping-enquiry') }}" method="post">
+            {# Die Beschriftung muss sagen, wohin der Klick führt. Bleibt die Abholung
+               wählbar, ist „Angebot anfragen" zu unbestimmt — es könnte auch ein Angebot
+               für die Abholung sein. Gemeint ist die Lieferung, und genau die zögert der
+               Kunde an dieser Stelle heraus. #}
+            <button type="submit" class="btn btn-primary rc-shipping-enquiry__button">
+                {{ rcEnquiry.pickupOnly ? 'rcCheckout.enquiryButtonDelivery'|trans : 'rcCheckout.enquiryButton'|trans }}
+            </button>
+        </form>
+    </div>
+{% endif %}

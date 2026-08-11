@@ -18,6 +18,15 @@ class FreeShippingThresholdSubscriber implements EventSubscriberInterface
 {
     private const DEFAULT_THRESHOLD = 50.00;
 
+    /**
+     * Unterhalb eines halben Cents gilt ein Betrag als null.
+     *
+     * Ein Vergleich `> 0.0` auf einem Fließkommawert wäre eine Wette darauf, dass eine
+     * Summe aus Rundungen exakt null trifft. Trifft sie es um ein Zehntausendstel nicht,
+     * verschwände der Hinweis in Shops, in denen er völlig richtig wäre.
+     */
+    private const CENT_TOLERANCE = 0.005;
+
     public function __construct(
         private readonly ConfigService $configService,
         private readonly FreeShippingService $freeShippingService,
@@ -57,7 +66,7 @@ class FreeShippingThresholdSubscriber implements EventSubscriberInterface
         }
 
         // Optionaler A/B-Test zuletzt (teuerster Check): ist der Besucher der Variante mit
-        // „Hinweis aus" zugeordnet, wird der Indikator nicht angehängt (siehe RCHK02).
+        // „Hinweis aus" zugeordnet, wird der Indikator nicht angehängt.
         if ($this->switchGate?->isIndicatorSuppressed() === true) {
             return;
         }
@@ -88,6 +97,25 @@ class FreeShippingThresholdSubscriber implements EventSubscriberInterface
         $threshold = $reach->threshold ?? $threshold;
 
         $status = $this->freeShippingService->calculate($cart, $context, $threshold);
+
+        // Die Zusage muss zu dem passen, was zwei Zeilen weiter rechts auf derselben Seite
+        // steht. Ist der Schwellwert erreicht, trägt der Warenkorb aber Versandkosten, dann
+        // ist „versandkostenfrei geliefert" schlicht falsch — und zwar nachweisbar, ohne
+        // irgendetwas über den Lieferort zu wissen.
+        //
+        // Gemessen an einem Shop mit echten Versanddaten: 530 kg, Warenwert weit über der Schwelle.
+        // Der Hinweis meldete „Glückwunsch — versandkostenfrei", die Zusammenfassung daneben
+        // berechnete 8,93 €. Die Ursache ist, dass der Hinweis nur Warenwert gegen Schwelle
+        // rechnet: Die versandkostenfreie Versandart war für dieses Gewicht gesperrt, geliefert
+        // hätte ein Paketdienst zum Normaltarif.
+        //
+        // Bei erreichter Schwelle **und** Versandkosten größer null wird deshalb geschwiegen.
+        // Nicht „noch X € fehlen" — das wäre die zweite falsche Aussage; die Schwelle ist ja
+        // überschritten. Wer sich für einen kostenpflichtigen Versand entschieden hat, bekommt
+        // ebenfalls keine Zusage mehr, und das ist richtig so: Er zahlt Versand.
+        if ($status->achieved && $cart->getShippingCosts()->getTotalPrice() > self::CENT_TOLERANCE) {
+            return;
+        }
 
         $event->getPage()->addExtension('rcFreeShipping', $status);
 

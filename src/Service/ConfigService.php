@@ -44,6 +44,64 @@ class ConfigService
         return (bool) $this->get('.shippingEstimatorEnabled', false, $salesChannelId);
     }
 
+    public function isShippingEnquiryEnabled(?string $salesChannelId = null): bool
+    {
+        return (bool) $this->get('.shippingEnquiryEnabled', true, $salesChannelId);
+    }
+
+    /**
+     * Die Seite mit dem Kontaktformular, auf die der Anfrageweg führt.
+     *
+     * Leer heißt: Der Anfrageweg erscheint nicht. Bewusst keine geratene Vorgabe — welche
+     * Seite das Formular trägt, weiß nur der Betreiber. Ein geratener Pfad wäre genau der
+     * tote Verweis, den dieses Plugin schon einmal gekostet hat.
+     */
+    public function getShippingEnquiryCategoryId(?string $salesChannelId = null): ?string
+    {
+        $value = $this->get('.shippingEnquiryCategoryId', '', $salesChannelId);
+
+        if (!\is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
+     * Versandarten, die keine Lieferung sind — allen voran die Selbstabholung.
+     *
+     * Shopware kennt dafür kein Merkmal: weder ein Feld noch eine Kennzeichnung. Eine
+     * Erkennung über den Namen („enthält Abhol") wäre geraten und ginge bei der ersten
+     * Umbenennung schief. Deshalb pflegt der Betreiber die Liste.
+     *
+     * Leer heißt: Es ändert sich nichts gegenüber dem Verhalten bis 1.9.0.
+     *
+     * @return list<string>
+     */
+    public function getNonDeliveryMethodIds(?string $salesChannelId = null): array
+    {
+        $value = $this->get('.shippingEnquiryNonDeliveryMethodIds', [], $salesChannelId);
+
+        if (!\is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== ''));
+    }
+
+    /**
+     * Der Text über der Schaltfläche — leer heißt: der Textbaustein gilt.
+     *
+     * Muster der Vertrauenszeile: Vorgabe als Textbaustein, damit es sie in jeder Sprache
+     * gibt, und die Einstellung als Überschreibung je Verkaufskanal.
+     */
+    public function getShippingEnquiryHint(?string $salesChannelId = null): string
+    {
+        return trim((string) $this->get('.shippingEnquiryHint', '', $salesChannelId));
+    }
+
     /**
      * Der eingestellte Rückfall-Betrag für die Versandkostenfreiheit.
      *

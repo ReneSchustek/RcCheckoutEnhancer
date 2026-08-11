@@ -55,13 +55,6 @@ class ShippingEstimateController extends StorefrontController
             throw new NotFoundHttpException('Der Versandkostenrechner ist nicht aktiv.');
         }
 
-        // Entscheidung des Briefs: nur für Gäste. Wer angemeldet ist, sieht seine
-        // echten Versandkosten im Checkout — eine zweite, abweichende Zahl daneben
-        // wäre eine Einladung zum Missverständnis.
-        if ($context->getCustomer() !== null) {
-            throw new NotFoundHttpException('Für angemeldete Kunden gilt die Adresse des Kontos.');
-        }
-
         // Schlüssel ist die aufrufende Adresse: die Begrenzung soll den einzelnen
         // Absender bremsen, nicht alle Besucher gemeinsam.
         $this->rateLimiter->ensureAccepted(

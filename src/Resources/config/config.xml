@@ -158,9 +158,49 @@ undo;14 Tage Widerrufsrecht</defaultValue>
             <name>shippingEstimatorEnabled</name>
             <label lang="de-DE">Versandkostenrechner im Warenkorb anzeigen</label>
             <label lang="en-GB">Show shipping cost estimator in the cart</label>
-            <helpText lang="de-DE">Gäste können Land und Postleitzahl eingeben und sehen die Kosten je Versandart. Für angemeldete Kunden wird er nicht angezeigt — dort gilt die Adresse des Kontos.</helpText>
-            <helpText lang="en-GB">Guests can enter country and postcode and see the cost per shipping method. It is not shown to signed-in customers, whose account address applies.</helpText>
+            <helpText lang="de-DE">Kunden können Land und Postleitzahl eingeben und sehen die Kosten je Versandart — und ob überhaupt eine angeboten wird. Für Angemeldete ist die Anschrift des Kontos vorbelegt.</helpText>
+            <helpText lang="en-GB">Customers can enter country and postcode and see the cost per shipping method — and whether one is offered at all. For signed-in customers the account address is prefilled.</helpText>
             <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Anfrage bei nicht möglicher Lieferung</title>
+        <title lang="en-GB">Enquiry when delivery is not possible</title>
+
+        <input-field type="bool">
+            <name>shippingEnquiryEnabled</name>
+            <label lang="de-DE">Anfrageweg anbieten</label>
+            <label lang="en-GB">Offer the enquiry path</label>
+            <helpText lang="de-DE">Bleibt im Bestellvorgang keine Versandart übrig, erscheint statt der Sackgasse ein Hinweis mit einer Schaltfläche zum Kontaktformular. Der Warenkorb wird dabei übernommen. Ohne ausgewählte Zielseite unten erscheint nichts.</helpText>
+            <helpText lang="en-GB">When no shipping method remains in the checkout, a hint with a button to the contact form is shown instead of a dead end. The cart is carried over. Nothing is shown unless a target page is selected below.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <component name="sw-entity-single-select">
+            <name>shippingEnquiryCategoryId</name>
+            <entity>category</entity>
+            <label lang="de-DE">Zielseite mit dem Kontaktformular</label>
+            <label lang="en-GB">Target page carrying the contact form</label>
+            <helpText lang="de-DE">Die Seite, auf der Ihr Kontaktformular steht. Solange hier nichts ausgewählt ist, erscheint der Anfrageweg nicht — eine Schaltfläche ins Leere wäre schlimmer als keine.</helpText>
+            <helpText lang="en-GB">The page carrying your contact form. As long as nothing is selected here, the enquiry path is not shown — a button leading nowhere is worse than none.</helpText>
+        </component>
+
+        <component name="sw-entity-multi-id-select">
+            <name>shippingEnquiryNonDeliveryMethodIds</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Versandarten, die keine Lieferung sind</label>
+            <label lang="en-GB">Shipping methods that are not a delivery</label>
+            <helpText lang="de-DE">Zum Beispiel die Selbstabholung. Bleibt für einen Warenkorb nur noch eine davon übrig, erscheint der Anfrageweg zusätzlich — die Abholung bleibt trotzdem wählbar. Leer lassen, wenn der Hinweis nur bei gar keiner Versandart erscheinen soll.</helpText>
+            <helpText lang="en-GB">Self-collection, for example. If only such methods remain for a cart, the enquiry path is shown in addition — collection stays selectable. Leave empty to show the hint only when no shipping method remains at all.</helpText>
+        </component>
+
+        <input-field type="textarea">
+            <name>shippingEnquiryHint</name>
+            <label lang="de-DE">Hinweistext (leer = Standardtext)</label>
+            <label lang="en-GB">Hint text (empty = default text)</label>
+            <helpText lang="de-DE">Steht über der Schaltfläche. Leer lassen für den mitgelieferten Text, der auch übersetzt vorliegt.</helpText>
+            <helpText lang="en-GB">Shown above the button. Leave empty for the shipped text, which is translated as well.</helpText>
         </input-field>
     </card>
 

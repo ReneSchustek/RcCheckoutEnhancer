@@ -213,10 +213,25 @@
             font-size: 0.875rem;
         }
 
+        // Lange Bezeichnungen brechen sonst mitten im Wort — aus „Vordachsystem" wurde in
+        // der schmalen Spalte „Vordachsys tem". `anywhere` erlaubt den Umbruch erst, wenn
+        // eine Zeile sonst überliefe, und bevorzugt bis dahin die Wortgrenze.
+        .line-item-label {
+            overflow-wrap: anywhere;
+            hyphens: auto;
+        }
+
         // Der Offcanvas-Modus stellt Mengen-Auswahl und Produktnummer dar. Beides gehört
         // in den Warenkorb, nicht auf die Bestätigungsseite: Geändert wird dort nicht mehr.
-        .line-item-quantity-select,
-        .line-item-ordernumber {
+        //
+        // **Die Klassennamen stammen aus dem Core-Template, nicht aus dem Gedächtnis.**
+        // Bis 1.8.0 standen hier `.line-item-quantity-select` und `.line-item-ordernumber`
+        // — beide gibt es in Shopware 6.7 nicht. Die Regeln zeigten ins Leere, und in der
+        // Leiste stand eine bedienbare Mengen-Auswahl, deren Zahl obendrein abgeschnitten
+        // war. Eine Regel auf einen Namen, den es nicht gibt, ist still wirkungslos und
+        // fällt nirgends auf; `MiniCartTemplateContractTest` nagelt die Namen deshalb fest.
+        .line-item-quantity,
+        .line-item-product-number {
             display: none;
         }
     }

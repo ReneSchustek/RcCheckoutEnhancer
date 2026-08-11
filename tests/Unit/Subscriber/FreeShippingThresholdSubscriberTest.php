@@ -14,7 +14,17 @@ use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingSwitchGate;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\FreeShippingThresholdSubscriber;
 use Shopware\Core\Checkout\Cart\Cart;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\Delivery;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryCollection;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryDate;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryPositionCollection;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\ShippingLocation;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
+use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
+use Shopware\Core\Checkout\Cart\Tax\Struct\CalculatedTaxCollection;
+use Shopware\Core\Checkout\Cart\Tax\Struct\TaxRuleCollection;
+use Shopware\Core\Checkout\Shipping\ShippingMethodEntity;
+use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Storefront\Page\Checkout\Cart\CheckoutCartPage;
@@ -75,8 +85,8 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
      * Bis 1.5.3 leitete der Hinweis seine Zusage allein aus den Verfügbarkeits-Regeln ab. Die
      * Gewichtsgrenze steht aber in den Preisbändern: Oberhalb des obersten Bands bleibt eine
      * Versandart *verfügbar* und scheitert erst am fehlenden Preis. Der Shop versprach dort
-     * kostenlosen Versand für einen Warenkorb, den er gar nicht ausliefert — am 2026-08-10 auf
-     * live-clone mit 530 kg gemessen.
+     * kostenlosen Versand für einen Warenkorb, den er gar nicht ausliefert — an echten
+     * Versanddaten mit 530 kg gemessen.
      */
     public function testOnCartPageStaysSilentWhenTheCartCannotBeShipped(): void
     {
@@ -193,6 +203,83 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         self::assertTrue($event->getPage()->hasExtension('rcFreeShipping'));
     }
 
+    /**
+     * Was: Die Schwelle ist erreicht, der Warenkorb trägt aber Versandkosten.
+     * Warum: **Der Kern.** An einem Shop mit echten Versanddaten stand bei 530 kg „Glückwunsch —
+     *        versandkostenfrei" über einer Zusammenfassung, die 8,93 € berechnete. Die
+     *        versandkostenfreie Versandart war für das Gewicht gesperrt; geliefert hätte ein
+     *        Paketdienst zum Normaltarif. Der Hinweis rechnete nur Warenwert gegen Schwelle
+     *        und wusste davon nichts.
+     * Erwartet: gar keine Zusage — auch kein „noch X € fehlen", die Schwelle ist ja
+     *        überschritten.
+     */
+    public function testNoPromiseWhenTheCartStillCarriesShippingCosts(): void
+    {
+        $service = $this->createMock(FreeShippingService::class);
+        $service->method('calculate')->willReturn(new FreeShippingStatus(357.0, 0.0, true, 'EUR'));
+
+        $subscriber = new FreeShippingThresholdSubscriber(
+            $this->configService(),
+            $service,
+            $this->reachability(),
+            $this->estimateService(),
+        );
+        $event = $this->createCartEvent(shippingCosts: 8.93);
+
+        $subscriber->onCartPageLoaded($event);
+
+        self::assertFalse(
+            $event->getPage()->hasExtension('rcFreeShipping'),
+            'Versandkostenfreiheit darf nicht zugesagt werden, während der Warenkorb Versand berechnet.',
+        );
+    }
+
+    /**
+     * Die Gegenprobe: Kostet der Versand tatsächlich nichts, bleibt die Zusage stehen.
+     * Ohne diesen Test wäre der Riegel darüber auch dann grün, wenn er den Hinweis
+     * überall abschaltete.
+     */
+    public function testThePromiseStaysWhenShippingIsActuallyFree(): void
+    {
+        $service = $this->createMock(FreeShippingService::class);
+        $service->method('calculate')->willReturn(new FreeShippingStatus(357.0, 0.0, true, 'EUR'));
+
+        $subscriber = new FreeShippingThresholdSubscriber(
+            $this->configService(),
+            $service,
+            $this->reachability(),
+            $this->estimateService(),
+        );
+        $event = $this->createCartEvent(shippingCosts: 0.0);
+
+        $subscriber->onCartPageLoaded($event);
+
+        self::assertTrue($event->getPage()->hasExtension('rcFreeShipping'));
+    }
+
+    /**
+     * Die Schwelle ist **nicht** erreicht und der Versand kostet etwas — der Normalfall.
+     * „Noch X € bis zur versandkostenfreien Lieferung" ist genau dann richtig und muss
+     * stehen bleiben; der Riegel darf nur die erreichte Zusage treffen.
+     */
+    public function testTheRemainingAmountIsShownEvenWhenShippingCostsSomething(): void
+    {
+        $service = $this->createMock(FreeShippingService::class);
+        $service->method('calculate')->willReturn(new FreeShippingStatus(357.0, 338.20, false, 'EUR'));
+
+        $subscriber = new FreeShippingThresholdSubscriber(
+            $this->configService(),
+            $service,
+            $this->reachability(),
+            $this->estimateService(),
+        );
+        $event = $this->createCartEvent(shippingCosts: 8.93);
+
+        $subscriber->onCartPageLoaded($event);
+
+        self::assertTrue($event->getPage()->hasExtension('rcFreeShipping'));
+    }
+
     public function testOnCartPageDoesNothingWhenCartEmpty(): void
     {
         $service = $this->createMock(FreeShippingService::class);
@@ -263,12 +350,40 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         return $reachability;
     }
 
-    private function createCartEvent(bool $withLineItem = true): CheckoutCartPageLoadedEvent
+    private function createCartEvent(bool $withLineItem = true, float $shippingCosts = 0.0): CheckoutCartPageLoadedEvent
     {
         $page = new CheckoutCartPage();
-        $page->setCart($this->createCart($withLineItem));
+        $page->setCart($this->createCart($withLineItem, $shippingCosts));
 
         return new CheckoutCartPageLoadedEvent($page, $this->createContext(), new Request());
+    }
+
+    /**
+     * Hängt dem Warenkorb eine Lieferung mit Versandkosten an.
+     *
+     * Umständlicher als ein Setter, weil `Cart::getShippingCosts()` die Kosten aus den
+     * Lieferungen summiert — ein Warenkorb ohne Lieferung kostet naturgemäß nichts. Genau
+     * dieser Weg wird hier geprüft.
+     */
+    private function attachShippingCosts(Cart $cart, float $shippingCosts): void
+    {
+        $country = new CountryEntity();
+        $country->setId('country-de');
+        $country->setUniqueIdentifier('country-de');
+
+        $shippingMethod = new ShippingMethodEntity();
+        $shippingMethod->setId('sm-1');
+        $shippingMethod->setUniqueIdentifier('sm-1');
+
+        $cart->setDeliveries(new DeliveryCollection([
+            new Delivery(
+                new DeliveryPositionCollection(),
+                new DeliveryDate(new \DateTimeImmutable(), new \DateTimeImmutable()),
+                $shippingMethod,
+                ShippingLocation::createFromCountry($country),
+                new CalculatedPrice($shippingCosts, $shippingCosts, new CalculatedTaxCollection(), new TaxRuleCollection()),
+            ),
+        ]));
     }
 
     private function createOffcanvasEvent(): OffcanvasCartPageLoadedEvent
@@ -279,11 +394,15 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         return new OffcanvasCartPageLoadedEvent($page, $this->createContext(), new Request());
     }
 
-    private function createCart(bool $withLineItem): Cart
+    private function createCart(bool $withLineItem, float $shippingCosts = 0.0): Cart
     {
         $cart = new Cart('test-token');
         if ($withLineItem) {
             $cart->add(new LineItem('li-1', LineItem::PRODUCT_LINE_ITEM_TYPE, 'ref-1', 1));
+        }
+
+        if ($shippingCosts > 0.0) {
+            $this->attachShippingCosts($cart, $shippingCosts);
         }
 
         return $cart;

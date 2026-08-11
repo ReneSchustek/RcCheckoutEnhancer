@@ -41,18 +41,6 @@ final class ShippingEstimateControllerTest extends TestCase
         $this->controller(enabled: false)->estimate(new Request(), $this->context());
     }
 
-    /**
-     * Warum: Entscheidung zu RCHK05. Für Angemeldete gilt die Adresse des Kontos; eine
-     *        zweite, davon abweichende Auskunft daneben wäre eine Einladung zum
-     *        Missverständnis.
-     */
-    public function testLoggedInCustomersAreTurnedAway(): void
-    {
-        $this->expectException(NotFoundHttpException::class);
-
-        $this->controller()->estimate(new Request(), $this->context(loggedIn: true));
-    }
-
     private function controller(bool $enabled = true): ShippingEstimateController
     {
         $config = $this->createMock(ConfigService::class);

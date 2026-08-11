@@ -26,7 +26,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
  *   überschrieben — und das ist Absicht, nicht Nachlässigkeit. Shopware schreibt die
  *   `defaultValue` aus `config.xml` nämlich **vor** dem Lauf der Migrationen in die
  *   Datenbank. Ein Riegel „nur anlegen, nie überschreiben" fände deshalb immer einen
- *   Wert vor und täte nie etwas. Am 2026-08-11 auf dev-67121 gemessen: Der
+ *   Wert vor und täte nie etwas. An einem echten Shop gemessen: Der
  *   eingeschaltete Versandkostenrechner stand nach dem Update auf „aus", weil der
  *   Vorgabewert schon dastand.
  *

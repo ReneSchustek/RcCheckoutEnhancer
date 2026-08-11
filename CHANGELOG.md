@@ -1,6 +1,135 @@
 
 # Changelog
 
+## [1.10.1] - 2026-08-11 — Die Schaltfläche sagt, wohin sie führt
+
+> **Deployment:** `php bin/console cache:clear`.
+
+### Behoben
+
+- **Bleibt nur die Selbstabholung übrig, heißt die Schaltfläche jetzt „Lieferung anfragen"** statt
+  „Angebot anfragen". Der Hinweis darüber bot die Lieferung schon an — die Beschriftung tat es
+  nicht, und sie hätte genauso gut ein Angebot für die Abholung meinen können. Genau an dieser
+  Stelle entscheidet sich, ob jemand klickt: Nicht jeder, der eine halbe Tonne bestellt, will
+  einen LKW mieten.
+
+## [1.10.0] - 2026-08-11 — Angebot anfragen auch dann, wenn nur die Abholung übrig bleibt
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`.
+> **Danach im Admin die Abhol-Versandarten eintragen** — ohne sie ändert sich nichts.
+
+### Neu
+
+- **Der Anfrageweg erscheint jetzt auch, wenn als einzige Möglichkeit die Selbstabholung übrig
+  bleibt** — zusätzlich, nicht an ihrer Stelle. Wer abholen will, kann das weiterhin.
+
+  Der Fall entsteht, weil die Abholung oft die einzige Versandart **ohne Gewichtsgrenze** ist. Sie
+  bleibt deshalb übrig, wenn die Speditionsstaffel endet — nicht als Angebot, sondern als Rest.
+  Der Kunde stand dann vor genau einer Möglichkeit: eine halbe Tonne selbst abholen. Wer das nicht
+  kann, hatte keinen Weg außer dem Abbruch — und das ist der Kunde mit dem größten Warenkorb.
+
+- **Neue Einstellung „Versandarten, die keine Lieferung sind".** Shopware kennt dafür kein
+  Merkmal; eine Erkennung über den Namen wäre geraten und ginge bei der ersten Umbenennung schief.
+  **Bleibt das Feld leer, ändert sich nichts** — dann erscheint der Hinweis wie bisher nur, wenn
+  gar keine Versandart übrig ist.
+
+- Eigener Hinweistext für diesen Fall: „Für diesen Warenkorb können wir nur die Selbstabholung
+  anbieten. Wenn Sie eine Lieferung wünschen, erstellen wir Ihnen gern ein Angebot." Wie der erste
+  Text als Textbaustein mit Überschreibung je Verkaufskanal.
+
+## [1.9.0] - 2026-08-11 — Der Versandkostenrechner steht auch angemeldeten Kunden offen
+
+> **Deployment:** `php bin/console cache:clear`.
+
+### Geändert
+
+- **Der Versandkostenrechner erscheint jetzt für alle Kunden, nicht nur für Gäste** — und ist für
+  Angemeldete mit der Anschrift des Kontos vorbelegt.
+
+  Bisher blieb er Gästen vorbehalten: Wer angemeldet ist, habe seine Adresse im Konto, und eine
+  zweite Zahl daneben wäre irreführend. Das galt, solange der Bestellvorgang immer zu einem
+  Ergebnis führte. **Er kann aber in eine Sackgasse laufen** — und der Rechner ist die einzige
+  Stelle im Warenkorb, an der ein Kunde erfährt, dass es für seine Sendung gar keine Versandart
+  gibt. Ausgerechnet der Stammkunde mit der großen Bestellung sah davon nichts.
+
+  Die befürchtete zweite Zahl gibt es ohnehin nicht: Der Rechner benutzt dieselbe Berechnung wie
+  der Bestellvorgang.
+
+- Die Warenkorb-Leiste zeigt die zuletzt errechnete Auskunft aus demselben Grund ebenfalls
+  Angemeldeten.
+
+## [1.8.1] - 2026-08-11 — Die Warenkorb-Leiste zeigt wieder nur den Warenkorb
+
+> **Deployment:** `bin/console theme:compile`.
+
+### Behoben
+
+- **In der Warenkorb-Leiste der Bestätigungsseite standen eine bedienbare Mengen-Auswahl und die
+  Produktnummer.** Beides sollte dort nie erscheinen — auf der Bestätigungsseite wird nicht mehr
+  geändert. Die Regeln, die es ausblenden sollten, zeigten auf Klassennamen, die es in Shopware 6.7
+  nicht gibt, und liefen deshalb ins Leere.
+
+  Die Mengen-Auswahl hat eine feste Mindestbreite und drückte in der schmalen Spalte alles
+  zusammen; ihre Zahl war zweistellig sogar abgeschnitten. **Das war die eigentliche Ursache
+  dafür, dass die Leiste gedrängt aussah.**
+
+- **Lange Bezeichnungen brachen mitten im Wort** — aus „Vordachsystem" wurde „Vordachsys tem".
+
+### Hinweis
+
+Ein Test hält jetzt fest, dass jede Klasse, die das Stilblatt ausblendet, im Core-Template
+tatsächlich vorkommt. Eine Regel auf einen Namen, den es nicht gibt, bricht nichts und wird nicht
+rot — sie sieht nur falsch aus, und zwar auf der Seite, auf der der Kunde bestätigt.
+
+## [1.8.0] - 2026-08-11 — Anfrage statt Sackgasse, wenn keine Versandart übrig bleibt
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`.
+> **Danach im Admin die Zielseite einstellen** — ohne sie erscheint der Anfrageweg nicht.
+
+### Neu
+
+- **Bleibt im Bestellvorgang keine Versandart übrig, erscheint ein Hinweis mit einer Schaltfläche
+  zum Kontaktformular — und der Warenkorb wird dorthin übernommen.** Bisher nannte der Shop bis zum
+  letzten Schritt einen Versandpreis für Sendungen, die er gar nicht ausliefern kann; der Kunde
+  hatte nirgends einen Anlass zu zweifeln und brach ab.
+
+  Übergeben wird, was der Vertrieb für ein Frachtangebot braucht: Artikelnummer, Bezeichnung und
+  Menge je Position, **die Kundeneingaben anderer Erweiterungen** (etwa eine gewählte Farbe),
+  Gewicht je Stück, Gesamtgewicht, längste Position, Warenwert und das Lieferziel.
+
+  Der Text landet **sichtbar** im Kommentarfeld des Formulars — der Kunde sieht, was er absendet,
+  und kann ergänzen.
+
+- **Drei Einstellungen dazu:** ein Schalter, die Zielseite mit dem Kontaktformular und ein
+  eigener Hinweistext. **Ohne ausgewählte Zielseite erscheint nichts** — eine Schaltfläche ins
+  Leere wäre schlimmer als keine.
+
+### Hinweise
+
+- Der Weg kommt **ohne JavaScript** aus. Er ist der letzte, der einem Kunden bleibt, bevor er
+  abbricht, und darf nicht daran scheitern, dass ein Skript klemmt.
+- Warenkörbe mit verfügbarer Versandart sehen den Hinweis nie. Der Smoke-Test hält das fest.
+
+## [1.7.1] - 2026-08-11 — Keine Zusage „versandkostenfrei", wenn der Warenkorb Versand berechnet
+
+> **Deployment:** `php bin/console cache:clear`.
+
+### Behoben
+
+- **Der Warenkorb versprach versandkostenfreie Lieferung und berechnete gleichzeitig Versandkosten.**
+  Gemessen an einer Sendung über der obersten Gewichtsstufe: Der Hinweis meldete „Glückwunsch — Ihre
+  Bestellung wird versandkostenfrei geliefert!", die Zusammenfassung daneben wies 8,93 € aus. Grund
+  war, dass der Hinweis nur den Warenwert gegen den Schwellenwert rechnete — die versandkostenfreie
+  Versandart war für dieses Gewicht gesperrt, geliefert hätte ein Paketdienst zum Normaltarif.
+
+  Ist der Schwellenwert erreicht, der Warenkorb trägt aber Versandkosten, erscheint der Hinweis
+  jetzt **gar nicht**. Auch kein „noch X € bis zur versandkostenfreien Lieferung" — der
+  Schwellenwert ist ja überschritten, das wäre die zweite falsche Aussage.
+
+  **Unverändert bleibt der Normalfall:** Solange der Schwellenwert noch nicht erreicht ist, steht
+  „noch X € bis zur versandkostenfreien Lieferung" wie bisher — auch dann, wenn der Versand aktuell
+  etwas kostet. Genau dafür gibt es den Hinweis.
+
 ## [1.7.0] - 2026-08-11 — Ein Plugin für den Bestellvorgang, jede Funktion einzeln abschaltbar
 
 > **Wichtig für den Umstieg:** Dieses Plugin übernimmt den Versandkostenfrei-Indikator und den

@@ -49,13 +49,6 @@ class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Dieselbe Gäste-Regel wie beim Rechner (RCHK05): Wer angemeldet ist, sieht
-        // seine echten Versandkosten im Checkout. Eine zweite Zahl daneben wäre
-        // irreführend — auch dann, wenn sie aus einer früheren Sitzung stammt.
-        if ($context->getCustomer() !== null) {
-            return;
-        }
-
         $cart = $event->getPage()->getCart();
 
         // Ein leerer Warenkorb hat keine Versandkosten, über die sich reden ließe.

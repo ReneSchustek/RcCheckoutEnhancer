@@ -6,6 +6,20 @@
     {{ parent() }}
 {% endblock %}
 
+{# Der Anfrageweg steht dort, wo der Kunde sonst hängen bleibt: unmittelbar vor den
+   Hinweisen zu Zahlungs- und Versandart, oberhalb der Bestellübersicht. Bleibt keine
+   Versandart übrig, rendert Shopware deren Auswahl gar nicht erst — der Kunde sähe ohne
+   diesen Block eine Seite, die ihn zum Absenden auffordert, ohne dass eine Lieferung
+   zustande kommen kann. #}
+{% block page_checkout_confirm_alerts %}
+    {{ parent() }}
+    {% if page.extensions.rcShippingEnquiry is defined %}
+        {% block page_checkout_confirm_rc_shipping_enquiry %}
+            {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/shipping-enquiry.html.twig' %}
+        {% endblock %}
+    {% endif %}
+{% endblock %}
+
 {# Wir umschließen den real existierenden Core-Block `page_checkout_confirm`
    (ein zuvor genutzter Wrapper-Block existierte in keiner Core-Version → toter
    No-Op).

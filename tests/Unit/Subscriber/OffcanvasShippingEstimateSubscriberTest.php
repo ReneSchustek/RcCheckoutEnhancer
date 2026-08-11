@@ -81,21 +81,17 @@ final class OffcanvasShippingEstimateSubscriberTest extends TestCase
     }
 
     /**
-     * Was: Ein angemeldeter Kunde.
-     * Warum: Dieselbe Regel wie beim Rechner (RCHK05) — wer angemeldet ist, sieht seine
-     *        echten Versandkosten im Checkout. Eine zweite Zahl daneben wäre irreführend,
-     *        auch dann, wenn sie aus einer früheren Sitzung stammt.
-     * Erwartet: gar keine Erweiterung, und der Speicher wird nicht einmal befragt.
+     * Was: Ein angemeldeter Kunde bekommt die Auskunft ebenfalls.
+     * Warum: Dieselbe Umkehr wie beim Rechner selbst. Bliebe die Leiste bei der alten Regel,
+     *        sähe ein angemeldeter Kunde seine gerade errechnete Auskunft überall — nur nicht
+     *        dort, wo er sie beim nächsten Öffnen des Warenkorbs sucht.
      */
-    public function testLoggedInCustomersSeeNothing(): void
+    public function testSignedInCustomersGetTheAnswerAsWell(): void
     {
-        $store = $this->createMock(LastShippingEstimateStore::class);
-        $store->expects($this->never())->method('get');
-
         $event = $this->event($this->cart(), loggedIn: true);
-        $this->subscriber($store)->onOffcanvasLoaded($event);
+        $this->subscriber($this->storeWith(null))->onOffcanvasLoaded($event);
 
-        self::assertFalse($event->getPage()->hasExtension('rcOffcanvasShipping'));
+        self::assertTrue($event->getPage()->hasExtension('rcOffcanvasShipping'));
     }
 
     /**

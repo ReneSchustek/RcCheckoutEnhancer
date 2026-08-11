@@ -22,7 +22,7 @@ use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 /**
- * Die Frage, um die es in RCHK06 geht: Gilt Versandkostenfreiheit für diesen Lieferort
+ * Die Frage, um die es hier geht: Gilt Versandkostenfreiheit für diesen Lieferort
  * überhaupt?
  *
  * Gelesen wird die echte Verfügbarkeitsregel der eingestellten Versandarten. Eine eigene
@@ -51,7 +51,7 @@ final class FreeShippingReachabilityTest extends TestCase
     /**
      * Was: Dieselbe Regel, aber der Besucher liefert nach Österreich.
      * Warum: **Der Befund.** Bis 1.3.0 stand der Hinweis auch ihm vor der Nase — eine
-     *        Zusage, die für ihn nie eintritt. Verschärft dadurch, dass seit RCHK05 der
+     *        Zusage, die für ihn nie eintritt. Verschärft dadurch, dass seitdem der
      *        Versandkostenrechner direkt darunter für dasselbe Land eine Zahl größer null
      *        nennt: zwei Aussagen an derselben Stelle, die einander widersprechen.
      * Erwartet: Der Hinweis gilt nicht.
@@ -96,7 +96,7 @@ final class FreeShippingReachabilityTest extends TestCase
 
     /**
      * Was: Die Regel nennt einen Betrag.
-     * Warum: **Der Kern von RCHK09.** Bis 1.4.0 stand derselbe Betrag an drei Stellen —
+     * Warum: **Der Kern.** Bis 1.4.0 stand derselbe Betrag an drei Stellen —
      *        Regel, Einstellung, Freitext der Vertrauensleiste — und alle drei waren
      *        verschieden. Gelesen wird jetzt die Regel; die Einstellung ist nur noch
      *        Rückfall.

@@ -46,20 +46,27 @@ class ShippingEstimateSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Nur für Gäste (Entscheidung zu RCHK05). Für angemeldete Kunden gilt die
-        // Adresse des Kontos; eine zweite Zahl daneben wäre irreführend.
-        if ($context->getCustomer() !== null) {
-            return;
-        }
-
         // Ein leerer Warenkorb hat keine Versandkosten, über die sich reden ließe.
         if ($event->getPage()->getCart()->getLineItems()->count() === 0) {
             return;
         }
 
+        // Bis 1.8.1 sahen nur Gäste den Rechner: Wer angemeldet ist, habe seine Adresse im
+        // Konto, und eine zweite Zahl daneben wäre irreführend. Das war richtig, solange der
+        // Bestellvorgang immer zu einem Ergebnis führte.
+        //
+        // Seit belegt ist, dass er in eine Sackgasse laufen kann, ist es falsch: Der Rechner
+        // ist die einzige Stelle im Warenkorb, an der jemand erfährt, dass es für seine
+        // Sendung gar keine Versandart gibt. Ausgerechnet der Stammkunde, der eine halbe
+        // Tonne bestellt, sah davon nichts.
+        //
+        // Die befürchtete zweite Zahl gibt es ohnehin nicht: Der Rechner benutzt dieselbe
+        // Kern-Berechnung wie der Checkout — gemessen nannten beide 8,93 €.
         $event->getPage()->addExtension('rcShippingEstimate', new ArrayStruct([
             'countries' => $this->shippingCountries($context),
             'currentCountryId' => $context->getShippingLocation()->getCountry()->getId(),
+            // Vorbelegung für Angemeldete: Was der Shop längst weiß, soll niemand abtippen.
+            'currentZipCode' => $context->getShippingLocation()->getAddress()?->getZipcode() ?? '',
         ]));
     }
 

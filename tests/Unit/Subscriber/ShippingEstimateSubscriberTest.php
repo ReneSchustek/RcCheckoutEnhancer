@@ -54,15 +54,21 @@ final class ShippingEstimateSubscriberTest extends TestCase
     }
 
     /**
-     * Warum: Entscheidung zu RCHK05 — wer angemeldet ist, sieht seine echten Versandkosten
-     *        im Checkout. Eine zweite, davon abweichende Zahl daneben wäre irreführend.
+     * Was: Ein angemeldeter Kunde sieht den Rechner ebenfalls.
+     * Warum: **Bewusste Umkehr einer früheren Entscheidung.** Bis 1.8.1 blieb er Gästen
+     *        vorbehalten — wer angemeldet ist, habe seine Adresse im Konto, und eine zweite
+     *        Zahl daneben wäre irreführend. Das galt, solange der Bestellvorgang immer zu
+     *        einem Ergebnis führte. Seit belegt ist, dass er in eine Sackgasse laufen kann,
+     *        ist der Rechner die einzige Stelle im Warenkorb, an der jemand erfährt, dass es
+     *        für seine Sendung gar keine Versandart gibt — und ausgerechnet der Stammkunde
+     *        mit der großen Bestellung sah das nicht.
      */
-    public function testLoggedInCustomersGetNoEstimator(): void
+    public function testSignedInCustomersSeeTheEstimatorAsWell(): void
     {
         $event = $this->event(loggedIn: true);
         $this->subscriber()->onCartPageLoaded($event);
 
-        self::assertFalse($event->getPage()->hasExtension('rcShippingEstimate'));
+        self::assertTrue($event->getPage()->hasExtension('rcShippingEstimate'));
     }
 
     /**

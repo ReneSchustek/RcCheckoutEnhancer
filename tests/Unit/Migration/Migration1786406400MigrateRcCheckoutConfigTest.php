@@ -82,7 +82,7 @@ final class Migration1786406400MigrateRcCheckoutConfigTest extends TestCase
      *      `config.xml`, den Shopware **vor** dem Lauf der Migrationen schreibt.
      * Warum: **Der Kern.** Genau hier ist die erste Fassung gescheitert: Sie legte nur an,
      *        wo nichts stand, fand deshalb immer den Vorgabewert vor und übernahm nie
-     *        etwas. Auf dev-67121 stand der eingeschaltete Versandkostenrechner danach
+     *        etwas. An einem echten Shop stand der eingeschaltete Versandkostenrechner danach
      *        auf „aus".
      * Erwartet: keine zweite Zeile, sondern die vorhandene wird überschrieben.
      */

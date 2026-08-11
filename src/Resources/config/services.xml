@@ -23,6 +23,30 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
+        <!-- Anfrageweg bei nicht möglicher Lieferung -->
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquirySummary"/>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore">
+            <argument type="service" id="request_stack"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquirySubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\ShippingEnquiryController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquirySummary"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
         <!-- Versandkostenfrei-Indikator -->
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingService"/>

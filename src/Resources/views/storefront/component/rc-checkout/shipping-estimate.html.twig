@@ -1,9 +1,10 @@
 {# Versandkostenrechner im Warenkorb: Land und Postleitzahl eingeben, Preise je
    Versandart erhalten.
 
-   Wird nur für Gäste gerendert (Entscheidung zu RCHK05). Wer angemeldet ist,
-   sieht seine echten Versandkosten im Checkout; eine zweite, davon abweichende
-   Zahl daneben wäre irreführend.
+   Seit 1.9.0 auch für angemeldete Kunden — mit ihrer Kontoanschrift vorbelegt. Er ist
+   die einzige Stelle im Warenkorb, an der jemand erfährt, dass es für seine Sendung gar
+   keine Versandart gibt; ausgerechnet der Stammkunde mit der großen Bestellung sah das
+   vorher nicht.
 
    Kein `<form>`-Element: Das Buy-Widget und der Warenkorb enthalten bereits
    Formulare, und verschachtelte Formulare sind in HTML nicht erlaubt. Die
@@ -45,6 +46,7 @@
                 <input type="text"
                        class="form-control"
                        id="rcShippingEstimateZip"
+                       value="{{ rcShippingEstimate.currentZipCode|default('') }}"
                        data-rc-shipping-estimate-zip
                        required="required"
                        maxlength="12"

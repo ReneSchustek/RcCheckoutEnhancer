@@ -17,6 +17,7 @@ use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
+use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Content\Media\MediaUrlPlaceholderHandlerInterface;
 use Shopware\Core\Content\Seo\SeoUrlPlaceholderHandlerInterface;
 use Shopware\Core\Framework\Adapter\Twig\TemplateFinder;
@@ -79,6 +80,23 @@ final class ShippingEstimateControllerRenderTest extends TestCase
         $response = $controller->estimate($request, $this->context());
 
         self::assertSame(200, $response->getStatusCode());
+    }
+
+    /**
+     * Was: Ein angemeldeter Kunde bekommt eine Auskunft statt einer Absage.
+     * Warum: **Bewusste Umkehr.** Bis 1.8.1 wies der Endpunkt Angemeldete ab. Wird der
+     *        Rechner ihnen im Warenkorb angeboten, muss er auch antworten — sonst wäre die
+     *        Schaltfläche sichtbar und die Anfrage abgelehnt.
+     */
+    public function testSignedInCustomersGetAnAnswerInsteadOfARejection(): void
+    {
+        $controller = $this->controller($this->createMock(LastShippingEstimateStore::class));
+
+        $request = new Request([], ['countryIso' => 'DE', 'zipCode' => '44135']);
+        $response = $controller->estimate($request, $this->context(angemeldet: true));
+
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('Standard', (string) $response->getContent());
     }
 
     private function controller(LastShippingEstimateStore $store): ShippingEstimateController
@@ -173,11 +191,11 @@ final class ShippingEstimateControllerRenderTest extends TestCase
         };
     }
 
-    private function context(): SalesChannelContext
+    private function context(bool $angemeldet = false): SalesChannelContext
     {
         $context = $this->createMock(SalesChannelContext::class);
         $context->method('getSalesChannelId')->willReturn('sc-id');
-        $context->method('getCustomer')->willReturn(null);
+        $context->method('getCustomer')->willReturn($angemeldet ? new CustomerEntity() : null);
         $context->method('getToken')->willReturn('token');
 
         return $context;

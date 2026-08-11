@@ -9,7 +9,8 @@ Verbessert den Shopware-Standard-Checkout: Fortschrittsanzeige, Vertrauenssignal
 - **Mini-Warenkorb:** Kompakte Warenkorbübersicht als Sidebar auf der Bestätigungsseite
 - **Lieferzeitschätzung:** Optionaler Hinweis auf geschätzte Lieferzeit
 - **Versandkostenfrei-Indikator:** Zeigt im Warenkorb und in der Warenkorb-Leiste, wie viel bis zur versandkostenfreien Lieferung fehlt — nur dort, wo Versandkostenfreiheit für den Lieferort auch gilt und der Warenkorb sich ausliefern lässt
-- **Versandkostenrechner:** Gäste geben Land und Postleitzahl ein und sehen die Kosten je Versandart. Die zuletzt berechnete Auskunft erscheint auch in der Warenkorb-Leiste, solange sie zum Warenkorb passt
+- **Versandkostenrechner:** Kunden geben Land und Postleitzahl ein und sehen die Kosten je Versandart — und ob überhaupt eine angeboten wird. Für Angemeldete ist die Anschrift des Kontos vorbelegt. Die zuletzt berechnete Auskunft erscheint auch in der Warenkorb-Leiste, solange sie zum Warenkorb passt
+- **Anfrageweg bei nicht möglicher Lieferung:** Bleibt im Bestellvorgang keine Versandart übrig, erscheint statt der Sackgasse ein Hinweis mit einer Schaltfläche zum Kontaktformular — und der Warenkorb wird dorthin übernommen
 - **Alles optional:** Jede Funktion einzeln an-/abschaltbar im Admin
 
 ## Voraussetzungen
@@ -38,6 +39,21 @@ Im Admin unter **Einstellungen > System > Plugins > RC Checkout Enhancer**:
 | Lieferzeit | An/Aus + Freitext |
 | Versandkostenfrei-Indikator | An/Aus + Rückfall-Schwellenwert + Auswahl der versandkostenfreien Versandarten |
 | Versandkostenrechner | An/Aus (im Auslieferungszustand aus) |
+| Anfrageweg bei nicht möglicher Lieferung | An/Aus + **Zielseite mit dem Kontaktformular** + Versandarten, die keine Lieferung sind + eigener Hinweistext |
+
+**Ohne ausgewählte Zielseite erscheint der Anfrageweg nicht.** Das ist Absicht: Welche Seite Ihr
+Kontaktformular trägt, weiß nur Ihr Shop — und eine Schaltfläche, die ins Leere führt, ist
+schlimmer als keine.
+
+**Tragen Sie Ihre Abhol-Versandarten unter „Versandarten, die keine Lieferung sind" ein.** Bleibt
+für einen Warenkorb nur noch eine davon übrig — was häufig passiert, weil Abholungen keine
+Gewichtsgrenze tragen —, erscheint der Anfrageweg zusätzlich. Die Abholung bleibt wählbar. Ohne
+Eintrag erscheint der Hinweis nur, wenn gar keine Versandart übrig ist.
+
+Übergeben wird in das Kommentarfeld des Formulars, was der Vertrieb für ein Frachtangebot braucht:
+Artikelnummer, Bezeichnung und Menge je Position, die Kundeneingaben anderer Erweiterungen,
+Gewicht je Stück, Gesamtgewicht, längste Position, Warenwert und das Lieferziel. Der Text steht
+sichtbar im Feld — der Kunde sieht, was er absendet, und kann ergänzen.
 
 Der Schwellenwert ist ausdrücklich nur ein **Rückfall**: Maßgeblich ist der Betrag aus der
 Verfügbarkeitsregel der ausgewählten Versandarten. Damit steht die Zahl an einer Stelle statt an

@@ -182,7 +182,7 @@ final class CheckoutSubscriberTest extends TestCase
     /**
      * Was: Eine Vertrauenszeile mit Platzhalter, wenn kein Betrag ermittelbar ist.
      * Warum: Bis 1.6.1 ging sie unverändert an die Vorlage. Der Kunde las dann wörtlich
-     *        „Kostenloser Versand ab %freeShippingThreshold%" — am 2026-08-10 auf live-clone
+     *        „Kostenloser Versand ab %freeShippingThreshold%" — an einem Shop mit echten Versanddaten
      *        nachgestellt, indem RcCheckout deaktiviert wurde. Von dort kommt der Betrag.
      */
     #[Test]
