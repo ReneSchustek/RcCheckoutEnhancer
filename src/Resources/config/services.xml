@@ -4,16 +4,103 @@
            xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
 
     <services>
+        <!-- Der eine Zugang zu allen Schaltern und Werten dieses Plugins. Jede Funktion
+             liest ihre Einstellung hierüber, nicht am SystemConfigService vorbei — sonst
+             stünde dieselbe Schlüssel-Zeichenkette an mehreren Stellen. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
         </service>
 
-        <!-- `request_stack` statt einer A/B-Abhängigkeit: Die Varianten-Zuordnung wird als
+        <!-- Fortschrittsleiste, Vertrauenssignale, Mini-Warenkorb, Lieferzeit.
+
+             `request_stack` statt einer A/B-Abhängigkeit: Die Varianten-Zuordnung wird als
              Angabe am Request gelesen, nicht über einen Dienst eines anderen Plugins. Damit
              braucht es hier keine Verdrahtung, die ohne RcAbTesting ins Leere liefe. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider"/>
+            <argument type="service" id="Shopware\Core\System\Currency\CurrencyFormatter"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!-- Versandkostenfrei-Indikator -->
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingService"/>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReachability">
+            <argument type="service" id="shipping_method.repository"/>
+            <argument type="service" id="country.repository"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReachability"/>
+        </service>
+
+        <!-- A/B-Brücke: der RcAbTesting-Resolver ist optional (on-invalid="null"),
+             sodass der Indikator auch ohne RcAbTesting läuft. -->
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\RcAbTestingFreeShippingSwitchGate">
+            <argument type="service" id="Ruhrcoder\RcAbTesting\Service\FrontendSwitch\FrontendSwitchResolver" on-invalid="null"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\FreeShippingThresholdSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReachability"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\RcAbTestingFreeShippingSwitchGate"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!-- Versandkostenrechner -->
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateContextFactory"/>
+
+        <!-- Eingabeprüfung des Endpunkts. Eigener Dienst, weil sie ohne
+             Anmeldung erreichbar ist und deshalb lückenlos getestet gehört. -->
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateInputValidator"/>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\CartFingerprint"/>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\LastShippingEstimateStore">
             <argument type="service" id="request_stack"/>
+        </service>
+
+        <!-- Rechnet je Versandart einmal den Warenkorb durch. CartRuleLoader statt des
+             als @internal markierten CartCalculator, und bewusst nicht CartService:
+             dessen recalculate() speichert den Warenkorb und würde den des Kunden
+             überschreiben. -->
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService">
+            <argument type="service" id="Shopware\Core\Checkout\Shipping\SalesChannel\ShippingMethodRoute"/>
+            <argument type="service" id="country.repository"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateContextFactory"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\CartRuleLoader"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\ShippingEstimateController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateInputValidator"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Shopware\Core\Framework\RateLimiter\RateLimiter"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\LastShippingEstimateStore"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\CartFingerprint"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEstimateSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Shopware\Core\System\Country\SalesChannel\CountryRoute"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\OffcanvasShippingEstimateSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\LastShippingEstimateStore"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\CartFingerprint"/>
             <tag name="kernel.event_subscriber"/>
         </service>
     </services>

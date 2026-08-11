@@ -1,6 +1,66 @@
 
 # Changelog
 
+## [1.7.0] - 2026-08-11 — Ein Plugin für den Bestellvorgang, jede Funktion einzeln abschaltbar
+
+> **Wichtig für den Umstieg:** Dieses Plugin übernimmt den Versandkostenfrei-Indikator und den
+> Versandkostenrechner. Reihenfolge beim Aktualisieren: **erst dieses Plugin aktualisieren**
+> (`php bin/console plugin:update RcCheckoutEnhancer`), **dann das bisherige Indikator-Plugin
+> deinstallieren**. Andersherum sind die Einstellungen verschwunden, bevor sie übernommen werden
+> konnten. Danach `php bin/console cache:clear` und `bin/build-storefront.sh`.
+
+### Neu
+
+- **Versandkostenfrei-Indikator.** Zeigt im Warenkorb und in der Warenkorb-Leiste, wie viel bis
+  zur versandkostenfreien Lieferung fehlt — samt Prüfung, ob Versandkostenfreiheit für das
+  Lieferland überhaupt gilt und ob der Warenkorb sich ausliefern lässt.
+- **Versandkostenrechner im Warenkorb.** Gäste geben Land und Postleitzahl ein und sehen die
+  Kosten je Versandart. Die zuletzt berechnete Auskunft erscheint auch in der Warenkorb-Leiste,
+  solange sie zum Warenkorb passt.
+- **Ein Schalter je Funktion**, alle im Verkaufskanal-Bereich der Einstellungen:
+  Fortschrittsanzeige, Vertrauenssignale, Warenkorbübersicht, Lieferzeit,
+  Versandkostenfrei-Indikator, Versandkostenrechner. Abgeschaltet erscheint nichts davon auf
+  der Seite.
+- **Bestehende Einstellungen werden übernommen.** Beim Aktualisieren wandern Schwellenwert,
+  ausgewählte Versandarten und die Ein/Aus-Zustände des bisherigen Indikator-Plugins mit — je
+  Verkaufskanal getrennt. Wiederholtes Aktualisieren überschreibt nichts, was danach im Admin
+  geändert wurde.
+
+### Geändert
+
+- Die Vertrauenssignale holen den Betrag für `%freeShippingThreshold%` jetzt direkt aus diesem
+  Plugin statt über die Suche nach einem anderen. Am Verhalten ändert das nichts; die Zeile
+  fällt weiterhin weg, wenn sich kein Betrag ermitteln lässt.
+- Alle Einstellungen werden an einer Stelle gelesen. Vorher stand derselbe Schlüssel in
+  mehreren Klassen.
+
+## [1.6.1] - 2026-08-10 — Kein Platzhalter mehr im Bestellvorgang
+
+### Behoben
+
+- **Die Vertrauenszeile zeigte einen unausgefüllten Platzhalter.** Ist der Versandkostenfrei-Betrag nicht ermittelbar, stand dort wörtlich `%freeShippingThreshold%`. Diese Zeile wird jetzt weggelassen — ein Vertrauenssignal ohne Zahl wirbt mit einer Zusage und zeigt an ihrer Stelle Technik. Zeilen ohne Platzhalter bleiben unverändert stehen.
+
+## [1.6.0] - 2026-08-04 — Die Vertrauensleiste kann den Versandkostenfrei-Betrag nachschlagen
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`.
+
+### Neu
+
+- **Platzhalter `%freeShippingThreshold%` in den Vertrauenssignalen.** Statt
+  `truck;Kostenloser Versand ab 50 €` lässt sich jetzt
+  `truck;Kostenloser Versand ab %freeShippingThreshold%` hinterlegen; der Betrag kommt dann
+  aus der Verfügbarkeitsregel der versandkostenfreien Versandart und ist damit dieselbe Zahl,
+  die der Warenkorb nennt. Wer lieber eine feste Zahl schreibt, kann das weiterhin tun.
+- Die Kopplung an RcCheckout ist lose: Fehlt das Plugin, bleibt der Platzhalter stehen und
+  nichts bricht.
+
+### Behoben
+
+- **Eine tote Abhängigkeit in der Dienst-Definition.** Dem Subscriber wurde ein
+  `request_stack` übergeben, das sein Konstruktor gar nicht mehr entgegennahm — PHP verschluckt
+  überzählige Argumente stillschweigend, deshalb ist es nie aufgefallen. Beim nächsten neuen
+  Konstruktor-Argument wäre daraus ein Typfehler geworden.
+
 ## [1.5.0] - 2026-08-03 — Die Checkout-Optimierung lässt sich gegen den Standard testen
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`. Ohne konfiguriertes Experiment ändert sich nichts.

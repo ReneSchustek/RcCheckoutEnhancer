@@ -5,6 +5,12 @@ parameters:
         - tests
     excludePaths:
         - vendor
+    # Optionale A/B-Integration: RcAbTesting ist keine harte Abhängigkeit
+    # (Runtime via on-invalid="null"). PHPStan bekommt die referenzierten Symbole über
+    # lokale Stubs statt über den Nachbar-Plugin-Pfad -- so läuft die Analyse
+    # auch im CI, wo nur dieses Plugin ausgecheckt ist.
+    scanFiles:
+        - phpstan-stubs/RcAbTesting.php
     bootstrapFiles:
         - vendor/autoload.php
     ignoreErrors: []

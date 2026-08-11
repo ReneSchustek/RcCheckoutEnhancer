@@ -1,0 +1,64 @@
+{% sw_extends '@Storefront/storefront/component/checkout/offcanvas-cart.html.twig' %}
+
+{% block component_offcanvas_cart_actions %}
+    {% if page.extensions.rcFreeShipping is defined %}
+        {% set rcFs = page.extensions.rcFreeShipping %}
+        {% block component_offcanvas_cart_rc_free_shipping %}
+            <div class="rc-free-shipping rc-free-shipping--offcanvas alert {{ rcFs.achieved ? 'alert-success' : 'alert-info' }} mb-2" role="status" aria-live="polite">
+                {% if rcFs.achieved %}
+                    {{ "rc-checkout.freeShipping.achieved"|trans }}
+                {% elseif page.extensions.rcFreeShippingReach is defined and page.extensions.rcFreeShippingReach.qualify %}
+                    {# Für Gäste steht die Bedingung im Text: Solange niemand eine Adresse
+                       gewählt hat, ist jede Aussage eine Annahme. Mit der Bedingung bleibt
+                       der Hinweis wirksam, ohne etwas zu versprechen, das nicht gilt. #}
+                    {{ "rc-checkout.freeShipping.remainingWithin"|trans({
+                        '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode),
+                        '%countries%': page.extensions.rcFreeShippingReach.countryNames|join(', '),
+                    }) }}
+                {% else %}
+                    {{ "rc-checkout.freeShipping.remaining"|trans({ '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode) }) }}
+                {% endif %}
+            </div>
+        {% endblock %}
+    {% endif %}
+
+    {% if page.extensions.rcOffcanvasShipping is defined %}
+        {% set rcShip = page.extensions.rcOffcanvasShipping %}
+        {% block component_offcanvas_cart_rc_shipping_estimate %}
+            {# Kein zweiter Rechner in der Leiste — nur die Auskunft, wenn es eine gibt,
+               und sonst der Weg dorthin. Der Rechner selbst steht auf der Warenkorb-Seite:
+               Er braucht zwei Eingabefelder und liefert eine Liste, das schöbe hier den
+               „Zur Kasse"-Knopf nach unten. #}
+            <div class="rc-offcanvas-shipping mb-2" data-rc-offcanvas-shipping>
+                {% if rcShip.state == 'valid' %}
+                    <p class="rc-offcanvas-shipping__known alert alert-light mb-0" role="status">
+                        {{ "rc-checkout.offcanvasShipping.known"|trans({
+                            '%country%': rcShip.estimate.countryIso,
+                            '%zip%': rcShip.estimate.zipCode,
+                            '%price%': rcShip.estimate.price|currency(rcShip.estimate.currencyIsoCode),
+                        }) }}
+                        <small class="rc-offcanvas-shipping__method d-block">{{ rcShip.estimate.shippingMethodName }}</small>
+                    </p>
+                {% elseif rcShip.state == 'stale' %}
+                    {# Bewusst ohne Preis: Der gespeicherte gilt für einen anderen Warenkorb.
+                       Ein veralteter Versandpreis ist schlechter als gar keiner — er ist eine
+                       Zusage, die der Shop nicht hält. #}
+                    <p class="rc-offcanvas-shipping__stale alert alert-light mb-0" role="status">
+                        {{ "rc-checkout.offcanvasShipping.stale"|trans }}
+                        <a class="rc-offcanvas-shipping__link d-block" href="{{ path('frontend.checkout.cart.page') }}">
+                            {{ "rc-checkout.offcanvasShipping.link"|trans }}
+                        </a>
+                    </p>
+                {% else %}
+                    <p class="rc-offcanvas-shipping__none mb-0">
+                        <a class="rc-offcanvas-shipping__link" href="{{ path('frontend.checkout.cart.page') }}">
+                            {{ "rc-checkout.offcanvasShipping.link"|trans }}
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
+        {% endblock %}
+    {% endif %}
+
+    {{ parent() }}
+{% endblock %}

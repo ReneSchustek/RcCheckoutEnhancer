@@ -11,5 +11,30 @@
         "miniCartSubtotal": "Zwischensumme",
         "miniCartShipping": "Versand",
         "miniCartTotal": "Gesamt"
+    },
+    "rc-checkout": {
+        "freeShipping": {
+            "remaining": "Noch %amount% bis zur versandkostenfreien Lieferung!",
+            "achieved": "Glückwunsch — Ihre Bestellung wird versandkostenfrei geliefert!",
+            "remainingWithin": "Noch %amount% bis zur versandkostenfreien Lieferung nach %countries%!"
+        },
+        "shippingEstimate": {
+            "title": "Versandkosten für diesen Warenkorb ermitteln",
+            "countryLabel": "Land",
+            "zipLabel": "Postleitzahl",
+            "zipHint": "Pflichtfeld. Die Postleitzahl beeinflusst den Preis.",
+            "submit": "Versandkosten ermitteln",
+            "caption": "Versandarten",
+            "noShipping": "Für diesen Warenkorb können wir keine Versandart anbieten — das kann am Zielland liegen oder an Gewicht und Maßen der Positionen.",
+            "failed": "Die Versandkosten lassen sich gerade nicht ermitteln. Bitte später erneut versuchen.",
+            "errorCountry": "Bitte ein Land auswählen.",
+            "errorZipRequired": "Bitte eine Postleitzahl eingeben.",
+            "errorZipInvalid": "Diese Postleitzahl können wir nicht verarbeiten."
+        },
+        "offcanvasShipping": {
+            "known": "Versand nach %country% %zip%: %price%",
+            "stale": "Der Warenkorb hat sich geändert — die Versandkosten müssen neu berechnet werden.",
+            "link": "Versandkosten berechnen"
+        }
     }
 }

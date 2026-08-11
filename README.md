@@ -1,15 +1,16 @@
 ﻿# RcCheckoutEnhancer – Checkout verbessern für Shopware 6
 
-Verbessert den Shopware-Standard-Checkout mit Fortschrittsanzeige, Vertrauenssignalen, Mini-Warenkorb und Bestellzusammenfassung. Alle Features per Admin konfigurierbar.
+Verbessert den Shopware-Standard-Checkout: Fortschrittsanzeige, Vertrauenssignale, Warenkorb-Leiste, Versandkostenfrei-Indikator und Versandkostenrechner. Jede Funktion ist einzeln abschaltbar.
 
 ## Features
 
 - **Progress-Bar:** Schritt-für-Schritt-Anzeige mit klickbarer Zurück-Navigation
-- **Vertrauenssignale:** Konfigurierbare Trust-Badges mit Icons (Schloss, LKW, Rückgabe)
+- **Vertrauenssignale:** Konfigurierbare Trust-Badges mit Icons (Schloss, LKW, Rückgabe). Der Platzhalter `%freeShippingThreshold%` zieht den Versandkostenfrei-Betrag aus derselben Quelle wie der Indikator, statt ihn als Freitext zu pflegen
 - **Mini-Warenkorb:** Kompakte Warenkorbübersicht als Sidebar auf der Bestätigungsseite
-- **Bestellzusammenfassung:** Adresse, Versand, Zahlung und Gesamtbetrag auf einen Blick
 - **Lieferzeitschätzung:** Optionaler Hinweis auf geschätzte Lieferzeit
-- **Alles optional:** Jedes Feature einzeln an-/abschaltbar im Admin
+- **Versandkostenfrei-Indikator:** Zeigt im Warenkorb und in der Warenkorb-Leiste, wie viel bis zur versandkostenfreien Lieferung fehlt — nur dort, wo Versandkostenfreiheit für den Lieferort auch gilt und der Warenkorb sich ausliefern lässt
+- **Versandkostenrechner:** Gäste geben Land und Postleitzahl ein und sehen die Kosten je Versandart. Die zuletzt berechnete Auskunft erscheint auch in der Warenkorb-Leiste, solange sie zum Warenkorb passt
+- **Alles optional:** Jede Funktion einzeln an-/abschaltbar im Admin
 
 ## Voraussetzungen
 
@@ -34,8 +35,13 @@ Im Admin unter **Einstellungen > System > Plugins > RC Checkout Enhancer**:
 | Progress-Bar | An/Aus + 4 konfigurierbare Schritt-Bezeichnungen |
 | Trust Badges | An/Aus + Texte mit optionalen Icons (lock, truck, undo, star) |
 | Mini-Warenkorb | An/Aus |
-| Bestellzusammenfassung | An/Aus |
 | Lieferzeit | An/Aus + Freitext |
+| Versandkostenfrei-Indikator | An/Aus + Rückfall-Schwellenwert + Auswahl der versandkostenfreien Versandarten |
+| Versandkostenrechner | An/Aus (im Auslieferungszustand aus) |
+
+Der Schwellenwert ist ausdrücklich nur ein **Rückfall**: Maßgeblich ist der Betrag aus der
+Verfügbarkeitsregel der ausgewählten Versandarten. Damit steht die Zahl an einer Stelle statt an
+dreien — und läuft nicht auseinander.
 
 ## Deployment
 
@@ -43,6 +49,7 @@ Im Admin unter **Einstellungen > System > Plugins > RC Checkout Enhancer**:
 |----------|--------|
 | Nur PHP/Twig | `bin/console cache:clear` |
 | SCSS geändert | `bin/console theme:compile` |
+| JS geändert | `bin/build-storefront.sh` |
 | Erstinstallation | `bin/console theme:compile` |
 
 ## Lizenz
@@ -60,10 +67,16 @@ Plugin eingreift und was daraus für die anderen folgt.
 
 | Seite | Ereignis | Überschriebener Block | `parent()` |
 |---|---|---|---|
-| Warenkorb | `CheckoutCartPageLoadedEvent` | `base_main_inner` | ja |
+| Warenkorb | `CheckoutCartPageLoadedEvent` | `base_main_inner`, `page_checkout_cart_product_table` | ja / ja |
+| Warenkorb-Leiste | `OffcanvasCartPageLoadedEvent` | `component_offcanvas_cart_actions` | ja |
 | Adresse / Registrierung | `CheckoutRegisterPageLoadedEvent` | `base_main_inner` | ja |
 | Bestätigung | `CheckoutConfirmPageLoadedEvent` | `base_main_inner`, `page_checkout_confirm`, `page_checkout_confirm_product_table` | ja / ja / **nein, siehe unten** |
 | Abschluss | `CheckoutFinishPageLoadedEvent` | `base_main_inner` | ja |
+
+Dazu ein eigener Storefront-Endpunkt für den Versandkostenrechner:
+`POST /rc-checkout/shipping-estimate` (`frontend.rc-checkout.shipping-estimate`). Er ist ohne
+Anmeldung erreichbar und deshalb doppelt begrenzt: eigene Rate-Limiter-Staffel und eine harte
+Längengrenze auf der Postleitzahl.
 
 Alle Abonnenten laufen mit **Vorrang 0**. Das Plugin rendert kein alternatives Checkout-Markup,
 sondern ergänzt: Fortschrittsleiste, Vertrauenssignale, Warenkorb-Leiste. Es setzt **kein**

@@ -34,6 +34,50 @@ class ConfigService
         return (bool) $this->get('.miniCartEnabled', true, $salesChannelId);
     }
 
+    public function isFreeShippingIndicatorEnabled(?string $salesChannelId = null): bool
+    {
+        return (bool) $this->get('.freeShippingIndicatorEnabled', true, $salesChannelId);
+    }
+
+    public function isShippingEstimatorEnabled(?string $salesChannelId = null): bool
+    {
+        return (bool) $this->get('.shippingEstimatorEnabled', false, $salesChannelId);
+    }
+
+    /**
+     * Der eingestellte Rückfall-Betrag für die Versandkostenfreiheit.
+     *
+     * `null` heißt: nichts Brauchbares eingestellt. Der Betrag aus der Verfügbarkeitsregel
+     * der Versandarten schlägt ihn ohnehin — diese Einstellung greift nur, wenn sich dort
+     * keiner ablesen lässt.
+     */
+    public function getFreeShippingThreshold(?string $salesChannelId = null): ?float
+    {
+        $value = $this->get('.freeShippingThreshold', null, $salesChannelId);
+
+        if (\is_int($value) || \is_float($value)) {
+            return (float) $value;
+        }
+
+        return \is_string($value) && is_numeric($value) ? (float) $value : null;
+    }
+
+    /**
+     * Die Versandarten, die der Betreiber als „versandkostenfrei" eingestellt hat.
+     *
+     * @return list<string>
+     */
+    public function getFreeShippingMethodIds(?string $salesChannelId = null): array
+    {
+        $value = $this->get('.freeShippingMethodIds', [], $salesChannelId);
+
+        if (!\is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== ''));
+    }
+
 
     public function isDeliveryTimeEnabled(?string $salesChannelId = null): bool
     {

@@ -119,6 +119,52 @@ undo;14 Tage Widerrufsrecht</defaultValue>
     </card>
 
     <card>
+        <title lang="de-DE">Versandkostenfrei-Indikator</title>
+        <title lang="en-GB">Free shipping indicator</title>
+
+        <input-field type="bool">
+            <name>freeShippingIndicatorEnabled</name>
+            <label lang="de-DE">Versandkostenfrei-Indikator anzeigen</label>
+            <label lang="en-GB">Show free shipping indicator</label>
+            <helpText lang="de-DE">Zeigt im Warenkorb und in der Warenkorb-Leiste, wie viel bis zur versandkostenfreien Lieferung fehlt.</helpText>
+            <helpText lang="en-GB">Shows in the cart and the cart sidebar how much is missing until free shipping.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="float">
+            <name>freeShippingThreshold</name>
+            <label lang="de-DE">Schwellenwert (Brutto, in Shop-Währung)</label>
+            <label lang="en-GB">Threshold (incl. tax, in shop currency)</label>
+            <helpText lang="de-DE">Nur Rückfall. Der Betrag wird aus der Verfügbarkeitsregel der unten eingestellten Versandarten gelesen; dieser Wert greift nur, wenn sich dort keiner ablesen lässt.</helpText>
+            <helpText lang="en-GB">Fallback only. The amount is read from the availability rule of the shipping methods configured below; this value applies only when none can be read there.</helpText>
+            <defaultValue>50</defaultValue>
+        </input-field>
+
+        <component name="sw-entity-multi-id-select">
+            <name>freeShippingMethodIds</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Versandkostenfreie Versandarten</label>
+            <label lang="en-GB">Free shipping methods</label>
+            <helpText lang="de-DE">Aus deren Verfügbarkeitsregeln wird gelesen, für welche Länder der Hinweis überhaupt gilt. Bleibt das Feld leer, erscheint er überall — mit der Bedingung im Text.</helpText>
+            <helpText lang="en-GB">Their availability rules determine the countries the hint applies to. Left empty, it is shown everywhere — with the condition spelled out.</helpText>
+        </component>
+    </card>
+
+    <card>
+        <title lang="de-DE">Versandkostenrechner</title>
+        <title lang="en-GB">Shipping cost estimator</title>
+
+        <input-field type="bool">
+            <name>shippingEstimatorEnabled</name>
+            <label lang="de-DE">Versandkostenrechner im Warenkorb anzeigen</label>
+            <label lang="en-GB">Show shipping cost estimator in the cart</label>
+            <helpText lang="de-DE">Gäste können Land und Postleitzahl eingeben und sehen die Kosten je Versandart. Für angemeldete Kunden wird er nicht angezeigt — dort gilt die Adresse des Kontos.</helpText>
+            <helpText lang="en-GB">Guests can enter country and postcode and see the cost per shipping method. It is not shown to signed-in customers, whose account address applies.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
         <title lang="de-DE">A/B-Test</title>
         <title lang="en-GB">A/B test</title>
 

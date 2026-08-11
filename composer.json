@@ -1,8 +1,8 @@
 {
     "name": "ruhrcoder/rc-checkout-enhancer",
-    "description": "Verbessert den Shopware-Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht / Enhances Shopware checkout with progress bar, trust badges and order summary",
+    "description": "Verbessert den Shopware-Checkout mit Fortschrittsanzeige, Vertrauenssignalen, Warenkorbübersicht, Versandkostenfrei-Indikator und Versandkostenrechner / Enhances Shopware checkout with progress bar, trust badges, cart overview, free shipping indicator and shipping cost estimator",
     "type": "shopware-platform-plugin",
-    "version": "1.5.0",
+    "version": "1.7.0",
     "license": "MIT",
     "authors": [
         {
@@ -56,8 +56,16 @@
             "en-GB": "Checkout Enhancement"
         },
         "description": {
-            "de-DE": "Verbessert den Checkout mit Fortschrittsanzeige, Vertrauenssignalen und Bestellübersicht.",
-            "en-GB": "Enhances the checkout with progress bar, trust badges and order summary."
+            "de-DE": "Verbessert den Checkout: Fortschrittsanzeige, Vertrauenssignale, Warenkorbübersicht, Versandkostenfrei-Indikator und Versandkostenrechner — jede Funktion einzeln abschaltbar.",
+            "en-GB": "Enhances the checkout: progress bar, trust badges, cart overview, free shipping indicator and shipping cost estimator — every feature can be switched off individually."
+        },
+        "manufacturerLink": {
+            "de-DE": "https://ruhrcoder.de",
+            "en-GB": "https://ruhrcoder.de"
+        },
+        "supportLink": {
+            "de-DE": "https://ruhrcoder.de",
+            "en-GB": "https://ruhrcoder.de"
         }
     }
 }

@@ -46,7 +46,7 @@ final class ConfirmTemplateContractTest extends TestCase
      * alles Angaben, die der Hauptbereich vollständig und mit funktionierenden Ändern-Wegen
      * führt. Doppelte Anzeige derselben Sache auf einer Seite irritiert und wird für
      * Screenreader zur doppelten Vorlesung; ihre eigenen Ändern-Schaltflächen sprangen
-     * ausserdem auf Anker, die es im Dokument nicht gibt. Dieser Test hält fest, dass sie
+     * außerdem auf Anker, die es im Dokument nicht gibt. Dieser Test hält fest, dass sie
      * nicht zurückkehrt.
      */
     /**

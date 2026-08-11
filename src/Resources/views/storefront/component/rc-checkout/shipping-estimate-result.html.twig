@@ -1,0 +1,48 @@
+{# Ergebnisliste des Versandkostenrechners.
+
+   Wird sowohl beim ersten Rendern (leer) als auch als Antwort auf die Anfrage
+   ausgeliefert. Der Bereich trägt `aria-live="polite"`: Wer mit Sprachausgabe
+   arbeitet, bekommt das Ergebnis vorgelesen, ohne dass der Fokus springt. #}
+<div class="rc-shipping-estimate-result" data-rc-shipping-estimate-result role="status" aria-live="polite">
+    {% if rcEstimateError is defined and rcEstimateError %}
+        <p class="rc-shipping-estimate-error alert alert-warning mb-0" data-rc-shipping-estimate-error>
+            {{ rcEstimateError|trans }}
+        </p>
+
+    {% elseif rcEstimate is defined and rcEstimate %}
+        {% if rcEstimate.state == 'ok' %}
+            <p class="rc-shipping-estimate-caption">
+                {{ "rc-checkout.shippingEstimate.caption"|trans }}
+            </p>
+
+            <ul class="rc-shipping-estimate-list list-unstyled mb-0">
+                {% for estimate in rcEstimate.estimates %}
+                    <li class="rc-shipping-estimate-item">
+                        <span class="rc-shipping-estimate-name">
+                            {{ estimate.name }}
+                            {% if estimate.deliveryTimeName %}
+                                <small class="rc-shipping-estimate-delivery-time">{{ estimate.deliveryTimeName }}</small>
+                            {% endif %}
+                        </span>
+                        <span class="rc-shipping-estimate-price">
+                            {{ estimate.price|currency(estimate.currencyIsoCode) }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+        {% elseif rcEstimate.state == 'no_shipping' %}
+            <p class="rc-shipping-estimate-empty alert alert-info mb-0">
+                {{ "rc-checkout.shippingEstimate.noShipping"|trans }}
+            </p>
+
+        {% else %}
+            {# Zustand 'error': ausdrücklich anders formuliert als „kein Versand".
+               Das eine ist eine Auskunft über den Shop, das andere ein Aussetzer
+               bei uns — wer beides gleich benennt, verwirrt oder lügt. #}
+            <p class="rc-shipping-estimate-failed alert alert-warning mb-0">
+                {{ "rc-checkout.shippingEstimate.failed"|trans }}
+            </p>
+        {% endif %}
+    {% endif %}
+</div>

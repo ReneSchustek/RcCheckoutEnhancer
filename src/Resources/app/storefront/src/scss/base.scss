@@ -222,4 +222,24 @@
     }
 }
 
+// === Versandkostenrechner ===
+
+// Der Knopf des Versandkostenrechners trägt eine lange deutsche Beschriftung
+// („Versandkosten ermitteln"). Themes setzen auf `.btn` üblicherweise
+// `white-space: nowrap` mit `text-overflow: ellipsis` — in der schmalen Spalte
+// stand dort dann „Versandkosten ermitt…", also eine abgeschnittene Beschriftung.
+// Das ist kein Schönheitsfehler: Eine gekürzte Beschriftung nennt die Aktion
+// nicht mehr vollständig.
+//
+// Umbruch statt Kürzung, und nur für diesen Knopf: Das Theme behält sein
+// Verhalten überall sonst.
+.rc-shipping-estimate {
+    [data-rc-shipping-estimate-submit] {
+        white-space: normal;
+        text-overflow: clip;
+        overflow: visible;
+        line-height: 1.2;
+    }
+}
+
 

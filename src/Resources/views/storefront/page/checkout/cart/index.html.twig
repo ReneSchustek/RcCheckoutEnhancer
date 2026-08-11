@@ -5,3 +5,39 @@
     {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/trust-badges.html.twig' %}
     {{ parent() }}
 {% endblock %}
+
+{# Versandkostenfrei-Indikator und Versandkostenrechner hängen an der Positionstabelle:
+   Der Hinweis steht über dem Warenkorb, der Rechner darunter. Beide erscheinen nur, wenn
+   ihr jeweiliger Subscriber seine Angaben angehängt hat — ist der Schalter aus, gibt es
+   die Erweiterung nicht, und hier bleibt nichts stehen. #}
+{% block page_checkout_cart_product_table %}
+    {% if page.extensions.rcFreeShipping is defined %}
+        {% set rcFs = page.extensions.rcFreeShipping %}
+        {% block page_checkout_cart_rc_free_shipping %}
+            <div class="rc-free-shipping alert {{ rcFs.achieved ? 'alert-success' : 'alert-info' }} mb-3" role="status" aria-live="polite">
+                {% if rcFs.achieved %}
+                    {{ "rc-checkout.freeShipping.achieved"|trans }}
+                {% elseif page.extensions.rcFreeShippingReach is defined and page.extensions.rcFreeShippingReach.qualify %}
+                    {# Für Gäste steht die Bedingung im Text: Solange niemand eine Adresse
+                       gewählt hat, ist jede Aussage eine Annahme. Mit der Bedingung bleibt
+                       der Hinweis wirksam, ohne etwas zu versprechen, das nicht gilt. #}
+                    {{ "rc-checkout.freeShipping.remainingWithin"|trans({
+                        '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode),
+                        '%countries%': page.extensions.rcFreeShippingReach.countryNames|join(', '),
+                    }) }}
+                {% else %}
+                    {{ "rc-checkout.freeShipping.remaining"|trans({ '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode) }) }}
+                {% endif %}
+            </div>
+        {% endblock %}
+    {% endif %}
+
+    {{ parent() }}
+
+    {% if page.extensions.rcShippingEstimate is defined %}
+        {% block page_checkout_cart_rc_shipping_estimate %}
+            {% set rcShippingEstimate = page.extensions.rcShippingEstimate %}
+            {% sw_include '@Storefront/storefront/component/rc-checkout/shipping-estimate.html.twig' %}
+        {% endblock %}
+    {% endif %}
+{% endblock %}

@@ -55,6 +55,108 @@ final class ConfigServiceTest extends TestCase
         self::assertTrue($this->configService->isMiniCartEnabled());
     }
 
+    /**
+     * Die Vorgabe „an" ist keine Geschmacksfrage: Der Indikator lief vor der
+     * Zusammenführung in einem eigenen Plugin und war dort standardmäßig an. Stünde er
+     * hier auf „aus", schaltete ein Update eine laufende Funktion still ab.
+     */
+    #[Test]
+    public function freeShippingIndicatorIsEnabledByDefault(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(null);
+
+        self::assertTrue($this->configService->isFreeShippingIndicatorEnabled());
+    }
+
+    #[Test]
+    public function freeShippingIndicatorCanBeSwitchedOff(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(false);
+
+        self::assertFalse($this->configService->isFreeShippingIndicatorEnabled());
+    }
+
+    /**
+     * Der Rechner ist im Auslieferungszustand aus — er muss je Verkaufskanal
+     * eingeschaltet werden.
+     */
+    #[Test]
+    public function shippingEstimatorIsDisabledByDefault(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(null);
+
+        self::assertFalse($this->configService->isShippingEstimatorEnabled());
+    }
+
+    #[Test]
+    public function shippingEstimatorCanBeSwitchedOn(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(true);
+
+        self::assertTrue($this->configService->isShippingEstimatorEnabled());
+    }
+
+    #[Test]
+    public function freeShippingThresholdIsNullWhenNothingIsConfigured(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(null);
+
+        self::assertNull($this->configService->getFreeShippingThreshold());
+    }
+
+    #[Test]
+    public function freeShippingThresholdAcceptsANumber(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(357.0);
+
+        self::assertSame(357.0, $this->configService->getFreeShippingThreshold());
+    }
+
+    /**
+     * Genau so kommt der Wert aus der Shopware-Konfiguration zurück, wenn er über die
+     * Konsole gesetzt wurde.
+     */
+    #[Test]
+    public function freeShippingThresholdAcceptsANumericString(): void
+    {
+        $this->systemConfigService->method('get')->willReturn('357');
+
+        self::assertSame(357.0, $this->configService->getFreeShippingThreshold());
+    }
+
+    /**
+     * Ein unlesbarer Wert wird nicht geraten. Wer hier eine Zahl erfände, zeigte dem
+     * Kunden eine Zusage, die der Shop nicht kennt.
+     */
+    #[Test]
+    public function freeShippingThresholdRejectsSomethingThatIsNotANumber(): void
+    {
+        $this->systemConfigService->method('get')->willReturn('unbekannt');
+
+        self::assertNull($this->configService->getFreeShippingThreshold());
+    }
+
+    #[Test]
+    public function freeShippingMethodIdsAreEmptyWhenNothingIsSelected(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(null);
+
+        self::assertSame([], $this->configService->getFreeShippingMethodIds());
+    }
+
+    /**
+     * Leere Einträge fliegen raus: Eine Kennung, die keine ist, führt in der
+     * Verfügbarkeits-Abfrage zu einer Suche ohne Treffer — und damit zu „gilt nirgends",
+     * obwohl der Betreiber etwas ausgewählt hat.
+     */
+    #[Test]
+    public function freeShippingMethodIdsDropEmptyAndNonStringEntries(): void
+    {
+        $this->systemConfigService->method('get')->willReturn(['sm-1', '', 17, 'sm-2']);
+
+        self::assertSame(['sm-1', 'sm-2'], $this->configService->getFreeShippingMethodIds());
+    }
+
 
     #[Test]
     public function deliveryTimeEnabledReturnsFalseByDefault(): void

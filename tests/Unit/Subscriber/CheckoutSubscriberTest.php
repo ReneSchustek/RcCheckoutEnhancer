@@ -9,8 +9,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
+use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber;
 use Shopware\Core\Framework\Struct\ArrayEntity;
+use Shopware\Core\System\Currency\CurrencyFormatter;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Storefront\Page\Checkout\Cart\CheckoutCartPage;
@@ -35,7 +37,18 @@ final class CheckoutSubscriberTest extends TestCase
     protected function setUp(): void
     {
         $this->configService = $this->createMock(ConfigService::class);
-        $this->subscriber = new CheckoutSubscriber($this->configService);
+
+        // Ist kein Betrag zu ermitteln, bleiben Zeilen ohne Platzhalter unberührt —
+        // Zeilen mit Platzhalter fallen weg, damit er nicht roh beim Kunden landet.
+        // Beide Wege haben eigene Tests weiter unten.
+        $threshold = $this->createMock(FreeShippingThresholdProvider::class);
+        $threshold->method('thresholdFor')->willReturn(null);
+
+        $this->subscriber = new CheckoutSubscriber(
+            $this->configService,
+            $threshold,
+            $this->createMock(CurrencyFormatter::class),
+        );
 
         $salesChannel = $this->createMock(SalesChannelEntity::class);
         $salesChannel->method('getId')->willReturn(self::SALES_CHANNEL_ID);
@@ -164,6 +177,79 @@ final class CheckoutSubscriberTest extends TestCase
         $event = new CheckoutCartPageLoadedEvent($page, $this->salesChannelContext, new Request());
 
         $this->subscriber->onCheckoutPage($event);
+    }
+
+    /**
+     * Was: Eine Vertrauenszeile mit Platzhalter, wenn kein Betrag ermittelbar ist.
+     * Warum: Bis 1.6.1 ging sie unverändert an die Vorlage. Der Kunde las dann wörtlich
+     *        „Kostenloser Versand ab %freeShippingThreshold%" — am 2026-08-10 auf live-clone
+     *        nachgestellt, indem RcCheckout deaktiviert wurde. Von dort kommt der Betrag.
+     */
+    #[Test]
+    public function trustBadgeWithPlaceholderIsDroppedWhenNoThresholdIsAvailable(): void
+    {
+        $this->configService->method('isProgressBarEnabled')->willReturn(true);
+        $this->configService->method('isTrustBadgesEnabled')->willReturn(true);
+        $this->configService->method('getTrustBadges')->willReturn([
+            ['icon' => 'truck', 'text' => 'Kostenloser Versand ab %freeShippingThreshold%'],
+            ['icon' => 'lock', 'text' => 'Sichere Bestellung'],
+        ]);
+        $this->configService->method('isMiniCartEnabled')->willReturn(true);
+        $this->configService->method('isDeliveryTimeEnabled')->willReturn(false);
+        $this->configService->method('getEstimatedDeliveryTime')->willReturn('');
+        $this->configService->method('getProgressStepLabels')->willReturn([
+            'step1' => '', 'step2' => '', 'step3' => '', 'step4' => '',
+        ]);
+
+        $page = new CheckoutCartPage();
+        $this->subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent(
+            $page,
+            $this->salesChannelContext,
+            new Request(),
+        ));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertSame(
+            [['icon' => 'lock', 'text' => 'Sichere Bestellung']],
+            $extension->get('trustBadges'),
+            'Die Zeile mit dem Platzhalter darf den Kunden nicht erreichen.',
+        );
+    }
+
+    /**
+     * Was: Zeilen ohne Platzhalter, wenn kein Betrag ermittelbar ist.
+     * Warum: Die Gegenprobe zum Test darüber — es wird genau die eine Zeile entfernt und
+     *        nicht das ganze Vertrauenssignal abgeschaltet.
+     */
+    #[Test]
+    public function trustBadgesWithoutPlaceholderStayUntouchedWhenNoThresholdIsAvailable(): void
+    {
+        $expected = [
+            ['icon' => 'lock', 'text' => 'Sichere Bestellung'],
+            ['icon' => 'undo', 'text' => '14 Tage Widerrufsrecht'],
+        ];
+
+        $this->configService->method('isProgressBarEnabled')->willReturn(true);
+        $this->configService->method('isTrustBadgesEnabled')->willReturn(true);
+        $this->configService->method('getTrustBadges')->willReturn($expected);
+        $this->configService->method('isMiniCartEnabled')->willReturn(true);
+        $this->configService->method('isDeliveryTimeEnabled')->willReturn(false);
+        $this->configService->method('getEstimatedDeliveryTime')->willReturn('');
+        $this->configService->method('getProgressStepLabels')->willReturn([
+            'step1' => '', 'step2' => '', 'step3' => '', 'step4' => '',
+        ]);
+
+        $page = new CheckoutCartPage();
+        $this->subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent(
+            $page,
+            $this->salesChannelContext,
+            new Request(),
+        ));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertSame($expected, $extension->get('trustBadges'));
     }
 
     private function configureDefaultMocks(): void

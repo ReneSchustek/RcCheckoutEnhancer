@@ -11,5 +11,30 @@
         "miniCartSubtotal": "Subtotal",
         "miniCartShipping": "Shipping",
         "miniCartTotal": "Total"
+    },
+    "rc-checkout": {
+        "freeShipping": {
+            "remaining": "Only %amount% more for free shipping!",
+            "achieved": "Congratulations — your order will be shipped for free!",
+            "remainingWithin": "Only %amount% to go for free shipping to %countries%!"
+        },
+        "shippingEstimate": {
+            "title": "Estimate shipping costs for this cart",
+            "countryLabel": "Country",
+            "zipLabel": "Postcode",
+            "zipHint": "Required. The postcode affects the price.",
+            "submit": "Estimate shipping costs",
+            "caption": "Shipping methods",
+            "noShipping": "We cannot offer a shipping method for this cart — this may be due to the destination country or to the weight and dimensions of the items.",
+            "failed": "Shipping costs cannot be determined right now. Please try again later.",
+            "errorCountry": "Please select a country.",
+            "errorZipRequired": "Please enter a postcode.",
+            "errorZipInvalid": "We cannot process this postcode."
+        },
+        "offcanvasShipping": {
+            "known": "Shipping to %country% %zip%: %price%",
+            "stale": "The cart has changed — shipping costs need to be recalculated.",
+            "link": "Calculate shipping costs"
+        }
     }
 }

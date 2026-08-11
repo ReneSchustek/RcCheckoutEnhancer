@@ -1,0 +1,71 @@
+{# Versandkostenrechner im Warenkorb: Land und Postleitzahl eingeben, Preise je
+   Versandart erhalten.
+
+   Wird nur für Gäste gerendert (Entscheidung zu RCHK05). Wer angemeldet ist,
+   sieht seine echten Versandkosten im Checkout; eine zweite, davon abweichende
+   Zahl daneben wäre irreführend.
+
+   Kein `<form>`-Element: Das Buy-Widget und der Warenkorb enthalten bereits
+   Formulare, und verschachtelte Formulare sind in HTML nicht erlaubt. Die
+   Absendung übernimmt das JS-Plugin. #}
+<div class="rc-shipping-estimate card mb-3"
+     data-rc-shipping-estimate="true"
+     data-rc-shipping-estimate-options='{{ {
+         "url": path("frontend.rc-checkout.shipping-estimate")
+     }|json_encode }}'>
+
+    <div class="card-body">
+        <p class="rc-shipping-estimate-title mb-2">
+            {{ "rc-checkout.shippingEstimate.title"|trans }}
+        </p>
+
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+                <label class="form-label" for="rcShippingEstimateCountry">
+                    {{ "rc-checkout.shippingEstimate.countryLabel"|trans }}
+                </label>
+                <select class="form-select"
+                        id="rcShippingEstimateCountry"
+                        data-rc-shipping-estimate-country>
+                    {% for country in rcShippingEstimate.countries %}
+                        <option value="{{ country.iso }}"
+                                {% if country.id == rcShippingEstimate.currentCountryId %}selected="selected"{% endif %}>
+                            {{ country.translated.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+                {# Sichtbares Label statt Platzhalter: Ein Platzhalter verschwindet beim
+                   Tippen und liefert Sprachausgaben keinen verlässlichen Namen. #}
+                <label class="form-label" for="rcShippingEstimateZip">
+                    {{ "rc-checkout.shippingEstimate.zipLabel"|trans }}
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="rcShippingEstimateZip"
+                       data-rc-shipping-estimate-zip
+                       required="required"
+                       maxlength="12"
+                       autocomplete="postal-code"
+                       aria-describedby="rcShippingEstimateZipHint">
+                <span class="form-text visually-hidden" id="rcShippingEstimateZipHint">
+                    {{ "rc-checkout.shippingEstimate.zipHint"|trans }}
+                </span>
+            </div>
+
+            <div class="col-12 col-md-3">
+                <button type="button"
+                        class="btn btn-primary w-100"
+                        data-rc-shipping-estimate-submit>
+                    {{ "rc-checkout.shippingEstimate.submit"|trans }}
+                </button>
+            </div>
+        </div>
+
+        <div class="rc-shipping-estimate-output mt-3" data-rc-shipping-estimate-output>
+            {% sw_include '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig' %}
+        </div>
+    </div>
+</div>
