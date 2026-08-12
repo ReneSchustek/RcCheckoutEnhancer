@@ -39,7 +39,7 @@ Im Admin unter **Einstellungen > System > Plugins > RC Checkout Enhancer**:
 | Lieferzeit | An/Aus + Freitext |
 | Versandkostenfrei-Indikator | An/Aus + Rückfall-Schwellenwert + Auswahl der versandkostenfreien Versandarten |
 | Versandkostenrechner | An/Aus (im Auslieferungszustand aus) |
-| Anfrageweg bei nicht möglicher Lieferung | An/Aus + **Zielseite mit dem Kontaktformular** + Versandarten, die keine Lieferung sind + eigener Hinweistext |
+| Anfrageweg bei nicht möglicher Lieferung | An/Aus + **Zielseite mit dem Kontaktformular** + Versandarten, die keine Lieferung sind + eigener Hinweistext + eigenes Anschreiben für das Kommentarfeld |
 
 **Ohne ausgewählte Zielseite erscheint der Anfrageweg nicht.** Das ist Absicht: Welche Seite Ihr
 Kontaktformular trägt, weiß nur Ihr Shop — und eine Schaltfläche, die ins Leere führt, ist
@@ -50,10 +50,17 @@ für einen Warenkorb nur noch eine davon übrig — was häufig passiert, weil A
 Gewichtsgrenze tragen —, erscheint der Anfrageweg zusätzlich. Die Abholung bleibt wählbar. Ohne
 Eintrag erscheint der Hinweis nur, wenn gar keine Versandart übrig ist.
 
-Übergeben wird in das Kommentarfeld des Formulars, was der Vertrieb für ein Frachtangebot braucht:
-Artikelnummer, Bezeichnung und Menge je Position, die Kundeneingaben anderer Erweiterungen,
-Gewicht je Stück, Gesamtgewicht, längste Position, Warenwert und das Lieferziel. Der Text steht
-sichtbar im Feld — der Kunde sieht, was er absendet, und kann ergänzen.
+Im Kommentarfeld des Formulars steht dann ein **Anschreiben**, darunter alles, was der Vertrieb
+für ein Frachtangebot braucht: Artikelnummer, Bezeichnung und Menge je Position, die
+Kundeneingaben anderer Erweiterungen, Gewicht je Stück, Gesamtgewicht, längste Position,
+Warenwert und die vollständige Lieferanschrift samt Firma. Der Text steht sichtbar im Feld — der
+Kunde sieht, was er absendet, und kann ergänzen. Das Anschreiben lässt sich je Verkaufskanal
+überschreiben; leer bedeutet: nur die Aufstellung.
+
+**Die Felder des Formulars werden mit den Daten des Kunden vorbelegt** — Anrede, Vorname,
+Nachname, E-Mail und Telefon, soweit bekannt. Ohne sie tippt der Kunde alles neu, ausgerechnet an
+der Stelle, an der er ohnehin schon aufgehalten wurde; und was er neu tippt, muss nicht die
+Adresse seines Kontos sein. Was der Kunde selbst eingibt, hat immer Vorrang.
 
 Der Schwellenwert ist ausdrücklich nur ein **Rückfall**: Maßgeblich ist der Betrag aus der
 Verfügbarkeitsregel der ausgewählten Versandarten. Damit steht die Zahl an einer Stelle statt an

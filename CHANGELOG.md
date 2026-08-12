@@ -1,6 +1,29 @@
 
 # Changelog
 
+## [1.11.0] - 2026-08-12 — Die Anfrage ist ein Anschreiben, kein Datenblock
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`.
+> Kein Storefront-Bau nötig.
+
+### Neu
+
+- **Das Kommentarfeld beginnt mit einem Anschreiben.** Bisher stand dort nur die Aufstellung des
+  Warenkorbs — wer die Anfrage öffnete, sah eine Stückliste und musste sich zusammenreimen, was der
+  Absender möchte. Der Text ist je Verkaufskanal überschreibbar; leer bedeutet: nur die Aufstellung.
+- **Das Kontaktformular wird mit den Daten des Kunden vorbelegt** — Anrede, Vorname, Nachname,
+  E-Mail und Telefon, soweit bekannt. Shopware füllt diese Felder aus der abgesendeten Eingabe,
+  nicht aus dem Konto; ein angemeldeter Kunde bekam deshalb ein leeres Formular und musste alles
+  neu tippen. Was er selbst eingibt, hat weiterhin Vorrang.
+- **Die Aufstellung nennt die vollständige Lieferanschrift**, mit Firma. Bisher standen dort nur
+  Land und Postleitzahl — ein Frachtpreis hängt aber an der Abladestelle, und die Firma entscheidet
+  darüber, ob eine Rampe da ist oder eine Hebebühne gebraucht wird.
+
+### Hinweis für den Betrieb
+
+Der Anfrageweg berührt die Spam-Abwehr nicht: Deren Feld liegt in einem eigenen Block, wird nicht
+überschrieben und muss leer bleiben. Ein Test hält das fest.
+
 ## [1.10.1] - 2026-08-11 — Die Schaltfläche sagt, wohin sie führt
 
 > **Deployment:** `php bin/console cache:clear`.

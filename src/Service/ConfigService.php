@@ -103,6 +103,18 @@ class ConfigService
     }
 
     /**
+     * Das Anschreiben, das über der Aufstellung im Kontaktformular steht.
+     *
+     * Dasselbe Muster wie beim Hinweis: leer heißt, der Textbaustein gilt. Wer den
+     * Textbaustein selbst leert, bekommt die Aufstellung ohne Anschreiben — auch das ist
+     * eine gültige Einstellung und darf nichts brechen.
+     */
+    public function getShippingEnquiryIntro(?string $salesChannelId = null): string
+    {
+        return trim((string) $this->get('.shippingEnquiryIntro', '', $salesChannelId));
+    }
+
+    /**
      * Der eingestellte Rückfall-Betrag für die Versandkostenfreiheit.
      *
      * `null` heißt: nichts Brauchbares eingestellt. Der Betrag aus der Verfügbarkeitsregel

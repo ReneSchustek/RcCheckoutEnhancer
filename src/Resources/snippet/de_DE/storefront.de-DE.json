@@ -15,7 +15,8 @@
         "enquiryHintPickupOnly": "Für diesen Warenkorb können wir nur die Selbstabholung anbieten. Wenn Sie eine Lieferung wünschen, erstellen wir Ihnen gern ein Angebot.",
         "enquiryButton": "Angebot anfragen",
         "enquiryButtonDelivery": "Lieferung anfragen",
-        "enquiryCartTaken": "Ihr Warenkorb wurde übernommen. Sie können den Text unten ergänzen, bevor Sie absenden."
+        "enquiryCartTaken": "Ihr Warenkorb wurde übernommen. Sie können den Text unten ergänzen, bevor Sie absenden.",
+        "enquiryIntro": "Sehr geehrte Damen und Herren,\n\nleider habe ich die Meldung erhalten, dass dieser Warenkorb so nicht versendet werden kann. Über ein persönliches Angebot würde ich mich freuen.\n\nMit freundlichen Grüßen"
     },
     "rc-checkout": {
         "freeShipping": {

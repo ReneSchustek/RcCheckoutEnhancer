@@ -13,6 +13,7 @@ use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
 use Shopware\Core\Checkout\Cart\Tax\Struct\CalculatedTaxCollection;
 use Shopware\Core\Checkout\Cart\Tax\Struct\TaxRuleCollection;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
@@ -136,6 +137,39 @@ final class ShippingEnquirySummaryTest extends TestCase
     }
 
     /**
+     * Was: Die vollständige Lieferanschrift, sobald sie feststeht.
+     * Warum: Ein Frachtpreis hängt an der Abladestelle, nicht am Land. Mit Straße und Ort
+     *        kann der Vertrieb rechnen; mit „Deutschland 44787" muss er nachfragen.
+     */
+    public function testItNamesTheFullDeliveryAddressWhenItIsKnown(): void
+    {
+        $text = (new ShippingEnquirySummary())->forCart(
+            $this->cartWith($this->productLineItem()),
+            $this->contextWithAddress(),
+        );
+
+        self::assertStringContainsString('Lieferung nach:', $text);
+        self::assertStringContainsString('Musterstraße 5', $text);
+        self::assertStringContainsString('44787 Bochum', $text);
+        self::assertStringContainsString('Deutschland', $text);
+    }
+
+    /**
+     * Was: Die Firma steht über der Straße.
+     * Warum: Bei einer Spedition entscheidet sie über Abladestelle und Preis — eine
+     *        Baustelle ohne Rampe kostet Hebebühne.
+     */
+    public function testItNamesTheCompanyWhenTheAddressCarriesOne(): void
+    {
+        $text = (new ShippingEnquirySummary())->forCart(
+            $this->cartWith($this->productLineItem()),
+            $this->contextWithAddress('Trummer Edelstahl GmbH'),
+        );
+
+        self::assertStringContainsString('Trummer Edelstahl GmbH', $text);
+    }
+
+    /**
      * Ein sehr langes Freitextfeld darf die Anfrage nicht überschwemmen.
      */
     public function testAnOverlongValueIsShortened(): void
@@ -180,14 +214,41 @@ final class ShippingEnquirySummaryTest extends TestCase
 
     private function context(): SalesChannelContext
     {
+        $context = $this->createMock(SalesChannelContext::class);
+        $context->method('getShippingLocation')->willReturn(ShippingLocation::createFromCountry($this->country()));
+
+        return $context;
+    }
+
+    private function contextWithAddress(?string $company = null): SalesChannelContext
+    {
+        $address = new CustomerAddressEntity();
+        $address->setId('address-1');
+        $address->setUniqueIdentifier('address-1');
+        $address->setStreet('Musterstraße 5');
+        $address->setZipcode('44787');
+        $address->setCity('Bochum');
+        $address->setCountry($this->country());
+
+        if ($company !== null) {
+            $address->setCompany($company);
+        }
+
+        $context = $this->createMock(SalesChannelContext::class);
+        $context->method('getShippingLocation')->willReturn(
+            new ShippingLocation($this->country(), null, $address),
+        );
+
+        return $context;
+    }
+
+    private function country(): CountryEntity
+    {
         $country = new CountryEntity();
         $country->setId('country-de');
         $country->setUniqueIdentifier('country-de');
         $country->setName('Deutschland');
 
-        $context = $this->createMock(SalesChannelContext::class);
-        $context->method('getShippingLocation')->willReturn(ShippingLocation::createFromCountry($country));
-
-        return $context;
+        return $country;
     }
 }

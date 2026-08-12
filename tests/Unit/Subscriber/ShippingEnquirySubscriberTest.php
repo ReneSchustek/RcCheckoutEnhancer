@@ -9,6 +9,8 @@ use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquirySubscriber;
 use Shopware\Core\Checkout\Cart\Cart;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
+use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Shipping\ShippingMethodCollection;
 use Shopware\Core\Checkout\Shipping\ShippingMethodEntity;
 use Shopware\Core\Framework\Struct\ArrayStruct;
@@ -190,6 +192,87 @@ final class ShippingEnquirySubscriberTest extends TestCase
     }
 
     /**
+     * Was: Das eingestellte Anschreiben liegt an der Seite.
+     * Warum: Der Kunde soll ein Anschreiben vorfinden und keinen Datenblock. Steht es
+     *        nicht an der Seite, kann die Vorlage es nicht setzen.
+     */
+    public function testTheCoveringTextIsHandedToThePage(): void
+    {
+        $store = $this->createMock(ShippingEnquiryStore::class);
+        $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
+
+        $event = $this->navigationEvent();
+        $this->subscriber(store: $store, intro: 'Sehr geehrte Damen und Herren,')->onNavigationPage($event);
+
+        $extension = $event->getPage()->getExtension('rcShippingEnquiry');
+        self::assertInstanceOf(ArrayStruct::class, $extension);
+        self::assertSame('Sehr geehrte Damen und Herren,', $extension->get('intro'));
+    }
+
+    /**
+     * Was: Die Daten des angemeldeten Kunden liegen an der Seite.
+     * Warum: **Darum geht es hier.** Shopware füllt das Kontaktformular aus der
+     *        abgesendeten Eingabe, nicht aus dem Konto — ohne diese Übergabe tippt der
+     *        Kunde seine Daten neu, und der Vertrieb bekommt womöglich eine andere
+     *        Mailadresse als die des Kontos.
+     */
+    public function testTheCustomerDataIsHandedToThePage(): void
+    {
+        $store = $this->createMock(ShippingEnquiryStore::class);
+        $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
+
+        $event = $this->navigationEvent($this->customer());
+        $this->subscriber(store: $store)->onNavigationPage($event);
+
+        $extension = $event->getPage()->getExtension('rcShippingEnquiry');
+        self::assertInstanceOf(ArrayStruct::class, $extension);
+
+        $customer = $extension->get('customer');
+        self::assertSame('Erika', $customer['firstName']);
+        self::assertSame('Mustermann', $customer['lastName']);
+        self::assertSame('erika@example.invalid', $customer['email']);
+        self::assertSame('0234 123456', $customer['phone']);
+        self::assertSame('salutation-mrs', $customer['salutationId']);
+    }
+
+    /**
+     * Die Gegenprobe: Ohne angemeldeten Kunden wird nichts geraten. Ein Formular mit
+     * fremden Daten wäre schlimmer als ein leeres.
+     */
+    public function testWithoutACustomerNothingIsInvented(): void
+    {
+        $store = $this->createMock(ShippingEnquiryStore::class);
+        $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
+
+        $event = $this->navigationEvent();
+        $this->subscriber(store: $store)->onNavigationPage($event);
+
+        $extension = $event->getPage()->getExtension('rcShippingEnquiry');
+        self::assertInstanceOf(ArrayStruct::class, $extension);
+        self::assertSame([], $extension->get('customer'));
+    }
+
+    /**
+     * Ein Kunde ohne hinterlegte Telefonnummer darf kein leeres Feld erzeugen, das später
+     * als „ausgefüllt" durchgeht.
+     */
+    public function testAnEmptyFieldIsLeftOutInsteadOfHandedOverBlank(): void
+    {
+        $store = $this->createMock(ShippingEnquiryStore::class);
+        $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
+
+        $customer = $this->customer();
+        $customer->getDefaultBillingAddress()?->setPhoneNumber('   ');
+
+        $event = $this->navigationEvent($customer);
+        $this->subscriber(store: $store)->onNavigationPage($event);
+
+        $extension = $event->getPage()->getExtension('rcShippingEnquiry');
+        self::assertInstanceOf(ArrayStruct::class, $extension);
+        self::assertArrayNotHasKey('phone', $extension->get('customer'));
+    }
+
+    /**
      * @param list<string> $nonDelivery
      */
     private function subscriber(
@@ -198,17 +281,38 @@ final class ShippingEnquirySubscriberTest extends TestCase
         string $hint = '',
         ?ShippingEnquiryStore $store = null,
         array $nonDelivery = [],
+        string $intro = '',
     ): ShippingEnquirySubscriber {
         $configService = $this->createMock(ConfigService::class);
         $configService->method('isShippingEnquiryEnabled')->willReturn($enabled);
         $configService->method('getShippingEnquiryCategoryId')->willReturn($categoryId);
         $configService->method('getShippingEnquiryHint')->willReturn($hint);
+        $configService->method('getShippingEnquiryIntro')->willReturn($intro);
         $configService->method('getNonDeliveryMethodIds')->willReturn($nonDelivery);
 
         return new ShippingEnquirySubscriber(
             $configService,
             $store ?? $this->createMock(ShippingEnquiryStore::class),
         );
+    }
+
+    private function customer(): CustomerEntity
+    {
+        $address = new CustomerAddressEntity();
+        $address->setId('address-1');
+        $address->setUniqueIdentifier('address-1');
+        $address->setPhoneNumber('0234 123456');
+
+        $customer = new CustomerEntity();
+        $customer->setId('customer-1');
+        $customer->setUniqueIdentifier('customer-1');
+        $customer->setSalutationId('salutation-mrs');
+        $customer->setFirstName('Erika');
+        $customer->setLastName('Mustermann');
+        $customer->setEmail('erika@example.invalid');
+        $customer->setDefaultBillingAddress($address);
+
+        return $customer;
     }
 
     private function confirmEvent(int $shippingMethods): CheckoutConfirmPageLoadedEvent
@@ -228,15 +332,16 @@ final class ShippingEnquirySubscriberTest extends TestCase
         return new CheckoutConfirmPageLoadedEvent($page, $this->context(), new Request());
     }
 
-    private function navigationEvent(): NavigationPageLoadedEvent
+    private function navigationEvent(?CustomerEntity $customer = null): NavigationPageLoadedEvent
     {
-        return new NavigationPageLoadedEvent(new NavigationPage(), $this->context(), new Request());
+        return new NavigationPageLoadedEvent(new NavigationPage(), $this->context($customer), new Request());
     }
 
-    private function context(): SalesChannelContext
+    private function context(?CustomerEntity $customer = null): SalesChannelContext
     {
         $context = $this->createMock(SalesChannelContext::class);
         $context->method('getSalesChannelId')->willReturn('sc-id');
+        $context->method('getCustomer')->willReturn($customer);
 
         return $context;
     }

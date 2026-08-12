@@ -202,6 +202,14 @@ undo;14 Tage Widerrufsrecht</defaultValue>
             <helpText lang="de-DE">Steht über der Schaltfläche. Leer lassen für den mitgelieferten Text, der auch übersetzt vorliegt.</helpText>
             <helpText lang="en-GB">Shown above the button. Leave empty for the shipped text, which is translated as well.</helpText>
         </input-field>
+
+        <input-field type="textarea">
+            <name>shippingEnquiryIntro</name>
+            <label lang="de-DE">Anschreiben im Kontaktformular (leer = Standardtext)</label>
+            <label lang="en-GB">Covering text in the contact form (empty = default text)</label>
+            <helpText lang="de-DE">Steht im Kommentarfeld über der Warenkorb-Aufstellung. Der Kunde kann ihn vor dem Absenden ändern. Leer lassen für den mitgelieferten Text, der auch übersetzt vorliegt.</helpText>
+            <helpText lang="en-GB">Placed in the comment field above the cart summary. The customer can edit it before sending. Leave empty for the shipped text, which is translated as well.</helpText>
+        </input-field>
     </card>
 
     <card>

@@ -255,17 +255,48 @@ class ShippingEnquirySummary
             $totals[] = \sprintf('Längste Position: %s mm', $this->number($longest));
         }
 
+        return [...$totals, ...$this->destinationOf($context)];
+    }
+
+    /**
+     * Wohin geliefert werden soll — so vollständig, wie es der Kontext hergibt.
+     *
+     * **Warum die ganze Anschrift und nicht nur Land und Postleitzahl:** Ein Frachtpreis
+     * hängt an der Abladestelle. Mit „Deutschland 44787" muss der Vertrieb nachfragen,
+     * bevor er rechnen kann — genau der Anruf, den diese Anfrage ersparen soll. Die Firma
+     * steht mit dabei, weil sie bei einer Spedition darüber entscheidet, ob eine Rampe da
+     * ist oder eine Hebebühne gebraucht wird.
+     *
+     * Steht die Anschrift noch nicht fest, bleibt es bei der einen Zeile mit dem Land.
+     * Geraten wird nichts.
+     *
+     * @return list<string>
+     */
+    private function destinationOf(SalesChannelContext $context): array
+    {
         $location = $context->getShippingLocation();
         $country = $location->getCountry()->getTranslation('name') ?? $location->getCountry()->getName();
-        $zipCode = $location->getAddress()?->getZipcode();
+        $country = \is_string($country) ? trim($country) : '';
 
-        if (\is_string($country) && $country !== '') {
-            $totals[] = $zipCode !== null && $zipCode !== ''
-                ? \sprintf('Lieferung nach: %s %s', $country, $zipCode)
-                : \sprintf('Lieferung nach: %s', $country);
+        $address = $location->getAddress();
+        if ($address === null) {
+            return $country === '' ? [] : [\sprintf('Lieferung nach: %s', $country)];
         }
 
-        return $totals;
+        $city = trim(\sprintf('%s %s', $address->getZipcode() ?? '', $address->getCity()));
+
+        $lines = array_values(array_filter([
+            $address->getCompany(),
+            $address->getStreet(),
+            $city === '' ? null : $city,
+            $country === '' ? null : $country,
+        ], static fn (?string $line): bool => $line !== null && trim($line) !== ''));
+
+        if ($lines === []) {
+            return [];
+        }
+
+        return ['Lieferung nach:', ...array_map(static fn (string $line): string => '    ' . trim($line), $lines)];
     }
 
     /**

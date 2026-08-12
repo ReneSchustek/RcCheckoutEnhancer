@@ -1,17 +1,145 @@
 {% sw_extends '@Storefront/storefront/element/cms-element-form/form-types/contact-form.html.twig' %}
 
-{# Befüllt das Kommentarfeld mit dem Warenkorb, wenn der Kunde über den Anfrageweg aus dem
-   Bestellvorgang hierherkommt.
+{# Befüllt das Kontaktformular, wenn der Kunde über den Anfrageweg aus dem Bestellvorgang
+   hierherkommt: Anschreiben und Warenkorb im Kommentarfeld, seine eigenen Daten in den
+   Feldern darüber.
 
-   Sichtbar und änderbar, nicht in einem versteckten Feld: Der Kunde soll wissen, was er
-   absendet — und er soll es ergänzen können. Ein verstecktes Feld wäre bequemer und falsch.
+   Sichtbar und änderbar, nicht in versteckten Feldern: Der Kunde soll wissen, was er
+   absendet — und er soll es ergänzen können. Versteckte Felder wären bequemer und falsch.
 
-   Ohne Übernahme bleibt alles beim Kern (`{{ parent() }}`): Diese Vorlage liegt auf jeder
-   Kontaktseite, nicht nur auf der aus dem Bestellvorgang aufgerufenen. #}
+   **Diese Vorlage liegt auf jeder Kontaktseite, nicht nur auf der aus dem Bestellvorgang
+   aufgerufenen.** Ohne Übernahme bleibt deshalb jeder Block beim Kern (`{{ parent() }}`).
+   Das ist die eine Stelle, an der dieses Plugin jede gewöhnliche Kontaktanfrage
+   beschädigen könnte.
+
+   Das Wabenfeld der Spam-Abwehr wird nicht angefasst: Es steht in einem eigenen Block
+   (`cms_form_contact_captcha`), ist ausgeblendet und muss leer bleiben. Vorbelegt werden
+   ausschließlich die sichtbaren Felder. #}
+
+{% block cms_form_contact_select_salutation %}
+    {% set rcEnquiry = page.extensions.rcShippingEnquiry ?? null %}
+    {% set rcSalutationId = rcEnquiry ? (data.get('salutationId') ?: rcEnquiry.customer.salutationId ?? null) : null %}
+
+    {% if rcSalutationId %}
+        {% set rcSalutationOptions %}
+            {% for salutation in element.data %}
+                <option value="{{ salutation.id }}"{% if salutation.id == rcSalutationId %} selected="selected"{% endif %}>
+                    {{ salutation.translated.displayName }}
+                </option>
+            {% endfor %}
+        {% endset %}
+
+        {% sw_include '@Storefront/storefront/component/form/form-select.html.twig' with {
+            label: 'account.personalSalutationLabel'|trans|sw_sanitize,
+            id: formPrefix ~ '-form-Salutation',
+            name: 'salutationId',
+            options: rcSalutationOptions,
+            violationPath: '/salutationId',
+            validationRules: 'required',
+            additionalClass: 'col-md-4',
+            additionalSelectClass: 'contact-select',
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block cms_form_contact_input_first_name %}
+    {% set rcEnquiry = page.extensions.rcShippingEnquiry ?? null %}
+    {% set rcFirstName = rcEnquiry ? (data.get('firstName') ?: rcEnquiry.customer.firstName ?? null) : null %}
+
+    {% if rcFirstName %}
+        {% sw_include '@Storefront/storefront/component/form/form-input.html.twig' with {
+            label: 'account.personalFirstNameLabel'|trans,
+            id: formPrefix ~ '-form-firstName',
+            name: 'firstName',
+            value: rcFirstName,
+            placeholder: 'account.personalFirstNamePlaceholder'|trans,
+            autocomplete: 'section-personal given-name',
+            violationPath: '/firstName',
+            validationRules: config('core.basicInformation.firstNameFieldRequired') ? 'required' : null,
+            additionalClass: 'col-md-4',
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block cms_form_contact_input_last_name %}
+    {% set rcEnquiry = page.extensions.rcShippingEnquiry ?? null %}
+    {% set rcLastName = rcEnquiry ? (data.get('lastName') ?: rcEnquiry.customer.lastName ?? null) : null %}
+
+    {% if rcLastName %}
+        {% sw_include '@Storefront/storefront/component/form/form-input.html.twig' with {
+            label: 'account.personalLastNameLabel'|trans,
+            id: formPrefix ~ '-form-lastName',
+            name: 'lastName',
+            value: rcLastName,
+            placeholder: 'account.personalLastNamePlaceholder'|trans,
+            autocomplete: 'section-personal family-name',
+            violationPath: '/lastName',
+            validationRules: config('core.basicInformation.lastNameFieldRequired') ? 'required' : null,
+            additionalClass: 'col-md-4',
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block cms_form_contact_input_email %}
+    {% set rcEnquiry = page.extensions.rcShippingEnquiry ?? null %}
+    {% set rcEmail = rcEnquiry ? (data.get('email') ?: rcEnquiry.customer.email ?? null) : null %}
+
+    {% if rcEmail %}
+        {% sw_include '@Storefront/storefront/component/form/form-input.html.twig' with {
+            type: 'email',
+            label: 'account.loginMailLabel'|trans,
+            id: formPrefix ~ '-form-email',
+            name: 'email',
+            value: rcEmail,
+            placeholder: 'account.loginMailPlaceholder'|trans,
+            autocomplete: 'email',
+            violationPath: '/email',
+            validationRules: 'required,email',
+            additionalClass: 'col-md-6',
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block cms_form_contact_input_phone %}
+    {% set rcEnquiry = page.extensions.rcShippingEnquiry ?? null %}
+    {% set rcPhone = rcEnquiry ? (data.get('phone') ?: rcEnquiry.customer.phone ?? null) : null %}
+
+    {% if rcPhone %}
+        {% sw_include '@Storefront/storefront/component/form/form-input.html.twig' with {
+            type: 'tel',
+            label: 'account.personalPhoneLabel'|trans,
+            id: formPrefix ~ '-form-phone',
+            name: 'phone',
+            value: rcPhone,
+            placeholder: 'account.personalPhonePlaceholder'|trans,
+            autocomplete: 'tel',
+            violationPath: '/phone',
+            validationRules: config('core.basicInformation.phoneNumberFieldRequired') ? 'required' : null,
+            additionalClass: 'col-md-6',
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
 {% block cms_form_contact_comment_textarea %}
-    {% set rcEnquirySummary = page.extensions.rcShippingEnquiry is defined ? page.extensions.rcShippingEnquiry.summary : null %}
+    {% set rcEnquiry = page.extensions.rcShippingEnquiry ?? null %}
+    {% set rcEnquirySummary = rcEnquiry ? rcEnquiry.summary : null %}
 
     {% if rcEnquirySummary %}
+        {# Der eingestellte Text schlägt den Textbaustein, wie bei jedem Baustein dieses
+           Plugins. Beide leer heißt: nur die Aufstellung — auch das ist eine Einstellung. #}
+        {% set rcIntro = rcEnquiry.intro ?: 'rcCheckout.enquiryIntro'|trans %}
+        {% set rcComment = rcIntro|trim ? rcIntro|trim ~ "\n\n" ~ rcEnquirySummary : rcEnquirySummary %}
+
         <div class="col-12">
             <div class="rc-shipping-enquiry-note alert alert-info" role="status">
                 {{ 'rcCheckout.enquiryCartTaken'|trans }}
@@ -22,11 +150,11 @@
             label: 'contact.commentLabel'|trans,
             id: formPrefix ~ '-form-comment',
             name: 'comment',
-            value: rcEnquirySummary,
+            value: rcComment,
             placeholder: 'contact.commentPlaceholder'|trans,
             violationPath: '/comment',
             validationRules: 'required',
-            rows: 12,
+            rows: 16,
             additionalClass: 'col-12',
         } %}
     {% else %}

@@ -8,6 +8,7 @@ use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore;
 use Shopware\Core\Checkout\Shipping\ShippingMethodCollection;
 use Shopware\Core\Framework\Struct\ArrayStruct;
+use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
 use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -130,8 +131,47 @@ final class ShippingEnquirySubscriber implements EventSubscriberInterface
             return;
         }
 
+        $context = $event->getSalesChannelContext();
+
         $event->getPage()->addExtension('rcShippingEnquiry', new ArrayStruct([
             'summary' => $summary,
+            'intro' => $this->configService->getShippingEnquiryIntro($context->getSalesChannelId()),
+            'customer' => $this->customerOf($context),
         ]));
+    }
+
+    /**
+     * Die Daten des Kunden, mit denen das Kontaktformular vorbelegt wird.
+     *
+     * **Warum überhaupt:** Der Kern füllt die Felder aus der abgesendeten Formulareingabe,
+     * nicht aus dem Konto — ein angemeldeter Kunde bekommt ein leeres Formular. Er tippt
+     * dann seine Daten neu, ausgerechnet an der Stelle, an der er ohnehin schon aufgehalten
+     * wurde. Und was er tippt, muss nicht sein Konto sein: eine andere Mailadresse, ein
+     * Zahlendreher in der Telefonnummer, und die Antwort geht ins Leere.
+     *
+     * Der Anfrageweg beginnt auf der Bestätigungsseite — dort ist der Kunde bekannt. Genau
+     * deshalb sitzt er dort und nicht im Warenkorb.
+     *
+     * **Was nicht bekannt ist, bleibt leer.** Geraten wird nichts, und niemand wird
+     * angemeldet, der es nicht ist.
+     *
+     * @return array<string, string>
+     */
+    private function customerOf(SalesChannelContext $context): array
+    {
+        $customer = $context->getCustomer();
+        if ($customer === null) {
+            return [];
+        }
+
+        $address = $customer->getActiveBillingAddress() ?? $customer->getDefaultBillingAddress();
+
+        return array_filter([
+            'salutationId' => $customer->getSalutationId(),
+            'firstName' => $customer->getFirstName(),
+            'lastName' => $customer->getLastName(),
+            'email' => $customer->getEmail(),
+            'phone' => $address?->getPhoneNumber(),
+        ], static fn (?string $value): bool => $value !== null && trim($value) !== '');
     }
 }

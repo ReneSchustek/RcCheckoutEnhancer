@@ -15,7 +15,8 @@
         "enquiryHintPickupOnly": "For this cart we can only offer self-collection. If you would like it delivered, we will gladly prepare a quote.",
         "enquiryButton": "Request a quote",
         "enquiryButtonDelivery": "Request a delivery quote",
-        "enquiryCartTaken": "Your cart has been carried over. You can add to the text below before sending."
+        "enquiryCartTaken": "Your cart has been carried over. You can add to the text below before sending.",
+        "enquiryIntro": "Dear Sir or Madam,\n\nunfortunately I was told that this cart cannot be shipped as it stands. I would be glad to receive an individual quote.\n\nKind regards"
     },
     "rc-checkout": {
         "freeShipping": {
