@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.34.1] - 2026-10-08 — Die Symbole der Vertrauenssignale sitzen auf Höhe des Textes
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console theme:compile`,
+> `php bin/console cache:clear`.
+
+### Behoben
+
+- **Schloss, Lieferwagen und Pfeil in den Vertrauenssignalen saßen rund 4 px unter dem Text.** Shopware
+  senkt Symbole für den Fließtext ab; in dieser Zeile richtet schon die Flexbox mittig aus, der Versatz
+  kam obendrauf. Er gilt dort jetzt nicht mehr, andere Symbole des Shops bleiben, wie sie sind.
+
 ## [1.34.0] - 2026-10-08 — Die Leiste verspricht keinen kostenlosen Versand
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console cache:clear`.

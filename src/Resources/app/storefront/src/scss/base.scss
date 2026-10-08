@@ -126,10 +126,17 @@
         gap: 4px;
         white-space: nowrap;
 
+        // Der Kern senkt Symbole für den Fließtext ab (`.icon > svg { top: .25em }`). Hier richtet
+        // schon die Flexbox mittig aus; mit dem Versatz saß jedes Symbol 4 px unter dem Text.
         .icon {
+            display: inline-flex;
             width: 14px;
             height: 14px;
             color: var(--bs-success, #198754);
+
+            > svg {
+                top: 0;
+            }
         }
     }
 }
