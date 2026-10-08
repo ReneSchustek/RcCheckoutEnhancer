@@ -6,21 +6,19 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Subscriber;
 
 use Ruhrcoder\RcCheckoutEnhancer\Service\CartFingerprint;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
+use Ruhrcoder\RcCheckoutEnhancer\Service\EstimateFormData;
 use Ruhrcoder\RcCheckoutEnhancer\Service\LastShippingEstimateStore;
 use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Storefront\Page\Checkout\Offcanvas\OffcanvasCartPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Hängt die zuletzt abgefragte Versandkosten-Auskunft an die Warenkorb-Seitenleiste.
+ * Hängt die zuletzt abgefragte Versandkosten-Auskunft und den Rechner an die
+ * Warenkorb-Seitenleiste.
  *
- * Bewusst **kein** zweiter Rechner an dieser Stelle. Drei Gründe, jeder für sich
- * ausreichend: Der Rechner ist kein Einzeiler und schöbe den „Zur Kasse"-Knopf nach
- * unten, also genau den Weg, den die Leiste abkürzen soll. Er läuft nur für Gäste,
- * damit hätte ein Teil der Besucher ein Feld und der andere nicht. Und zwei Formulare
- * mit demselben Ziel auf einer Seite driften mit der Zeit auseinander.
- *
- * Stattdessen: die Auskunft, wenn es eine gibt — und sonst der Weg dorthin.
+ * Der Rechner ist derselbe Baustein wie auf der Warenkorbseite, mit derselben Berechnung.
+ * Neu gerechnet wird nur auf Klick; beim Öffnen der Leiste zeigt sie die gespeicherte
+ * Auskunft, solange sie zum Warenkorb passt.
  */
 class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
 {
@@ -28,6 +26,7 @@ class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
         private readonly ConfigService $configService,
         private readonly LastShippingEstimateStore $lastEstimateStore,
         private readonly CartFingerprint $cartFingerprint,
+        private readonly EstimateFormData $formData,
     ) {
     }
 
@@ -56,10 +55,15 @@ class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Wer etwas hineinlegt, fragt in diesem Moment nach den Versandkosten; deshalb steht der
+        // Rechner auch in der Leiste.
+        $event->getPage()->addExtension('rcShippingEstimate', new ArrayStruct(
+            $this->formData->forContext($context)
+        ));
+
         $lastEstimate = $this->lastEstimateStore->get();
 
-        // Ohne vorherige Berechnung nur der Verweis auf die Warenkorb-Seite, kein
-        // leerer Kasten: Wer nie gerechnet hat, soll erfahren, dass er es kann.
+        // Ohne frühere Auskunft steht nur der Rechner da, kein leerer Kasten.
         if ($lastEstimate === null) {
             $event->getPage()->addExtension('rcOffcanvasShipping', new ArrayStruct([
                 'state' => 'none',
@@ -69,9 +73,9 @@ class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
         }
 
         // Der Fingerabdruck entscheidet, ob der gespeicherte Preis noch gilt. Stimmt
-        // er nicht, wird hier **nicht** neu gerechnet — eine Berechnung kostet so viele
-        // Warenkorb-Durchläufe, wie es Versandarten gibt, und die Leiste geht oft auf.
-        // Gesagt wird stattdessen, dass neu zu rechnen ist.
+        // er nicht, wird hier nicht neu gerechnet, denn eine Berechnung kostet je verfügbarer
+        // Versandart einen Warenkorb-Durchlauf, und die Leiste geht oft auf. Gesagt wird
+        // stattdessen, dass neu zu rechnen ist.
         $stillValid = $lastEstimate->cartFingerprint === $this->cartFingerprint->of($cart);
 
         $event->getPage()->addExtension('rcOffcanvasShipping', new ArrayStruct([

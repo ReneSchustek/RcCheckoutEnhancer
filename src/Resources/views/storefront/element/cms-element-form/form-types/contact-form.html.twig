@@ -5,12 +5,11 @@
    Feldern darüber.
 
    Sichtbar und änderbar, nicht in versteckten Feldern: Der Kunde soll wissen, was er
-   absendet — und er soll es ergänzen können. Versteckte Felder wären bequemer und falsch.
+   absendet, und er soll es ergänzen können. Versteckte Felder wären bequemer und falsch.
 
-   **Diese Vorlage liegt auf jeder Kontaktseite, nicht nur auf der aus dem Bestellvorgang
-   aufgerufenen.** Ohne Übernahme bleibt deshalb jeder Block beim Kern (`{{ parent() }}`).
-   Das ist die eine Stelle, an der dieses Plugin jede gewöhnliche Kontaktanfrage
-   beschädigen könnte.
+   Diese Vorlage liegt auf jeder Kontaktseite, nicht nur auf der aus dem Bestellvorgang
+   aufgerufenen. Ohne Übernahme bleibt deshalb jeder Block beim Kern (`{{ parent() }}`),
+   denn hier könnte das Plugin jede gewöhnliche Kontaktanfrage beschädigen.
 
    Das Wabenfeld der Spam-Abwehr wird nicht angefasst: Es steht in einem eigenen Block
    (`cms_form_contact_captcha`), ist ausgeblendet und muss leer bleiben. Vorbelegt werden
@@ -136,7 +135,7 @@
 
     {% if rcEnquirySummary %}
         {# Der eingestellte Text schlägt den Textbaustein, wie bei jedem Baustein dieses
-           Plugins. Beide leer heißt: nur die Aufstellung — auch das ist eine Einstellung. #}
+           Plugins. Beide leer heißt: nur die Aufstellung; auch das ist eine Einstellung. #}
         {% set rcIntro = rcEnquiry.intro ?: 'rcCheckout.enquiryIntro'|trans %}
         {% set rcComment = rcIntro|trim ? rcIntro|trim ~ "\n\n" ~ rcEnquirySummary : rcEnquirySummary %}
 

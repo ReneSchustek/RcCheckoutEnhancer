@@ -13,6 +13,10 @@ use Shopware\Core\Checkout\Cart\Tax\Struct\TaxRuleCollection;
 use Shopware\Core\System\Currency\CurrencyEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
+/**
+ * Restbetrag bis zur Versandkostenfreiheit: unter, auf und über der Schwelle, mit der Schwelle
+ * umgerechnet in die Währung des Kontexts.
+ */
 final class FreeShippingServiceTest extends TestCase
 {
     public function testCalculateBelowThresholdReportsRemaining(): void

@@ -8,11 +8,16 @@
 
 {# Der Anfrageweg steht dort, wo der Kunde sonst hängen bleibt: unmittelbar vor den
    Hinweisen zu Zahlungs- und Versandart, oberhalb der Bestellübersicht. Bleibt keine
-   Versandart übrig, rendert Shopware deren Auswahl gar nicht erst — der Kunde sähe ohne
+   Versandart übrig, rendert Shopware deren Auswahl gar nicht erst, und der Kunde sähe ohne
    diesen Block eine Seite, die ihn zum Absenden auffordert, ohne dass eine Lieferung
    zustande kommen kann. #}
 {% block page_checkout_confirm_alerts %}
     {{ parent() }}
+    {# Die fehlende Telefonnummer steht vor dem Anfrageweg: Sie hält die Bestellung auf, und
+       anders als beim Anfrageweg kann der Kunde sie hier selbst auflösen. #}
+    {% block page_checkout_confirm_rc_phone_number %}
+        {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/phone-number.html.twig' %}
+    {% endblock %}
     {% if page.extensions.rcShippingEnquiry is defined %}
         {% block page_checkout_confirm_rc_shipping_enquiry %}
             {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/shipping-enquiry.html.twig' %}
@@ -20,15 +25,12 @@
     {% endif %}
 {% endblock %}
 
-{# Wir umschließen den real existierenden Core-Block `page_checkout_confirm`
-   (ein zuvor genutzter Wrapper-Block existierte in keiner Core-Version → toter
-   No-Op).
+{# Umschließt den Core-Block `page_checkout_confirm`, damit die Leiste neben dem
+   Hauptbereich steht.
 
-   Die Seitenleiste hängt allein am Mini-Warenkorb. Die früher hier ebenfalls
-   eingebundene Bestellübersicht ist entfallen: Sie wiederholte Adresse, Versand-
-   und Zahlungsart samt Gesamtbetrag, die der Hauptbereich vollständig und mit
-   funktionierenden Ändern-Wegen zeigt — und ihre eigenen Ändern-Schaltflächen
-   sprangen auf Anker, die es im Dokument nicht gibt. #}
+   Die Seitenleiste zeigt nur den Mini-Warenkorb. Adresse, Versand- und Zahlungsart
+   samt Gesamtbetrag stehen vollständig und mit funktionierenden Ändern-Wegen im
+   Hauptbereich; eine zweite Übersicht in der Leiste wiederholte sie nur. #}
 {% block page_checkout_confirm %}
     {% set rc = page.extensions.rcCheckoutEnhancer %}
     {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
@@ -47,17 +49,15 @@
 {% endblock %}
 
 {# Zeigt die Seitenleiste den Warenkorb, blendet der Hauptbereich seine eigene
-   Positionstabelle aus. Sonst stünde dieselbe Bestellung zweimal auf einer Seite —
+   Positionstabelle aus. Sonst stünde dieselbe Bestellung zweimal auf einer Seite,
    einmal als Tabelle, einmal als Karte. Doppelte Anzeige derselben Sache irritiert,
    verlängert die Seite und lässt Screenreader alles zweimal vorlesen.
 
    Damit ergeben sich genau zwei saubere Varianten, die sich gegeneinander messen lassen:
    ohne Leiste die Tabelle im Hauptbereich, mit Leiste die Karte daneben. #}
 {% block page_checkout_confirm_product_table %}
-    {# **Der wichtigste Punkt am ganzen A/B-Test.** Hält sich die Leiste zurück, muss die Tabelle
-       zurückkommen — sonst sähe die Vergleichsgruppe auf der Bestätigungsseite gar keinen
-       Warenkorb. Das wäre derselbe Fehler wie am 2026-07-28, nur schlimmer: damals fehlte eine
-       Angabe, hier fehlte die ganze Übersicht. #}
+    {# Hält sich die Leiste zurück, muss die Tabelle zurückkommen; sonst sähe die
+       Vergleichsgruppe des A/B-Tests auf der Bestätigungsseite gar keinen Warenkorb. #}
     {% set rc = page.extensions.rcCheckoutEnhancer %}
     {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
     {% if rcSuppressed or not rc.miniCartEnabled %}

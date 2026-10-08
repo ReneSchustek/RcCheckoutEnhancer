@@ -9,15 +9,22 @@ use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReachability;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingSwitchGate;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService;
+use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Framework\Struct\ArrayStruct;
 use Shopware\Storefront\Page\Checkout\Cart\CheckoutCartPageLoadedEvent;
 use Shopware\Storefront\Page\Checkout\Offcanvas\OffcanvasCartPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Hängt den Versandkostenfrei-Hinweis an Warenkorbseite und Leiste, aber nur, wenn die Zusage
+ * für diesen Lieferort und diesen Warenkorb auch stimmt.
+ *
+ * Die Prüfungen laufen von billig nach teuer: Einstellungen, leerer Warenkorb, A/B-Test,
+ * Reichweite der Regel, Lieferbarkeit. Jede kann den Hinweis verschweigen; eine falsche Zusage
+ * neben dem Versandkostenrechner wiegt schwerer als ein fehlender Werbesatz.
+ */
 class FreeShippingThresholdSubscriber implements EventSubscriberInterface
 {
-    private const DEFAULT_THRESHOLD = 50.00;
-
     /**
      * Unterhalb eines halben Cents gilt ein Betrag als null.
      *
@@ -48,34 +55,17 @@ class FreeShippingThresholdSubscriber implements EventSubscriberInterface
     {
         $context = $event->getSalesChannelContext();
         $salesChannelId = $context->getSalesChannel()->getId();
-
-        // Zuerst die billigen, gecachten Config-Checks — nur wenn das Feature überhaupt aktiv ist,
-        // lohnt der teurere A/B-Gate-Aufruf weiter unten.
-        if (!$this->configService->isFreeShippingIndicatorEnabled($salesChannelId)) {
-            return;
-        }
-
-        $threshold = $this->configService->getFreeShippingThreshold($salesChannelId) ?? self::DEFAULT_THRESHOLD;
-        if ($threshold <= 0.0) {
-            return;
-        }
-
         $cart = $event->getPage()->getCart();
-        if ($cart->getLineItems()->count() === 0) {
+
+        if (!$this->isWanted($cart, $salesChannelId)) {
             return;
         }
 
-        // Optionaler A/B-Test zuletzt (teuerster Check): ist der Besucher der Variante mit
-        // „Hinweis aus" zugeordnet, wird der Indikator nicht angehängt.
-        if ($this->switchGate?->isIndicatorSuppressed() === true) {
-            return;
-        }
+        $configuredThreshold = $this->configService->getFreeShippingThreshold($salesChannelId);
 
-        // Gilt Versandkostenfreiheit für diesen Lieferort überhaupt? Bis 1.3.0 wurde
-        // das nie gefragt: Der Hinweis war ein reiner Rechenausdruck und stand auch dem
-        // Gast in Österreich vor der Nase, für den er nie eintritt. Seit der
-        // Versandkostenrechner direkt darunter steht und für dasselbe Land eine Zahl
-        // größer null nennt, widersprachen sich zwei Aussagen an derselben Stelle.
+        // Gilt Versandkostenfreiheit für diesen Lieferort nicht, schweigt der Hinweis. Sonst
+        // stünde er auch vor dem Gast in Österreich, und der Versandkostenrechner darunter
+        // nennte für dasselbe Land eine Zahl größer null.
         $reach = $this->reachability->reachableFrom($this->configService->getFreeShippingMethodIds($salesChannelId), $context);
         if (!$reach->applies) {
             return;
@@ -84,35 +74,29 @@ class FreeShippingThresholdSubscriber implements EventSubscriberInterface
         // Und lässt sich dieser Warenkorb überhaupt ausliefern? Die Prüfung darüber sieht nur
         // die Verfügbarkeits-Regeln an; die Gewichtsgrenze steht aber in den Preisbändern, und
         // oberhalb des obersten Bands ist eine Versandart weiterhin verfügbar und scheitert erst
-        // am fehlenden Preis. Ohne diese zweite Frage versprach der Hinweis kostenlosen Versand
-        // für Warenkörbe, die der Shop gar nicht ausliefert — am 2026-08-10 mit 530 kg gemessen.
+        // am fehlenden Preis. Ohne diese zweite Frage verspräche der Hinweis kostenlosen Versand
+        // für Warenkörbe über dem obersten Gewichtsband, die der Shop gar nicht ausliefert.
         if (!$this->estimateService->canShipToContextLocation($cart, $context)) {
             return;
         }
 
-        // Der Betrag aus der Regel schlägt die Einstellung. Bis 1.4.0 stand er an drei
-        // Stellen — Regel, Einstellung, Freitext der Vertrauensleiste — und am 2026-08-04
-        // waren alle drei verschieden. Drei Stellen für dieselbe Zahl laufen wieder
-        // auseinander; es ist keine Frage, ob, sondern wann.
-        $threshold = $reach->threshold ?? $threshold;
+        // Der Betrag aus der Regel schlägt die Einstellung; zwei Stellen für dieselbe Zahl
+        // laufen früher oder später auseinander.
+        // Ohne Betrag schweigt der Hinweis, wie die Vertrauensleiste. Ein angenommener Betrag
+        // stünde neben einer Leiste, die keine Schwelle nennt.
+        $threshold = $reach->threshold ?? $configuredThreshold;
+        if ($threshold === null || $threshold <= 0.0) {
+            return;
+        }
 
         $status = $this->freeShippingService->calculate($cart, $context, $threshold);
 
-        // Die Zusage muss zu dem passen, was zwei Zeilen weiter rechts auf derselben Seite
-        // steht. Ist der Schwellwert erreicht, trägt der Warenkorb aber Versandkosten, dann
-        // ist „versandkostenfrei geliefert" schlicht falsch — und zwar nachweisbar, ohne
-        // irgendetwas über den Lieferort zu wissen.
-        //
-        // Gemessen an einem Shop mit echten Versanddaten: 530 kg, Warenwert weit über der Schwelle.
-        // Der Hinweis meldete „Glückwunsch — versandkostenfrei", die Zusammenfassung daneben
-        // berechnete 8,93 €. Die Ursache ist, dass der Hinweis nur Warenwert gegen Schwelle
-        // rechnet: Die versandkostenfreie Versandart war für dieses Gewicht gesperrt, geliefert
-        // hätte ein Paketdienst zum Normaltarif.
-        //
-        // Bei erreichter Schwelle **und** Versandkosten größer null wird deshalb geschwiegen.
-        // Nicht „noch X € fehlen" — das wäre die zweite falsche Aussage; die Schwelle ist ja
-        // überschritten. Wer sich für einen kostenpflichtigen Versand entschieden hat, bekommt
-        // ebenfalls keine Zusage mehr, und das ist richtig so: Er zahlt Versand.
+        // Erreichte Schwelle und Versandkosten über null passen nicht zusammen. Der Hinweis
+        // rechnet nur Warenwert gegen Schwelle; ist die versandkostenfreie Versandart etwa für
+        // dieses Gewicht gesperrt, liefert ein Paketdienst zum Normaltarif, und die
+        // Zusammenfassung daneben nennt einen Betrag. Dann wird geschwiegen, auch kein
+        // „noch X € fehlen", denn die Schwelle ist ja überschritten. Wer selbst einen
+        // kostenpflichtigen Versand gewählt hat, zahlt Versand und bekommt ebenfalls keine Zusage.
         if ($status->achieved && $cart->getShippingCosts()->getTotalPrice() > self::CENT_TOLERANCE) {
             return;
         }
@@ -120,14 +104,40 @@ class FreeShippingThresholdSubscriber implements EventSubscriberInterface
         $event->getPage()->addExtension('rcFreeShipping', $status);
 
         // Steht das Lieferland noch nicht fest, bleibt der Hinweis sichtbar, sagt aber
-        // dazu, wofür er gilt (Entscheidung Rene, 2026-08-04). Ein stiller Hinweis wäre
-        // eine Zusage ohne Bedingung, ein weggelassener kostete genau die Werbewirkung,
-        // für die es ihn gibt.
+        // dazu, wofür er gilt. Ohne den Zusatz wäre er eine Zusage ohne Bedingung, ein
+        // weggelassener kostete die Werbewirkung, für die es ihn gibt.
         $event->getPage()->addExtension('rcFreeShippingReach', new ArrayStruct([
             // Die Bedingung wird nur Gästen genannt. Wer angemeldet ist, hat eine
-            // Adresse — für den ist die Frage beantwortet, und ein Zusatz wäre Lärm.
+            // Adresse; für ihn ist die Frage beantwortet, und ein Zusatz wäre Lärm.
             'qualify' => $context->getCustomer() === null && $reach->countryIds !== [],
             'countryNames' => $reach->countryNames,
         ]));
+    }
+
+    /**
+     * Die billigen Vorprüfungen, bevor Lieferort und Versandkosten gerechnet werden.
+     */
+    private function isWanted(Cart $cart, string $salesChannelId): bool
+    {
+        // Zuerst die zwischengespeicherten Einstellungen; nur wenn der Hinweis überhaupt an ist,
+        // lohnen die teureren Prüfungen.
+        if (!$this->configService->isFreeShippingIndicatorEnabled($salesChannelId)) {
+            return false;
+        }
+
+        // Eine eingestellte Null schaltet den Hinweis ab. Fehlt der Wert, entscheidet später die
+        // Regel; ohne sie gibt es keine Schwelle.
+        $configuredThreshold = $this->configService->getFreeShippingThreshold($salesChannelId);
+        if ($configuredThreshold !== null && $configuredThreshold <= 0.0) {
+            return false;
+        }
+
+        if ($cart->getLineItems()->count() === 0) {
+            return false;
+        }
+
+        // Ist der Besucher im optionalen A/B-Test der Variante „Hinweis aus" zugeordnet, bleibt der
+        // Indikator weg.
+        return $this->switchGate?->isIndicatorSuppressed() !== true;
     }
 }

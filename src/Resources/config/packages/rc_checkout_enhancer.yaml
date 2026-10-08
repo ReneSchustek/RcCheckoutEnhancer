@@ -1,12 +1,13 @@
 # Eigene Begrenzung für den Versandkostenrechner.
 #
-# Der Endpunkt ist ohne Anmeldung erreichbar und löst je Aufruf so viele
-# Warenkorb-Berechnungen aus, wie der Kanal Versandarten hat. Ohne Begrenzung
-# genügt eine Schleife, um den Shop zu beschäftigen.
+# Der Endpunkt ist ohne Anmeldung erreichbar und löst je Aufruf eine
+# Warenkorb-Berechnung je verfügbarer Versandart aus, höchstens 26. Ohne
+# Begrenzung genügt eine Schleife, um den Shop zu beschäftigen. Der Rechner
+# auf der Produktseite zählt gegen dieselbe Staffel.
 #
-# Die Staffel ist bewusst großzügiger als beim Login: Wer ausprobiert, wohin er
-# liefern lassen kann, tippt mehrere Länder hintereinander durch. Erst wer das
-# in Maschinengeschwindigkeit tut, läuft in die Sperre.
+# Die Staffel ist großzügiger als beim Login: Wer ausprobiert, wohin er liefern
+# lassen kann, tippt mehrere Länder hintereinander durch. Erst wer das in
+# Maschinengeschwindigkeit tut, läuft in die Sperre.
 shopware:
     api:
         rate_limiter:
@@ -19,3 +20,16 @@ shopware:
                       interval: '30 seconds'
                     - limit: 40
                       interval: '120 seconds'
+
+            # Der Speditionshinweis läuft bei jedem Aufruf einer Produktseite mit; wer
+            # zwanzig Artikel in Folge anklickt, darf nicht in die Sperre laufen. Gebremst
+            # wird erst, was nach Maschine aussieht.
+            rc_checkout_freight_hint:
+                enabled: true
+                policy: 'time_backoff'
+                reset: '1 hour'
+                limits:
+                    - limit: 60
+                      interval: '60 seconds'
+                    - limit: 200
+                      interval: '600 seconds'

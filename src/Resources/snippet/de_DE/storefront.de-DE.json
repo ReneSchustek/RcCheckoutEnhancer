@@ -1,5 +1,13 @@
 {
     "rcCheckout": {
+        "onePage": {
+            "pathLegend": "Wie möchten Sie bestellen?",
+            "pathGuest": "Gastbestellung",
+            "pathLogin": "Bereits Kunde",
+            "pathRegister": "Neues Kundenkonto",
+            "finalStepHint": "Sobald Sie Ihre Adresse übernommen haben, sehen Sie den Endpreis samt Versandkosten und können zahlungspflichtig bestellen.",
+            "progressStep": "Kasse"
+        },
         "progressLabel": "Bestellfortschritt",
         "progressStep1": "Warenkorb",
         "progressStep2": "Anmelden",
@@ -12,11 +20,35 @@
         "miniCartShipping": "Versand",
         "miniCartTotal": "Gesamt",
         "enquiryHint": "Leider können wir diesen Warenkorb über unseren normalen Versandweg nicht an Sie liefern. Bitte kontaktieren Sie uns für eine individuelle Lösung. Wir werden uns schnellstmöglich bei Ihnen melden.",
-        "enquiryHintPickupOnly": "Für diesen Warenkorb können wir nur die Selbstabholung anbieten. Wenn Sie eine Lieferung wünschen, erstellen wir Ihnen gern ein Angebot.",
+        "enquiryHintPickupOnly": "Für diesen Warenkorb ist kein Versand möglich. Bitte sprechen Sie uns an — wir klären Abholung oder Lieferung mit Ihnen persönlich.",
         "enquiryButton": "Angebot anfragen",
-        "enquiryButtonDelivery": "Lieferung anfragen",
+        "enquiryButtonDelivery": "Kontakt aufnehmen",
         "enquiryCartTaken": "Ihr Warenkorb wurde übernommen. Sie können den Text unten ergänzen, bevor Sie absenden.",
-        "enquiryIntro": "Sehr geehrte Damen und Herren,\n\nleider habe ich die Meldung erhalten, dass dieser Warenkorb so nicht versendet werden kann. Über ein persönliches Angebot würde ich mich freuen.\n\nMit freundlichen Grüßen"
+        "enquiryIntro": "Sehr geehrte Damen und Herren,\n\nleider habe ich die Meldung erhalten, dass dieser Warenkorb so nicht versendet werden kann. Über ein persönliches Angebot würde ich mich freuen.\n\nMit freundlichen Grüßen",
+        "pickupHint": "Sie haben Selbstabholung gewählt. Bitte stellen Sie sicher, dass Sie die gekaufte Ware transportieren können. Die Ware in Ihrem Warenkorb wiegt insgesamt {Gewicht} und hat eine maximale Länge von {Länge}.",
+        "pickupHintWeightOnly": "Sie haben Selbstabholung gewählt. Bitte stellen Sie sicher, dass Sie die gekaufte Ware transportieren können. Die Ware in Ihrem Warenkorb wiegt insgesamt {Gewicht}.",
+        "pickupHintLengthOnly": "Sie haben Selbstabholung gewählt. Bitte stellen Sie sicher, dass Sie die gekaufte Ware transportieren können. Die Ware in Ihrem Warenkorb hat eine maximale Länge von {Länge}.",
+        "pickupDialogTitle": "Bitte bestätigen Sie die Selbstabholung",
+        "pickupDialogConfirm": "Verstanden — ich hole selbst ab",
+        "pickupDialogCancel": "Abbrechen — doch liefern lassen",
+        "pickupReopen": "Hinweis lesen und bestätigen",
+        "pickupDialogError": "Die Bestätigung konnte nicht gespeichert werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+        "pickupDocumentNote": "Selbstabholung: Verladen und Transport der Ware liegen beim Käufer.",
+        "pickupDocumentConfirmedAt": "Bestätigt am %date%.",
+        "phoneNumberHint": "Für diese Bestellung fehlt noch Ihre Telefonnummer. Wir brauchen sie für Rückfragen zur Lieferung — die Spedition meldet sich damit vor der Anlieferung bei Ihnen.",
+        "phoneNumberLabel": "Telefonnummer",
+        "phoneNumberButton": "Nummer übernehmen",
+        "phoneNumberSaved": "Vielen Dank, Ihre Telefonnummer ist gespeichert.",
+        "phoneNumberInvalid": "Das sieht nicht nach einer Telefonnummer aus. Bitte geben Sie sie mit Vorwahl ein, zum Beispiel 09568 8039770.",
+        "guestAccount": {
+            "heading": "Aus dieser Bestellung ein Kundenkonto machen",
+            "info": "Ihre Angaben aus dieser Bestellung sind schon da. Vergeben Sie ein Kennwort, dann melden Sie sich künftig mit %email% an und sehen Ihre Bestellungen im Kundenkonto.",
+            "button": "Kundenkonto anlegen",
+            "created": "Ihr Kundenkonto ist angelegt. Melden Sie sich mit %email% und Ihrem neuen Kennwort an.",
+            "expired": "Das Angebot, ein Kundenkonto anzulegen, ist abgelaufen. Sie können sich jederzeit neu registrieren.",
+            "emailTaken": "Zu dieser Mailadresse gibt es schon ein Kundenkonto. Melden Sie sich dort an; falls Sie das Kennwort nicht mehr wissen, über „Passwort vergessen\".",
+            "invalidPassword": "Das Kennwort ist zu kurz oder die Wiederholung stimmt nicht überein. Bitte mindestens %minLength% Zeichen."
+        }
     },
     "rc-checkout": {
         "freeShipping": {
@@ -37,10 +69,29 @@
             "errorZipRequired": "Bitte eine Postleitzahl eingeben.",
             "errorZipInvalid": "Diese Postleitzahl können wir nicht verarbeiten."
         },
+        "shippingPlaceholder": {
+            "costs": "wird nach Eingabe der Lieferadresse berechnet"
+        },
         "offcanvasShipping": {
+            "toggle": "Versandkosten berechnen",
             "known": "Versand nach %country% %zip%: %price%",
-            "stale": "Der Warenkorb hat sich geändert — die Versandkosten müssen neu berechnet werden.",
-            "link": "Versandkosten berechnen"
+            "stale": "Der Warenkorb hat sich geändert — die Versandkosten müssen neu berechnet werden."
+        },
+        "freightHint": {
+            "title": "Versand per Spedition",
+            "reasonLength": "wegen der Länge (%measure%)",
+            "reasonWeight": "wegen des Gewichts (%measure%)",
+            "range": "%country%: %min% – %max%",
+            "single": "%country%: %price%",
+            "byZip": "je nach Postleitzahl",
+            "quantity": "bei der Mindestabnahme von %quantity% Stück",
+            "toggle": "Für meine Postleitzahl berechnen",
+            "submit": "Berechnen"
         }
+    },
+    "checkout": {
+        "rc-checkout-pickup-acknowledgement-required": "Bitte bestätigen Sie den Hinweis zur Selbstabholung, bevor Sie die Bestellung abschließen.",
+        "rc-checkout-shipping-enquiry-required": "Für diesen Warenkorb ist keine Bestellung möglich. Bitte nehmen Sie über den Hinweis oben Kontakt mit uns auf.",
+        "rc-checkout-phone-number-required": "Für diese Bestellung fehlt eine Telefonnummer. Bitte tragen Sie sie oben ein, bevor Sie die Bestellung abschließen."
     }
 }

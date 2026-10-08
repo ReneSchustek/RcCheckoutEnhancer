@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Subscriber;
 
 use PHPUnit\Framework\TestCase;
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PickupAcknowledgementRequiredError;
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\ShippingEnquiryRequiredError;
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquirySubscriber;
@@ -47,7 +50,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
     }
 
     /**
-     * **Die Gegenprobe.** Gibt es etwas zu wählen, ist die Sendung lieferbar — und der
+     * Die Gegenprobe: Gibt es etwas zu wählen, ist die Sendung lieferbar, und der
      * Hinweis wäre eine Absage an einen Kunden, der gerade bestellen will.
      */
     public function testNothingAppearsWhileAShippingMethodIsAvailable(): void
@@ -61,12 +64,12 @@ final class ShippingEnquirySubscriberTest extends TestCase
 
     /**
      * Was: Es bleibt nur die Selbstabholung übrig.
-     * Warum: **Der Fall zwischen den beiden anderen.** Die Abholung ist oft die einzige
+     * Warum: Der Fall zwischen den beiden anderen. Die Abholung ist oft die einzige
      *        Versandart ohne Gewichtsgrenze und bleibt deshalb übrig, wenn die
-     *        Speditionsleiter endet — nicht als Angebot, sondern als Rest. Der Kunde stünde
+     *        Speditionsleiter endet, nicht als Angebot, sondern als Rest. Der Kunde stünde
      *        sonst vor genau einer Möglichkeit: eine halbe Tonne selbst abholen. Wer das
      *        nicht kann, hätte keinen Weg außer dem Abbruch.
-     * Erwartet: Der Anfrageweg erscheint **zusätzlich**, mit eigenem Text.
+     * Erwartet: Der Anfrageweg erscheint zusätzlich, mit eigenem Text.
      */
     public function testTheEnquiryAppearsWhenOnlySelfCollectionIsLeft(): void
     {
@@ -80,8 +83,64 @@ final class ShippingEnquirySubscriberTest extends TestCase
     }
 
     /**
-     * **Die Gegenprobe.** Steht neben der Abholung noch eine echte Lieferung zur Wahl, ist
-     * alles in Ordnung — dann wäre der Hinweis eine Absage an einen Kunden, der liefern
+     * Was: Bleibt nur die Abholung, hängt an der Bestellung noch die Abhol-Sperre.
+     * Warum: Sie sagt „bitte bestätigen Sie den Hinweis" und meint einen Dialog, den es in
+     *        diesem Zustand nicht mehr gibt. Eine Aufforderung ins Leere ist dieselbe Sackgasse,
+     *        die schon einmal auf der Warenkorbseite stand. Sie wird ersetzt, nicht entfernt —
+     *        bestellt werden soll hier nichts.
+     */
+    public function testTheAcknowledgementBlockIsReplacedByTheEnquiryBlock(): void
+    {
+        $event = $this->confirmEvent(shippingMethods: 1);
+        $event->getPage()->getCart()->getErrors()->add(new PickupAcknowledgementRequiredError());
+
+        $this->subscriber(nonDelivery: ['sm-0'])->onConfirmPage($event);
+
+        $errors = $event->getPage()->getCart()->getErrors();
+        self::assertNull($errors->get('rc-checkout-pickup-acknowledgement-required'));
+        $block = $errors->get('rc-checkout-shipping-enquiry-required');
+        self::assertInstanceOf(ShippingEnquiryRequiredError::class, $block);
+        self::assertTrue($block->blockOrder(), 'Ohne Sperre stünde die Schaltfläche wieder offen.');
+    }
+
+    /**
+     * Was: Dieselbe Lage, aber ohne vorher gesetzte Abhol-Sperre.
+     * Warum: Die Sperre muss auch dann stehen, wenn der Hinweis gar nicht erst fällig war —
+     *        etwa bei leichter Ware, die trotzdem niemand liefert. Sonst hinge das Verbot an
+     *        einer Schwelle, mit der es nichts zu tun hat.
+     */
+    public function testTheEnquiryBlocksTheOrderOnItsOwn(): void
+    {
+        $event = $this->confirmEvent(shippingMethods: 1);
+
+        $this->subscriber(nonDelivery: ['sm-0'])->onConfirmPage($event);
+
+        self::assertInstanceOf(
+            ShippingEnquiryRequiredError::class,
+            $event->getPage()->getCart()->getErrors()->get('rc-checkout-shipping-enquiry-required')
+        );
+    }
+
+    /**
+     * Was: Neben der Abholung steht eine echte Lieferart.
+     * Warum: Dann ist alles in Ordnung, und die Abhol-Sperre gehört dem Dialog — sie darf nicht
+     *        gegen eine Sperre getauscht werden, die dem Kunden den Weg abschneidet.
+     */
+    public function testTheAcknowledgementBlockSurvivesWhenDeliveryIsPossible(): void
+    {
+        $event = $this->confirmEvent(shippingMethods: 2);
+        $event->getPage()->getCart()->getErrors()->add(new PickupAcknowledgementRequiredError());
+
+        $this->subscriber(nonDelivery: ['sm-0'])->onConfirmPage($event);
+
+        $errors = $event->getPage()->getCart()->getErrors();
+        self::assertInstanceOf(PickupAcknowledgementRequiredError::class, $errors->get('rc-checkout-pickup-acknowledgement-required'));
+        self::assertNull($errors->get('rc-checkout-shipping-enquiry-required'));
+    }
+
+    /**
+     * Die Gegenprobe: Steht neben der Abholung noch eine echte Lieferung zur Wahl, ist
+     * alles in Ordnung; dann wäre der Hinweis eine Absage an einen Kunden, der liefern
      * lassen kann.
      */
     public function testNothingAppearsWhenARealDeliveryIsAvailableBesideCollection(): void
@@ -94,8 +153,8 @@ final class ShippingEnquirySubscriberTest extends TestCase
     }
 
     /**
-     * Ohne gepflegte Liste verhält sich das Plugin wie bis 1.9.0: Nur „gar keine Versandart"
-     * löst aus. Wer die Einstellung nie anfasst, bekommt kein neues Verhalten untergeschoben.
+     * Ohne gepflegte Liste löst nur „gar keine Versandart" aus. Wer die Einstellung nie
+     * anfasst, bekommt keinen Anfrageweg neben einer einzelnen verbliebenen Versandart untergeschoben.
      */
     public function testWithoutTheListOnlyAnEmptySelectionTriggers(): void
     {
@@ -107,7 +166,8 @@ final class ShippingEnquirySubscriberTest extends TestCase
     }
 
     /**
-     * Bleibt gar nichts übrig, ist es keine Abholung — der ursprüngliche Text gilt.
+     * Bleibt gar nichts übrig, ist es keine Abholung; es gilt der Text für „gar keine
+     * Versandart", nicht der für „nur Abholung".
      */
     public function testWithoutAnyMethodTheOriginalTextApplies(): void
     {
@@ -211,8 +271,8 @@ final class ShippingEnquirySubscriberTest extends TestCase
 
     /**
      * Was: Die Daten des angemeldeten Kunden liegen an der Seite.
-     * Warum: **Darum geht es hier.** Shopware füllt das Kontaktformular aus der
-     *        abgesendeten Eingabe, nicht aus dem Konto — ohne diese Übergabe tippt der
+     * Warum: Shopware füllt das Kontaktformular aus der abgesendeten Eingabe, nicht aus dem
+     *        Konto; ohne diese Übergabe tippt der
      *        Kunde seine Daten neu, und der Vertrieb bekommt womöglich eine andere
      *        Mailadresse als die des Kontos.
      */
@@ -293,6 +353,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         return new ShippingEnquirySubscriber(
             $configService,
             $store ?? $this->createMock(ShippingEnquiryStore::class),
+            new ShippingEnquiryRule($configService),
         );
     }
 
@@ -335,6 +396,22 @@ final class ShippingEnquirySubscriberTest extends TestCase
     private function navigationEvent(?CustomerEntity $customer = null): NavigationPageLoadedEvent
     {
         return new NavigationPageLoadedEvent(new NavigationPage(), $this->context($customer), new Request());
+    }
+
+    /**
+     * Was: Die Ereignisliste.
+     * Warum: Ein falscher Name hier heißt, dass der Anfrageweg still nie erscheint und der
+     *        Kunde vor der Sackgasse steht, gegen die er gebaut ist.
+     */
+    public function testItListensToBothPages(): void
+    {
+        self::assertSame(
+            [
+                CheckoutConfirmPageLoadedEvent::class => 'onConfirmPage',
+                NavigationPageLoadedEvent::class => 'onNavigationPage',
+            ],
+            ShippingEnquirySubscriber::getSubscribedEvents()
+        );
     }
 
     private function context(?CustomerEntity $customer = null): SalesChannelContext

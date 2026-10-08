@@ -9,21 +9,18 @@ use PHPUnit\Framework\TestCase;
 /**
  * Festnagelungen an der Warenkorb-Leiste.
  *
- * Zwei Dinge, die schon einmal verloren gingen und beim nächsten Umbau still wieder verloren
- * gehen können:
+ * Zwei Dinge, die beim nächsten Umbau still verloren gehen können.
  *
- * **Die Positionen kommen aus dem Core-Template.** Am 2026-07-28 wurde die doppelte
- * Bestellübersicht auf der Confirm-Seite beseitigt — richtig. Übersehen wurde, dass die Leiste
- * damit die **einzige** Warenkorb-Darstellung auf dieser Seite ist und ihr eigenes Markup den
- * Erweiterungspunkt der Positionszeilen umging. Die von `RcColorPicker` gewählte RAL-Farbe fehlte
- * danach genau auf der Seite, auf der der Kunde bestätigt. Aufgefallen ist es dem Smoke-Test eines
- * anderen Plugins, keinem Review.
+ * Die Positionen kommen aus dem Core-Template. Auf der Bestätigungsseite ist die Leiste die
+ * einzige Warenkorb-Darstellung; umginge ihr Markup den Erweiterungspunkt der Positionszeilen,
+ * fehlte etwa die von `RcColorPicker` gewählte RAL-Farbe genau auf der Seite, auf der der Kunde
+ * bestätigt.
  *
- * **Die Auszeichnung des Umschalters.** `aria-controls` und `aria-hidden` sind unsichtbar; wer
- * sie beim Umbauen verliert, merkt es nicht, solange er nicht mit einer Vorlesehilfe zuhört.
+ * Die Auszeichnung des Umschalters. `aria-controls` und `aria-hidden` sind unsichtbar; wer sie
+ * beim Umbauen verliert, merkt es nicht, solange er nicht mit einer Vorlesehilfe zuhört.
  *
  * Der Smoke-Test deckt den ersten Punkt end-to-end ab. Diese Tests laufen in Millisekunden und
- * sagen, **was** kaputt ist, nicht nur dass etwas fehlt.
+ * sagen, was kaputt ist, nicht nur dass etwas fehlt.
  */
 final class MiniCartTemplateContractTest extends TestCase
 {
@@ -102,15 +99,12 @@ final class MiniCartTemplateContractTest extends TestCase
 
     /**
      * Was: Die Klassennamen, die das Stilblatt ausblendet, gibt es im Core-Template wirklich.
-     * Warum: **Der Kern dieses Tests.** Bis 1.8.0 blendete das Stilblatt
-     *        `.line-item-quantity-select` und `.line-item-ordernumber` aus — beide Namen kennt
-     *        Shopware 6.7 nicht. Die Regeln zeigten ins Leere, und in der Leiste stand eine
-     *        bedienbare Mengen-Auswahl, deren Zahl in der schmalen Spalte abgeschnitten war.
-     *
-     *        **Eine Regel auf einen Namen, den es nicht gibt, ist still wirkungslos.** Nichts
-     *        wird rot, nichts bricht — es sieht nur falsch aus, und zwar auf der Seite, auf der
-     *        der Kunde bestätigt. Dieselbe Klasse Fehler wie ein Twig-Block, den der Core nicht
-     *        kennt; auch der hat dieses Plugin schon Monate gekostet.
+     * Warum: Eine Regel auf einen Namen, den es nicht gibt, ist still wirkungslos. Nichts wird
+     *        rot, nichts bricht; es sieht nur falsch aus, und zwar auf der Seite, auf der der
+     *        Kunde bestätigt. Namen wie `.line-item-quantity-select` oder
+     *        `.line-item-ordernumber` kennt Shopware 6.7 nicht; eine Regel darauf ließe eine
+     *        bedienbare Mengen-Auswahl in der schmalen Spalte stehen, deren Zahl abgeschnitten
+     *        ist. Dieselbe Art Fehler wie ein Twig-Block, den der Kern nicht kennt.
      * Erwartet: Jeder ausgeblendete Name steht im Core-Template.
      */
     public function testEveryHiddenClassExistsInTheCoreTemplate(): void
@@ -141,7 +135,7 @@ final class MiniCartTemplateContractTest extends TestCase
         $sidebar = strstr($scss, '.rc-checkout-mini-cart');
         self::assertIsString($sidebar, 'Abschnitt der Warenkorb-Leiste nicht im Stilblatt gefunden.');
 
-        // Kommentare heraus, bevor gesucht wird: Dort stehen die **alten**, falschen Namen als
+        // Kommentare heraus, bevor gesucht wird: Dort können falsche Namen als
         // Warnung für den nächsten Leser. Ohne diesen Schritt meldete der Test genau die
         // Erklärung als Fehler, die den Fehler beschreibt.
         $sidebar = (string) preg_replace('#//[^\n]*#', '', $sidebar);
@@ -152,12 +146,10 @@ final class MiniCartTemplateContractTest extends TestCase
         self::assertNotEmpty($verwendet, 'Keine Core-Klassen im Abschnitt — dann prüft dieser Test nichts.');
 
         foreach ($verwendet as $klasse) {
-            // Ganzer Name, nicht Teilzeichenfolge. Der erste Anlauf dieses Tests prüfte auf
-            // Enthaltensein — und ließ `.line-item-quantity-select` durchgehen, weil der Core
-            // ein `line-item-quantity-select-wrapper` rendert. **Damit hatte der Test genau
-            // den Fehler, den er verhindern soll:** Ein CSS-Klassenselektor greift auf ganze
-            // Namen, eine Teilzeichenfolge sagt darüber nichts. Aufgefallen ist es nur, weil
-            // die Gegenprobe mit dem alten Namen grün blieb.
+            // Ganzer Name, nicht Teilzeichenfolge. Eine Prüfung auf Enthaltensein ließe
+            // `.line-item-quantity-select` durchgehen, weil der Core ein
+            // `line-item-quantity-select-wrapper` rendert. Ein CSS-Klassenselektor greift auf
+            // ganze Namen, eine Teilzeichenfolge sagt darüber nichts.
             self::assertMatchesRegularExpression(
                 '/\b' . preg_quote($klasse, '/') . '(?![\w-])/',
                 $coreTemplate,

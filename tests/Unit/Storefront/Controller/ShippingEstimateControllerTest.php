@@ -25,8 +25,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * viele Warenkorb-Berechnungen aus, wie es Versandarten gibt. Wer ihn offen lässt, wo er
  * abgeschaltet sein soll, verschenkt genau die Grenze, die ihn schützt.
  *
- * Geprüft wird ausschließlich, was **vor** dem Rendern entschieden wird — dafür braucht es
- * keinen Container. Der Weg danach läuft im Smoke-Gate gegen echte Anfragen.
+ * Geprüft wird ausschließlich, was vor dem Rendern entschieden wird; dafür braucht es keinen
+ * Container. Den Weg mit Rendern prüft {@see ShippingEstimateControllerRenderTest}.
  */
 final class ShippingEstimateControllerTest extends TestCase
 {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
 use Ruhrcoder\RcCheckoutEnhancer\Struct\LastShippingEstimate;
+use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimate;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -15,12 +16,13 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * In der Sitzung und nicht in einem eigenen Cookie: Shopware führt für den Warenkorb
  * ohnehin eine, damit entsteht kein zusätzlicher Einwilligungsfall nach § 25 TDDDG.
  *
- * Gespeichert wird nur die **günstigste** Versandart. Die Leiste hat Platz für eine
- * Zeile; die vollständige Liste steht auf der Warenkorb-Seite, wo sie hingehört.
+ * Gespeichert wird nur die günstigste Lieferung. Die Leiste hat Platz für eine Zeile; die
+ * vollständige Liste steht auf der Warenkorb-Seite, wo sie hingehört. Eine Abholung ist keine
+ * Lieferung, mit 0,00 € gewänne sie sonst immer und die Leiste meldete „Versand … 0,00 €".
+ *
+ * Nicht `final`, weil die Tests der Leiste und des Rechner-Controllers ihn als Test-Double
+ * ersetzen; eine Schnittstelle nur dafür wäre mehr Bauwerk als Nutzen.
  */
-// Bewusst nicht `final`: Der Subscriber, der diesen Speicher benutzt, wird gegen ein
-// Test-Double geprüft, und eine `final`-Klasse lässt sich nicht doubeln. Eine
-// Schnittstelle nur für diesen Zweck einzuziehen, wäre mehr Bauwerk als Nutzen.
 class LastShippingEstimateStore
 {
     private const SESSION_KEY = 'rcCheckoutLastShippingEstimate';
@@ -30,7 +32,11 @@ class LastShippingEstimateStore
     ) {
     }
 
-    public function remember(ShippingEstimateResult $result, string $cartFingerprint): void
+    /**
+     * @param list<string> $excludedMethodIds Abholung und Platzhalter: kein Versand, auch wenn sie
+     *                                        mit 0,00 € die günstigste Zeile wären
+     */
+    public function remember(ShippingEstimateResult $result, string $cartFingerprint, array $excludedMethodIds = []): void
     {
         $session = $this->requestStack->getSession();
 
@@ -38,14 +44,19 @@ class LastShippingEstimateStore
         // und „die Berechnung ist gescheitert" gehören nicht in die Leiste: Das eine
         // wäre eine Absage ohne Zusammenhang, das andere eine Entschuldigung an einer
         // Stelle, an der niemand danach gefragt hat.
-        if (!$result->isSuccessful() || $result->estimates === []) {
+        $deliveries = array_values(array_filter(
+            $result->estimates,
+            static fn (ShippingEstimate $estimate): bool => !\in_array($estimate->shippingMethodId, $excludedMethodIds, true),
+        ));
+
+        if (!$result->isSuccessful() || $deliveries === []) {
             $session->remove(self::SESSION_KEY);
 
             return;
         }
 
-        $cheapest = $result->estimates[0];
-        foreach ($result->estimates as $estimate) {
+        $cheapest = $deliveries[0];
+        foreach ($deliveries as $estimate) {
             if ($estimate->price < $cheapest->price) {
                 $cheapest = $estimate;
             }

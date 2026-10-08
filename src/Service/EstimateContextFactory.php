@@ -16,17 +16,16 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
  * Baut aus dem Kontext des Besuchers einen Ableger, der auf eine andere Adresse
  * und eine bestimmte Versandart zeigt.
  *
- * Zwei Dinge sind daran wichtig und beide nicht offensichtlich:
+ * Der Ableger bekommt ein eigenes Token. Was auf dem Weg der Berechnung gespeichert wird,
+ * landet damit unter einer Wegwerf-Kennung und nie auf dem Warenkorb des Besuchers; sonst
+ * könnte eine Auskunft den echten Warenkorb überschreiben, und der Kunde stünde nach einer
+ * Preisabfrage im falschen Land.
  *
- * Erstens bekommt der Ableger ein **eigenes Token**. Alles, was auf dem Weg der
- * Berechnung noch gespeichert wird, landet damit unter einer Wegwerf-Kennung und
- * niemals auf dem Warenkorb des Besuchers. Ohne das könnte eine Auskunft den echten
- * Warenkorb überschreiben — der Kunde stünde nach einer Preisabfrage im falschen Land.
+ * Den Steuer-Zustand erbt der Ableger unverändert. Ein Netto-Kanal liefert damit
+ * Netto-Preise, ein Brutto-Kanal Brutto-Preise; auf Brutto gezwungen, sähe der B2B-Kunde
+ * eine Zahl, die im Warenkorb daneben anders steht.
  *
- * Zweitens bleibt der **Steuer-Zustand unangetastet**. Der Ableger erbt ihn vom
- * Besucher-Kontext; ein Netto-Kanal liefert damit Netto-Preise, ein Brutto-Kanal
- * Brutto-Preise. Wer hier auf Brutto zwingt, zeigt dem B2B-Kunden eine Zahl, die
- * im Warenkorb daneben anders steht.
+ * Nicht `final`, weil die Tests des Rechners ihn als Test-Double ersetzen.
  */
 class EstimateContextFactory
 {
@@ -34,10 +33,9 @@ class EstimateContextFactory
      * Klont den Kontext auf ein Wegwerf-Token, eine Pseudo-Adresse im Zielland und
      * die angefragte Versandart.
      *
-     * Gibt `null` zurück, wenn die Zuweisung nicht greift. Das ist kein theoretischer
-     * Fall: `Struct::assign()` verschluckt Zuweisungsfehler wortlos (`catch (\Error)`),
-     * ein Tippfehler im Property-Namen bliebe also unbemerkt und die Berechnung liefe
-     * gegen das Standardland des Kanals — mit plausiblen, falschen Preisen.
+     * `null`, wenn die Zuweisung nicht greift. `Struct::assign()` verschluckt Zuweisungsfehler
+     * wortlos (`catch (\Error)`); ein Tippfehler im Property-Namen bliebe unbemerkt, und die
+     * Berechnung liefe gegen das Standardland des Kanals, mit plausiblen, falschen Preisen.
      */
     public function create(
         SalesChannelContext $context,
@@ -83,7 +81,7 @@ class EstimateContextFactory
     /**
      * Regeln wie `customerShippingZipCode` fragen die Postleitzahl über
      * `$context->getCustomer()->getActiveShippingAddress()` ab. Ohne diesen
-     * Pseudo-Kunden greift eine PLZ-Regel nie — und der Preis wäre still zu niedrig.
+     * Pseudo-Kunden greift eine PLZ-Regel nie, und der Preis wäre still zu niedrig.
      */
     private function pseudoCustomer(CustomerAddressEntity $address): CustomerEntity
     {

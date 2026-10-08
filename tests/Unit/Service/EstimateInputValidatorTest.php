@@ -8,12 +8,16 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\EstimateInputValidator;
 
+/**
+ * Land und Postleitzahl aus dem Rechner-Formular: welche Eingabe brauchbar ist und welcher
+ * Textbaustein sonst erscheint.
+ */
 final class EstimateInputValidatorTest extends TestCase
 {
     /**
      * @return array<string, array{0: string, 1: string, 2: ?string}>
      */
-    public static function eingaben(): array
+    public static function inputs(): array
     {
         return [
             // Land, Postleitzahl, erwarteter Snippet-Schlüssel (null = brauchbar)
@@ -41,7 +45,7 @@ final class EstimateInputValidatorTest extends TestCase
         ];
     }
 
-    #[DataProvider('eingaben')]
+    #[DataProvider('inputs')]
     public function testValidate(string $countryIso, string $zipCode, ?string $expected): void
     {
         self::assertSame($expected, (new EstimateInputValidator())->validate($countryIso, $zipCode));

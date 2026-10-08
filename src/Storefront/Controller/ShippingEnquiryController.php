@@ -17,13 +17,12 @@ use Symfony\Component\Routing\Attribute\Route;
 /**
  * Übernimmt den Warenkorb in die Sitzung und schickt den Kunden zum Kontaktformular.
  *
- * Bewusst **ohne Storefront-Javascript**: Die Schaltfläche ist ein gewöhnliches Formular,
- * das hierher absendet. Ein Skript hätte denselben Weg mit mehr Teilen abgebildet — und
- * ohne Skript funktioniert der Weg auch dann, wenn am Javascript etwas klemmt. Gerade
- * dieser Weg ist der letzte, der einem Kunden bleibt, bevor er abbricht.
+ * Ohne Storefront-Javascript: Die Schaltfläche ist ein gewöhnliches Formular, das hierher
+ * absendet. So funktioniert der Weg auch dann, wenn am Javascript etwas klemmt, und er ist
+ * der letzte, der einem Kunden bleibt, bevor er abbricht.
  *
- * **POST und nicht GET:** Der Aufruf legt etwas in der Sitzung ab. Ein Verweis, den ein
- * Vorlade-Mechanismus des Browsers versehentlich abruft, soll das nicht auslösen.
+ * POST und nicht GET, weil der Aufruf etwas in der Sitzung ablegt. Ein Verweis, den ein
+ * Vorlade-Mechanismus des Browsers abruft, soll das nicht auslösen.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class ShippingEnquiryController extends StorefrontController
@@ -57,7 +56,7 @@ class ShippingEnquiryController extends StorefrontController
         $cart = $this->cartService->getCart($context->getToken(), $context);
 
         // Ein leerer Warenkorb ergibt keine Anfrage. Der Kunde landet trotzdem auf dem
-        // Formular — dort kann er schreiben, was er braucht.
+        // Formular und kann dort schreiben, was er braucht.
         $summary = $this->summary->forCart($cart, $context);
         if ($summary !== '') {
             $this->enquiryStore->remember($summary);

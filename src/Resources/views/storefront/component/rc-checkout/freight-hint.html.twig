@@ -1,0 +1,66 @@
+{# Der Speditionshinweis der Produktseite, nachgeladen.
+
+   Aufbau: Hinweis, Grund, Spanne im Heimatland je nach Postleitzahl, darunter ein Rechner für
+   die eigene. Kein `<form>`, weil der Kasten im Kaufbereich steht und verschachtelte Formulare
+   nicht erlaubt sind; die Absendung übernimmt das Skript. #}
+{% set hint = rcFreightHint %}
+{% set zipId = 'rcFreightHintZip-' ~ rcFreightProductId %}
+
+<div class="rc-freight-hint" role="note">
+    <p class="rc-freight-hint__title">
+        {{ "rc-checkout.freightHint.title"|trans }}
+    </p>
+
+    {% if hint.reason == 'length' %}
+        <p class="rc-freight-hint__reason">{{ "rc-checkout.freightHint.reasonLength"|trans({ '%measure%': hint.measure }) }}</p>
+    {% elseif hint.reason == 'weight' %}
+        <p class="rc-freight-hint__reason">{{ "rc-checkout.freightHint.reasonWeight"|trans({ '%measure%': hint.measure }) }}</p>
+    {% endif %}
+
+    <p class="rc-freight-hint__price">
+        {% if hint.isRange %}
+            {{ "rc-checkout.freightHint.range"|trans({
+                '%country%': hint.countryName,
+                '%min%': hint.minPrice|currency(hint.currencyIsoCode),
+                '%max%': hint.maxPrice|currency(hint.currencyIsoCode),
+            }) }}
+        {% else %}
+            {{ "rc-checkout.freightHint.single"|trans({
+                '%country%': hint.countryName,
+                '%price%': hint.minPrice|currency(hint.currencyIsoCode),
+            }) }}
+        {% endif %}
+    </p>
+
+    {% if hint.isRange %}
+        <p class="rc-freight-hint__note">{{ "rc-checkout.freightHint.byZip"|trans }}</p>
+    {% endif %}
+
+    {% if hint.quantity > 1 %}
+        {# Die Spanne gilt für die Mindestabnahme — ohne diesen Satz läse man sie als Stückpreis. #}
+        <p class="rc-freight-hint__note">{{ "rc-checkout.freightHint.quantity"|trans({ '%quantity%': hint.quantity }) }}</p>
+    {% endif %}
+
+    <details class="rc-freight-hint__calc">
+        <summary class="rc-freight-hint__toggle">{{ "rc-checkout.freightHint.toggle"|trans }}</summary>
+
+        <div class="rc-freight-hint__form">
+            <label class="form-label" for="{{ zipId }}">{{ "rc-checkout.shippingEstimate.zipLabel"|trans }}</label>
+            <div class="input-group">
+                <input type="text"
+                       class="form-control"
+                       id="{{ zipId }}"
+                       data-rc-freight-hint-zip
+                       required="required"
+                       maxlength="12"
+                       autocomplete="postal-code"
+                       inputmode="numeric">
+                <button type="button" class="btn btn-primary" data-rc-freight-hint-submit>
+                    {{ "rc-checkout.freightHint.submit"|trans }}
+                </button>
+            </div>
+        </div>
+
+        <div class="rc-freight-hint__output" data-rc-freight-hint-output></div>
+    </details>
+</div>

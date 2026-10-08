@@ -1,0 +1,6 @@
+{# Die einzige Stelle im Plugin mit `ab_switch()`. Eingebunden wird sie nur aus
+   checkout-layout.html.twig und nur, wenn RcAbTesting installiert ist; sonst würde Twig die
+   Funktion beim Übersetzen vermissen.
+
+   Ohne laufenden Test liefert der Schalter nichts, dann gilt die geführte Darstellung. #}
+{%- if ab_switch('checkout_layout') == 'one_page' -%}one_page{%- else -%}guided{%- endif -%}

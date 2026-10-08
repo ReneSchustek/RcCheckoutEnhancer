@@ -25,10 +25,12 @@
     {% if page.extensions.rcOffcanvasShipping is defined %}
         {% set rcShip = page.extensions.rcOffcanvasShipping %}
         {% block component_offcanvas_cart_rc_shipping_estimate %}
-            {# Kein zweiter Rechner in der Leiste — nur die Auskunft, wenn es eine gibt,
-               und sonst der Weg dorthin. Der Rechner selbst steht auf der Warenkorb-Seite:
-               Er braucht zwei Eingabefelder und liefert eine Liste, das schöbe hier den
-               „Zur Kasse"-Knopf nach unten. #}
+            {# Die zuletzt errechnete Auskunft, wenn es eine gibt, darunter der Rechner. Beides
+               steht über der Schaltfläche zur Kasse, damit man es ohne Scrollen sieht.
+
+               Damit der Weg zur Kasse nicht nach unten rutscht, ist der Rechner zugeklappt, und
+               die Schaltfläche klebt am unteren Rand der Leiste (`base.scss`). Aufgeklappt
+               schöbe er sie bei 800 px Fensterhöhe aus dem sichtbaren Bereich. #}
             <div class="rc-offcanvas-shipping mb-2" data-rc-offcanvas-shipping>
                 {% if rcShip.state == 'valid' %}
                     <p class="rc-offcanvas-shipping__known alert alert-light mb-0" role="status">
@@ -40,25 +42,35 @@
                         <small class="rc-offcanvas-shipping__method d-block">{{ rcShip.estimate.shippingMethodName }}</small>
                     </p>
                 {% elseif rcShip.state == 'stale' %}
-                    {# Bewusst ohne Preis: Der gespeicherte gilt für einen anderen Warenkorb.
-                       Ein veralteter Versandpreis ist schlechter als gar keiner — er ist eine
-                       Zusage, die der Shop nicht hält. #}
+                    {# Ohne Preis: Der gespeicherte gilt für einen anderen Warenkorb, und ein
+                       veralteter Versandpreis ist eine Zusage, die der Shop nicht hält. Neu
+                       rechnen lässt sich mit dem Rechner darunter. #}
                     <p class="rc-offcanvas-shipping__stale alert alert-light mb-0" role="status">
                         {{ "rc-checkout.offcanvasShipping.stale"|trans }}
-                        <a class="rc-offcanvas-shipping__link d-block" href="{{ path('frontend.checkout.cart.page') }}">
-                            {{ "rc-checkout.offcanvasShipping.link"|trans }}
-                        </a>
-                    </p>
-                {% else %}
-                    <p class="rc-offcanvas-shipping__none mb-0">
-                        <a class="rc-offcanvas-shipping__link" href="{{ path('frontend.checkout.cart.page') }}">
-                            {{ "rc-checkout.offcanvasShipping.link"|trans }}
-                        </a>
                     </p>
                 {% endif %}
             </div>
         {% endblock %}
     {% endif %}
 
+    {# Derselbe Baustein wie auf der Warenkorbseite, mit derselben Berechnung und demselben
+       Skript; ein zweiter Rechenweg liefe auseinander. #}
+    {% if page.extensions.rcShippingEstimate is defined %}
+        {% block component_offcanvas_cart_rc_shipping_estimate_form %}
+            {% set rcShippingEstimate = page.extensions.rcShippingEstimate %}
+            {# Zugeklappt: eine Zeile statt rund 280 Pixel. `<details>` statt eines eigenen
+               Schalters, weil Tastatur und Sprachausgabe Auf und Zu so ohne Skript vom Browser
+               bekommen. Das Ergebnis tauscht nur die Liste im Inneren aus, der Kasten bleibt
+               dabei offen. #}
+            <details class="rc-offcanvas-estimate mb-2" data-rc-offcanvas-estimate>
+                <summary class="rc-offcanvas-estimate__toggle">
+                    {{ "rc-checkout.offcanvasShipping.toggle"|trans }}
+                </summary>
+                {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/shipping-estimate.html.twig' with { rcEstimateStacked: true } %}
+            </details>
+        {% endblock %}
+    {% endif %}
+
     {{ parent() }}
+
 {% endblock %}

@@ -13,14 +13,14 @@ use PHPUnit\Framework\TestCase;
  * nicht mit einer Vorlesehilfe zuhört oder Kontraste nachrechnet. Das BFSG gilt seit dem
  * 28.06.2025; ein stiller Rückfall ist hier kein Schönheitsfehler.
  *
- * Der Kontrast-Test rechnet die Farbpaare nach, statt nur auf Variablennamen zu prüfen. Der
- * Grund steht im Audit vom 2026-08-03: Mit Bootstraps Vorgabewerten sah das alte Paar mit 3,60:1
- * knapp aus, mit den Werten des Trummer-Themes waren es **2,10:1**. Ein Test, der nur
- * `gray-600` verbietet, hätte den nächsten schlechten Wert wieder durchgelassen.
+ * Der Kontrast-Test rechnet die Farbpaare nach, statt nur auf Variablennamen zu prüfen. Mit
+ * Bootstraps Vorgabewerten sieht ein Paar mit 3,60:1 knapp aus, mit den Werten des Shop-Themes
+ * sind es 2,10:1. Ein Test, der nur `gray-600` verbietet, ließe den nächsten schlechten Wert
+ * wieder durch.
  */
 final class ProgressBarAccessibilityTest extends TestCase
 {
-    /** Die Farbwerte, die das Trummer-Theme tatsächlich setzt (aus dem kompilierten CSS). */
+    /** Die Farbwerte, die das Shop-Theme tatsächlich setzt (aus dem kompilierten CSS). */
     private const THEME_COLORS = [
         'gray-300' => '#bcc1c7',
         'gray-600' => '#798490',
@@ -83,9 +83,9 @@ final class ProgressBarAccessibilityTest extends TestCase
 
     /**
      * Was: Die Kontraste der Fortschrittsleiste, nachgerechnet.
-     * Warum: **Der Befund des Audits.** Der noch nicht erreichte Schritt lag bei 2,10:1 — WCAG
-     *        1.4.3 verlangt 4,5:1. Gerechnet wird mit den echten Theme-Werten, nicht mit den
-     *        Fallbacks im Quelltext; genau diese Lücke hatte den Fehler verdeckt.
+     * Warum: Mit `gray-600` läge der noch nicht erreichte Schritt bei 2,10:1, WCAG 1.4.3
+     *        verlangt 4,5:1. Gerechnet wird mit den echten Theme-Werten, nicht mit den
+     *        Fallbacks im Quelltext, weil die Fallbacks einen solchen Wert verdecken.
      */
     public function testAllColourPairsMeetTheContrastRequirement(): void
     {
@@ -123,7 +123,7 @@ final class ProgressBarAccessibilityTest extends TestCase
         self::assertNotFalse($position, sprintf('Selektor %s nicht gefunden', $selector));
 
         // Großzügig gefasst: Zwischen Selektor und Farbe steht die Begründung, warum es diese
-        // Farbe ist — und die ist lang, weil der Fehler teuer war. Gesucht wird die **erste**
+        // Farbe ist, und die ist lang. Gesucht wird die erste
         // `color: var(--bs-gray-…)`-Zeile nach dem Selektor; die Zustandsvarianten darunter
         // setzen `#fff` und werden davon nicht getroffen.
         $block = substr($this->styles, $position, 2500);

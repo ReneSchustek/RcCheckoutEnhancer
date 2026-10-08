@@ -1,0 +1,25 @@
+{% sw_extends '@Storefront/storefront/component/buy-widget/buy-widget.html.twig' %}
+
+{# Der Speditionshinweis steht direkt unter „zzgl. Versandkosten", dort, wo der Kunde nach den
+   Versandkosten fragt.
+
+   Gerendert wird nur der leere Platz; den Inhalt lädt das Skript nach. Die Preisspanne kostet
+   beim ersten Aufruf je Zone eine Handvoll Warenkorb-Berechnungen, und darauf soll die
+   Produktseite nicht warten. Geht der Artikel per Paket, bleibt der Platz leer und
+   unsichtbar. #}
+{% block buy_widget_tax %}
+    {{ parent() }}
+
+    {% if config('RcCheckoutEnhancer.config.freightHintEnabled') and product.id is defined %}
+        {% block buy_widget_rc_freight_hint %}
+            <div class="rc-freight-hint-slot"
+                 data-rc-freight-hint="true"
+                 data-rc-freight-hint-options='{{ {
+                     "url": path("frontend.rc-checkout.freight-hint", { productId: product.id }),
+                     "estimateUrl": path("frontend.rc-checkout.freight-hint.estimate", { productId: product.id }),
+                     "errorText": "rc-checkout.shippingEstimate.failed"|trans
+                 }|json_encode }}'
+                 hidden></div>
+        {% endblock %}
+    {% endif %}
+{% endblock %}

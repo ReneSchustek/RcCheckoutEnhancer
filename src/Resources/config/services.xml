@@ -5,17 +5,18 @@
 
     <services>
         <!-- Der eine Zugang zu allen Schaltern und Werten dieses Plugins. Jede Funktion
-             liest ihre Einstellung hierüber, nicht am SystemConfigService vorbei — sonst
+             liest ihre Einstellung hierüber, nicht am SystemConfigService vorbei; sonst
              stünde dieselbe Schlüssel-Zeichenkette an mehreren Stellen. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <tag name="kernel.reset" method="reset"/>
         </service>
 
         <!-- Fortschrittsleiste, Vertrauenssignale, Mini-Warenkorb, Lieferzeit.
 
-             `request_stack` statt einer A/B-Abhängigkeit: Die Varianten-Zuordnung wird als
-             Angabe am Request gelesen, nicht über einen Dienst eines anderen Plugins. Damit
-             braucht es hier keine Verdrahtung, die ohne RcAbTesting ins Leere liefe. -->
+             Keine A/B-Abhängigkeit: Die Entscheidung fällt in der Vorlage, der Subscriber
+             reicht nur die Angaben durch. Damit braucht es hier keine Verdrahtung, die ohne
+             RcAbTesting ins Leere liefe. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider"/>
@@ -25,16 +26,185 @@
 
         <!-- Anfrageweg bei nicht möglicher Lieferung -->
 
-        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquirySummary"/>
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\CartExposedCustomFields">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <tag name="kernel.reset" method="reset"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquirySummary">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\CartExposedCustomFields"/>
+        </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore">
             <argument type="service" id="request_stack"/>
         </service>
 
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+        </service>
+
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquirySubscriber">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule"/>
             <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupAcknowledgementStore">
+            <argument type="service" id="request_stack"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PickupAcknowledgementValidator">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupHintDecider"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupAcknowledgementStore"/>
+            <argument type="service" id="request_stack"/>
+            <tag name="shopware.cart.validator"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\PickupAcknowledgementOrderSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupAcknowledgementStore"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\PickupAcknowledgementController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupHintDecider"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupAcknowledgementStore"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Gateway\SalesChannel\CheckoutGatewayRoute"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\PhoneNumberRequirement">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\PhoneNumberInput"/>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PhoneNumberValidator">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PhoneNumberRequirement"/>
+            <argument type="service" id="request_stack"/>
+            <tag name="shopware.cart.validator"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\PhoneNumberSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PhoneNumberRequirement"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\GuestAccountOffer">
+            <argument type="service" id="request_stack"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\GuestAccountOfferSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\GuestAccountOffer"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\GuestAccountController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\GuestAccountOffer"/>
+            <argument type="service" id="Shopware\Core\Checkout\Customer\SalesChannel\ConvertGuestRoute"/>
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\PhoneNumberController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PhoneNumberRequirement"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PhoneNumberInput"/>
+            <argument type="service" id="customer_address.repository"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupHintDecider">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="translator"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\PickupHintSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupHintDecider"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupAcknowledgementStore"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselector"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselector"/>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselectionApplier">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselector"/>
+            <!-- Der Kern führt keinen Dienst unter der abstrakten Klasse; der Typ im Konstruktor
+                 bleibt trotzdem die abstrakte, damit ein Dekorator eintreten kann. -->
+            <argument type="service" id="Shopware\Core\System\SalesChannel\SalesChannel\ContextSwitchRoute"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingChoiceStore"/>
+            <argument type="service" id="Shopware\Core\Checkout\Payment\SalesChannel\PaymentMethodRoute"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingPlaceholderFilter">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingMethodPreselectionSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselectionApplier"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingPlaceholderFilter"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\OnePageSelectionLoader">
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Gateway\SalesChannel\CheckoutGatewayRoute"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselectionApplier"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingPlaceholderFilter"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\OnePageCheckoutSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\OnePageSelectionLoader"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\OnePageSelectionController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\OnePageSelectionLoader"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingChoiceStore">
+            <argument type="service" id="request_stack"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingChoiceSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingChoiceStore"/>
+            <argument type="service" id="request_stack"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupDocumentNote">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Twig\SummaryDiscountExtension">
+            <tag name="twig.extension"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Twig\PickupDocumentNoteExtension">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupDocumentNote"/>
+            <tag name="twig.extension"/>
         </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\ShippingEnquiryController" public="true">
@@ -91,7 +261,7 @@
         </service>
 
         <!-- Rechnet je Versandart einmal den Warenkorb durch. CartRuleLoader statt des
-             als @internal markierten CartCalculator, und bewusst nicht CartService:
+             als @internal markierten CartCalculator, und nicht CartService:
              dessen recalculate() speichert den Warenkorb und würde den des Kunden
              überschreiben. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService">
@@ -115,9 +285,35 @@
             </call>
         </service>
 
+        <!-- Speditionshinweis auf der Produktseite: derselbe Rechenweg wie der Rechner,
+             ein Wegwerf-Warenkorb mit genau diesem Artikel. -->
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\FreightHintService">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService"/>
+            <argument type="service" id="sales_channel.product.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\LineItemFactoryRegistry"/>
+            <argument type="service" id="cache.object"/>
+            <argument type="service" id="translator"/>
+            <argument type="service" id="logger"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Storefront\Controller\FreightHintController" public="true">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreightHintService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateInputValidator"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Shopware\Core\Framework\RateLimiter\RateLimiter"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateFormData">
+            <argument type="service" id="Shopware\Core\System\Country\SalesChannel\CountryRoute"/>
+        </service>
+
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEstimateSubscriber">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
-            <argument type="service" id="Shopware\Core\System\Country\SalesChannel\CountryRoute"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateFormData"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -125,7 +321,17 @@
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\LastShippingEstimateStore"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\CartFingerprint"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\EstimateFormData"/>
             <tag name="kernel.event_subscriber"/>
+        </service>
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\OffcanvasShippingOpenSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+        <service id="Ruhrcoder\RcCheckoutEnhancer\SystemCheck\ConfigurationCheck">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+            <tag name="shopware.system_check"/>
         </service>
     </services>
 </container>

@@ -7,6 +7,10 @@ namespace Ruhrcoder\RcCheckoutEnhancer;
 use Shopware\Core\Framework\Plugin;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
+/**
+ * Einstieg des Plugins. Außer dem Laden der eigenen Paket-Konfiguration braucht es hier nichts;
+ * Dienste, Routen und Vorlagen findet Shopware über die üblichen Pfade unter `Resources/`.
+ */
 final class RcCheckoutEnhancer extends Plugin
 {
     /**

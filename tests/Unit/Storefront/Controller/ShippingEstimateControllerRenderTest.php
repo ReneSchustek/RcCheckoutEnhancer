@@ -32,15 +32,12 @@ use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
 /**
- * Der erfolgreiche Weg durch den Rechner-Endpunkt — inklusive Rendern.
+ * Der erfolgreiche Weg durch den Rechner-Endpunkt, einschließlich Rendern.
  *
  * Dieser Test braucht ein Gerüst: `renderStorefront()` holt sich Anfrage, Ereignis-Verteiler,
  * Einstellungen und Twig aus dem Container. Das prüft streng genommen mehr Rahmen als
- * Entscheidung, und es war die bewusste Grenze, die dieses Plugin bis 1.5.1 gezogen hat.
- *
- * Gebaut wurde es trotzdem, weil die Marke aus `prinzipien.md` gelten soll. Der Nutzen ist
- * nicht null: Belegt ist, dass die Auskunft **gemerkt** wird, bevor sie hinausgeht — genau
- * die Reihenfolge, von der die Warenkorb-Seitenleiste lebt.
+ * Entscheidung. Belegt ist aber, dass die Auskunft gemerkt wird, bevor sie hinausgeht; von
+ * dieser Reihenfolge lebt die Warenkorb-Seitenleiste.
  */
 final class ShippingEstimateControllerRenderTest extends TestCase
 {
@@ -84,8 +81,8 @@ final class ShippingEstimateControllerRenderTest extends TestCase
 
     /**
      * Was: Ein angemeldeter Kunde bekommt eine Auskunft statt einer Absage.
-     * Warum: **Bewusste Umkehr.** Bis 1.8.1 wies der Endpunkt Angemeldete ab. Wird der
-     *        Rechner ihnen im Warenkorb angeboten, muss er auch antworten — sonst wäre die
+     * Warum: Wird der Rechner Angemeldeten im Warenkorb angeboten, muss er ihnen auch
+     *        antworten; sonst wäre die
      *        Schaltfläche sichtbar und die Anfrage abgelehnt.
      */
     public function testSignedInCustomersGetAnAnswerInsteadOfARejection(): void

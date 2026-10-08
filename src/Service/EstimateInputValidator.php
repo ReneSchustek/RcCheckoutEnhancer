@@ -15,8 +15,9 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 class EstimateInputValidator
 {
     /**
-     * Die Längengrenze ist kein Schönheitsfehler: ohne sie landet eine beliebig
-     * lange Zeichenkette in der Regelauswertung und im Log.
+     * Die längsten Postleitzahlen kommen mit Trennzeichen auf elf Zeichen (Iran, ‚12345-67890');
+     * 12 schneidet keine echte ab. Ohne Grenze landete eine beliebig lange Zeichenkette in der
+     * Regelauswertung und im Log.
      */
     private const ZIP_MAX_LENGTH = 12;
 
@@ -25,8 +26,7 @@ class EstimateInputValidator
     private const ERROR_ZIP_INVALID = 'rc-checkout.shippingEstimate.errorZipInvalid';
 
     /**
-     * Gibt den Snippet-Schlüssel der Fehlermeldung zurück, oder `null` wenn die
-     * Eingabe brauchbar ist.
+     * Der Snippet-Schlüssel der Fehlermeldung, oder `null`, wenn die Eingabe brauchbar ist.
      */
     public function validate(string $countryIso, string $zipCode): ?string
     {

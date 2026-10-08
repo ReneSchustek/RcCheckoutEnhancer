@@ -12,6 +12,10 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
+/**
+ * Was die Warenkorb-Leiste von der letzten Versandauskunft behält: nur die günstigste Lieferung,
+ * nie die Abholung, nie eine Absage oder eine gescheiterte Berechnung.
+ */
 final class LastShippingEstimateStoreTest extends TestCase
 {
     /**
@@ -34,6 +38,38 @@ final class LastShippingEstimateStoreTest extends TestCase
         self::assertSame('Standard', $remembered->shippingMethodName);
         self::assertSame(4.95, $remembered->price);
         self::assertSame('fingerabdruck', $remembered->cartFingerprint);
+    }
+
+    /**
+     * Was: Abfrage mit Abholung für 0,00 € und Paket.
+     * Warum: Die Leiste nennt den günstigsten Versand. Die Abholung ist keiner und darf dort
+     *        nicht als „Versand nach … 0,00 €" stehen.
+     */
+    public function testAPickupIsNeverTheCheapestShipping(): void
+    {
+        $store = $this->store($session);
+
+        $store->remember(ShippingEstimateResult::withShippingMethods([
+            new ShippingEstimate('sm-abholung', 'Selbstabholer', 0.0, 'EUR'),
+            new ShippingEstimate('sm-paket', 'Paket', 8.93, 'EUR'),
+        ], 'DE', '44787'), 'fingerabdruck', ['sm-abholung']);
+
+        self::assertSame('Paket', $store->get()?->shippingMethodName);
+    }
+
+    /**
+     * Was: Nur die Abholung ist übrig.
+     * Warum: Dann gibt es keinen Versand, den die Leiste nennen könnte.
+     */
+    public function testOnlyAPickupLeavesNothingToShow(): void
+    {
+        $store = $this->store($session);
+
+        $store->remember(ShippingEstimateResult::withShippingMethods([
+            new ShippingEstimate('sm-abholung', 'Selbstabholer', 0.0, 'EUR'),
+        ], 'DE', '44787'), 'fingerabdruck', ['sm-abholung']);
+
+        self::assertNull($store->get());
     }
 
     /**

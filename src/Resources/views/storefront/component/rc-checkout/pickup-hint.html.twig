@@ -1,0 +1,106 @@
+{# Der Abhol-Hinweis: Wer schwere oder lange Ware selbst abholen will, erfährt hier, worauf
+   er sich einlässt, bevor er bestellt und nicht erst an der Rampe.
+
+   Der Server entscheidet, das Skript zeigt. Ob dieser Block überhaupt gerendert wird, hat der
+   PickupHintDecider entschieden, bevor die Seite entstand, mit derselben Bedingung, die auch die
+   Bestellung sperrt. Das Skript daneben rechnet nichts nach; es öffnet den Dialog und meldet die
+   Bestätigung. Eine zweite Wahrheit im Browser wiche irgendwann von der ersten ab.
+
+   Der Kasten bleibt im Markup, verschwindet aber, wenn der Dialog übernimmt; sonst stünde
+   derselbe Satz zweimal auf der Seite. Ohne JavaScript gibt es keinen Dialog, der Kasten bleibt
+   stehen und sagt, warum die Bestellung gesperrt ist, denn die Sperre hängt am Server. Nach dem
+   Bestätigen bleibt er als stiller Merker.
+
+   Der Dialog erscheint nur bei `not acknowledged`, weil die Bedingung nach dem Bestätigen
+   weiterhin zutrifft und nur die Sperre weg ist. Ohne diese Abfrage ginge er bei jedem
+   weiteren Seitenaufbau erneut auf. #}
+{% set rcPickup = page.extensions.rcPickupHint %}
+{% if rcPickup %}
+    <div class="rc-pickup-hint-wrapper"
+         data-rc-pickup-acknowledgement
+         data-rc-pickup-acknowledgement-options='{{ {
+             acknowledgeUrl: path('frontend.rc-checkout.pickup-acknowledgement')
+         }|json_encode }}'>
+
+        <div class="rc-pickup-hint alert alert-warning" role="status" data-rc-pickup-box tabindex="-1">
+            <p class="rc-pickup-hint__text">
+                {{ rcPickup.hint }}
+            </p>
+
+            {# Der Rückweg in den Dialog. Ohne ihn wäre das Schließen eine Sackgasse: Die
+               Bestellung bliebe gesperrt, und der einzige Ausweg wäre ein Neuladen der Seite.
+
+               Nur solange nicht bestätigt ist; danach ist der Kasten ein stiller Merker, und
+               es gibt nichts mehr zu bestätigen. Ohne JavaScript bleibt die Schaltfläche
+               wirkungslos; dann steht der Satz aber ohnehin vollständig im Kasten. #}
+            {% if not rcPickup.acknowledged %}
+                <button type="button"
+                        class="btn btn-primary btn-sm rc-pickup-hint__reopen"
+                        data-rc-pickup-reopen>
+                    {{ 'rcCheckout.pickupReopen'|trans }}
+                </button>
+            {% endif %}
+        </div>
+
+        {# hidden statt display:none über eine Klasse: So ist der Dialog auch für
+           Vorlesewerkzeuge weg, solange er zu ist, und nicht nur unsichtbar. #}
+        {% if not rcPickup.acknowledged %}
+        <div class="rc-pickup-dialog"
+             data-rc-pickup-dialog
+             hidden
+             role="dialog"
+             aria-labelledby="rc-pickup-dialog-title"
+             aria-describedby="rc-pickup-dialog-text">
+            <div class="rc-pickup-dialog__box">
+                <h2 class="rc-pickup-dialog__title" id="rc-pickup-dialog-title">
+                    {{ 'rcCheckout.pickupDialogTitle'|trans }}
+                </h2>
+
+                <p class="rc-pickup-dialog__text" id="rc-pickup-dialog-text">
+                    {{ rcPickup.hint }}
+                </p>
+
+                <p class="rc-pickup-dialog__error alert alert-danger"
+                   data-rc-pickup-error
+                   hidden
+                   role="alert">
+                    {{ 'rcCheckout.pickupDialogError'|trans }}
+                </p>
+
+                <div class="rc-pickup-dialog__actions">
+                    <button type="button"
+                            class="btn btn-primary rc-pickup-dialog__confirm"
+                            data-rc-pickup-confirm>
+                        {{ 'rcCheckout.pickupDialogConfirm'|trans }}
+                    </button>
+
+                    {# Schließen heißt: doch liefern lassen.
+                       Statt den Dialog nur zuzuklappen und die Bestellung gesperrt zu lassen,
+                       stellt der Abbruch die Versandart zurück, auf die, die auch die
+                       Vorauswahl nähme. Danach trifft die Bedingung nicht mehr zu, der Hinweis
+                       verschwindet, und der Warenkorb ist wieder gültig.
+
+                       Über Shopwares eigenen Umschaltweg als Formular, nicht per Skript: So
+                       funktioniert der Abbruch auch ohne JavaScript, und die Umschaltung läuft
+                       durch dieselbe Prüfung wie jede andere Wahl der Versandart.
+
+                       Der Rückweg ist immer da, weil der Dialog nur entsteht, wenn es eine
+                       Lieferart gibt, auf die sich zurückstellen lässt; bleibt nur die Abholung,
+                       übernimmt der Anfrageweg. #}
+                    <form action="{{ path('frontend.checkout.configure') }}"
+                          method="post"
+                          data-rc-pickup-revert-form>
+                        <input type="hidden" name="shippingMethodId" value="{{ rcPickup.revertToId }}">
+                        <input type="hidden" name="redirectTo" value="frontend.checkout.confirm.page">
+                        <button type="submit"
+                                class="btn btn-link rc-pickup-dialog__close"
+                                data-rc-pickup-close>
+                            {{ 'rcCheckout.pickupDialogCancel'|trans }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endif %}

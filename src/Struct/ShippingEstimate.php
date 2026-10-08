@@ -11,7 +11,7 @@ use Shopware\Core\Framework\Struct\Struct;
  * angefragte Adresse kostet.
  *
  * Der Preis kommt aus der Shopware-eigenen Berechnung und trägt den Steuer-Zustand
- * des Verkaufskanals — bei einem Netto-Kanal steht hier netto, bei einem Brutto-Kanal
+ * des Verkaufskanals: Bei einem Netto-Kanal steht hier netto, bei einem Brutto-Kanal
  * brutto. Wer ihn anzeigt, darf ihn deshalb nicht nachträglich umrechnen.
  */
 class ShippingEstimate extends Struct

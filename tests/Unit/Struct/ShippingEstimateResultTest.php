@@ -9,6 +9,10 @@ use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimate;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
 use Shopware\Core\Framework\Uuid\Uuid;
 
+/**
+ * Die drei Zustände einer Versandauskunft (Versandarten gefunden, keine Versandart, Berechnung
+ * gescheitert) und die Werte einer einzelnen Auskunftszeile.
+ */
 final class ShippingEstimateResultTest extends TestCase
 {
     public function testWithShippingMethodsIsSuccessful(): void

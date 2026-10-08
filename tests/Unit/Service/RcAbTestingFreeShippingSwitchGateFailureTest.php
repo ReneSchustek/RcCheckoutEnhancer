@@ -13,9 +13,8 @@ use RuntimeException;
  * Der Ausfallschutz des A/B-Schalters.
  *
  * Der Indikator ist optionaler Zusatz. Ein Fehler im Resolver eines anderen Plugins darf
- * die Warenkorb-Seite nie mit einem Serverfehler abreißen — im Zweifel wird angezeigt.
- * Dieser Zweig war bis 1.5.0 ungeprüft, und ein ungeprüfter Ausfallschutz ist eine
- * Behauptung.
+ * die Warenkorb-Seite nie mit einem Serverfehler abreißen; im Zweifel wird angezeigt.
+ * Ein ungeprüfter Ausfallschutz wäre nur eine Behauptung.
  */
 final class RcAbTestingFreeShippingSwitchGateFailureTest extends TestCase
 {

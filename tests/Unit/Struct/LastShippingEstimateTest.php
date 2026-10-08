@@ -8,10 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\LastShippingEstimate;
 
 /**
- * Diese Struktur kommt aus der **Sitzung** zurück — also aus einer Quelle, die zwischen
- * zwei Fassungen des Plugins beliebig alt sein kann. Ein Eintrag aus 1.3.0, der nach
- * einem Update auf ein anderes Format trifft, darf keinen Fehler auslösen, sondern muss
- * schlicht als „nichts gemerkt" gelten.
+ * Diese Struktur kommt aus der Sitzung zurück, also aus einer Quelle, die zwischen zwei
+ * Fassungen des Plugins beliebig alt sein kann. Ein Eintrag in einem älteren Format darf nach
+ * einem Update keinen Fehler auslösen, sondern muss schlicht als „nichts gemerkt" gelten.
  */
 final class LastShippingEstimateTest extends TestCase
 {

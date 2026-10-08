@@ -1,0 +1,14 @@
+{# Gibt `one_page` oder `guided` aus, je nachdem, welche Darstellung dieser Besucher sieht.
+   Gedacht für `{% set x = include(...)|trim == 'one_page' %}`.
+
+   Beim A/B-Test entscheidet RcAbTesting. Dessen Funktion steht in einer eigenen Datei, die nur
+   eingebunden wird, wenn es sie gibt: Twig sucht eine Funktion schon beim Übersetzen, und ohne
+   RcAbTesting stünde sonst der ganze Checkout. #}
+{%- set rc = page.extensions.rcCheckoutEnhancer -%}
+{%- if rc and rc.checkoutLayout == 'one_page' -%}
+    one_page
+{%- elseif rc and rc.abSwitchAvailable -%}
+    {{- include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-checkout-layout.html.twig')|trim -}}
+{%- else -%}
+    guided
+{%- endif -%}

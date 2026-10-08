@@ -51,7 +51,7 @@ final class Migration1786406400MigrateRcCheckoutConfigTest extends TestCase
     }
 
     /**
-     * Was: Ein Wert liegt für den kanalübergreifenden Fall **und** für zwei Kanäle vor.
+     * Was: Ein Wert liegt für den kanalübergreifenden Fall und für zwei Kanäle vor.
      * Warum: Ein Wert in `system_config` gilt entweder für alle Kanäle oder für genau
      *        einen. Wer nur die erste Zeile überträgt, vererbt still die Einstellung eines
      *        fremden Kanals.
@@ -79,11 +79,10 @@ final class Migration1786406400MigrateRcCheckoutConfigTest extends TestCase
 
     /**
      * Was: Der neue Schlüssel steht schon in der Datenbank — mit dem Vorgabewert aus
-     *      `config.xml`, den Shopware **vor** dem Lauf der Migrationen schreibt.
-     * Warum: **Der Kern.** Genau hier ist die erste Fassung gescheitert: Sie legte nur an,
-     *        wo nichts stand, fand deshalb immer den Vorgabewert vor und übernahm nie
-     *        etwas. An einem echten Shop stand der eingeschaltete Versandkostenrechner danach
-     *        auf „aus".
+     *      `config.xml`, den Shopware vor dem Lauf der Migrationen schreibt.
+     * Warum: Eine Migration, die nur dort anlegt, wo nichts steht, findet immer diesen
+     *        Vorgabewert vor und übernimmt nie etwas. An einem echten Shop stünde der
+     *        eingeschaltete Versandkostenrechner nach dem Update auf „aus".
      * Erwartet: keine zweite Zeile, sondern die vorhandene wird überschrieben.
      */
     public function testTheOldValueBeatsTheDefaultThatIsAlreadyInPlace(): void

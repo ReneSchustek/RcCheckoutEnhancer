@@ -9,14 +9,12 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 /**
  * Die eine Stelle, an der der Versandkostenfrei-Betrag erfragt wird.
  *
- * Sie existiert, damit die Vertrauensleiste nicht ihre eigene Zahl pflegen muss. Bis
- * 1.4.0 tat sie das: Dort stand „Kostenloser Versand ab 50 €" als Freitext, während die
- * Regel 357 € verlangte und der Indikator gegen 500 € rechnete. Drei Stellen für
- * dieselbe Zahl, alle drei verschieden.
+ * Die Vertrauensleiste fragt hier, damit sie keine eigene Zahl pflegt. Ein Freitext
+ * „Kostenloser Versand ab 50 €" neben einer Regel, die 357 € verlangt, läuft früher oder
+ * später auseinander, und der Kunde liest dann zwei Beträge für dieselbe Sache.
  *
- * Bis zur Zusammenführung lagen Indikator und Vertrauensleiste in zwei Plugins; die
- * Leiste suchte diese Klasse deshalb über `class_exists()`. Diese Brücke ist entfallen —
- * beide stehen jetzt im selben Plugin und sind ganz normal verdrahtet.
+ * Nicht `final`, weil die Tests des {@see \Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber}
+ * ihn als Test-Double ersetzen.
  */
 class FreeShippingThresholdProvider
 {

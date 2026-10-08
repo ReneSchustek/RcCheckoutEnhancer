@@ -29,15 +29,15 @@
 
         <div class="collapse show" id="rcMiniCartCollapse">
             <div class="card-body p-2">
-                {# Positionen über das Core-Template rendern statt über eigenes Markup.
-                   Grund: Plugins hängen ihre Positionsangaben an die Blöcke dieses Templates —
-                   RcColorPicker etwa die gewählte RAL-Farbe an
-                   `component_line_item_type_product_label`. Eigenes Markup umgeht diesen
-                   Erweiterungspunkt: Solange die Leiste die einzige Warenkorb-Darstellung auf der
-                   Seite ist, fehlte dem Kunden die Farbe genau auf der Seite, auf der er bestätigt.
+                {# Positionen über das Core-Template rendern statt über eigenes Markup, weil
+                   Plugins ihre Positionsangaben an die Blöcke dieses Templates hängen, etwa
+                   RcColorPicker die gewählte RAL-Farbe an `component_line_item_type_product_label`.
+                   Eigenes Markup ließe sie weg, und solange die Leiste die einzige
+                   Warenkorb-Darstellung auf der Seite ist, fehlte die Farbe genau dort, wo der
+                   Kunde bestätigt.
 
                    `displayMode: 'offcanvas'` ist die kompakte Core-Variante, die auch der
-                   Offcanvas-Warenkorb nutzt — dieselbe Darstellung, die der Kunde schon kennt.
+                   Offcanvas-Warenkorb nutzt, also eine Darstellung, die der Kunde schon kennt.
                    Ändern-/Entfernen-Wege bleiben aus: Die Leiste zeigt den Warenkorb, sie
                    bearbeitet ihn nicht. #}
                 <ul class="rc-checkout-mini-cart__items list-unstyled mb-0">
@@ -46,10 +46,8 @@
                            nennt: Der Positionspreis ist der Block, an dem Preis-Erweiterungen
                            hängen. RcDualPrice setzt seinen Netto-Zweitpreis in
                            `component_line_item_type_product_col_total_price`. Mit `false` rendert
-                           der Core diesen Block gar nicht -- gemessen: Warenkorb zeigt den
-                           Zweitpreis zweimal, die Confirm-Seite keinmal. Das ist derselbe Fehler
-                           wie bei der Farbe, nur eine Ebene tiefer: Nicht das eigene Markup umging
-                           den Erweiterungspunkt, sondern ein abgeschalteter Block. #}
+                           der Core diesen Block gar nicht, und der Zweitpreis fehlte auf der
+                           Bestätigungsseite. #}
                         {% sw_include '@Storefront/storefront/component/line-item/type/product.html.twig' with {
                             lineItem: lineItem,
                             displayMode: 'offcanvas',
@@ -62,10 +60,20 @@
 
                 <hr class="my-2">
 
+                {# Automatische Aktionen wie der Rabatt für Vorkasse folgen als eigene Zeile; die
+                   Zwischensumme zeigt dafür den Warenwert davor, sonst stünde der Rabatt doppelt. #}
+                {% set rcDiscounts = rc_summary_discounts(cart.lineItems) %}
                 <div class="d-flex justify-content-between small">
                     <span>{{ 'rcCheckout.miniCartSubtotal'|trans }}</span>
-                    <span>{{ cart.price.positionPrice|currency }}</span>
+                    <span>{{ (cart.price.positionPrice - rc_summary_discount_total(cart.lineItems))|currency }}</span>
                 </div>
+
+                {% for rcDiscount in rcDiscounts %}
+                    <div class="d-flex justify-content-between small rc-summary-discount">
+                        <span>{{ rcDiscount.label }}</span>
+                        <span>&minus;{{ rcDiscount.price.totalPrice|abs|currency }}</span>
+                    </div>
+                {% endfor %}
 
                 {% for delivery in cart.deliveries %}
                     <div class="d-flex justify-content-between small text-muted">

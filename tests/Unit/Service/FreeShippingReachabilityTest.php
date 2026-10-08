@@ -50,10 +50,9 @@ final class FreeShippingReachabilityTest extends TestCase
 
     /**
      * Was: Dieselbe Regel, aber der Besucher liefert nach Österreich.
-     * Warum: **Der Befund.** Bis 1.3.0 stand der Hinweis auch ihm vor der Nase — eine
-     *        Zusage, die für ihn nie eintritt. Verschärft dadurch, dass seitdem der
-     *        Versandkostenrechner direkt darunter für dasselbe Land eine Zahl größer null
-     *        nennt: zwei Aussagen an derselben Stelle, die einander widersprechen.
+     * Warum: Sonst stünde der Hinweis auch ihm vor der Nase, eine Zusage, die für ihn nie
+     *        eintritt. Der Versandkostenrechner direkt darunter nennt für dasselbe Land eine
+     *        Zahl größer null, und zwei Aussagen an derselben Stelle widersprächen einander.
      * Erwartet: Der Hinweis gilt nicht.
      */
     public function testTheHintDoesNotApplyInACountryTheRuleExcludes(): void
@@ -95,11 +94,41 @@ final class FreeShippingReachabilityTest extends TestCase
     }
 
     /**
+     * Was: Zwei versandkostenfreie Versandarten, eine nur für Deutschland, die andere mit einer
+     *      Regel ohne Länder-Bedingung, Kunde in Österreich.
+     * Warum: Die zweite liefert überall kostenlos. Die Länder der ersten allein machten die Liste
+     *        zu eng, und der Hinweis schwiege in Österreich zu Unrecht.
+     */
+    public function testAMethodWithoutACountryConditionWidensTheAnswer(): void
+    {
+        $germanyOnly = $this->method('sm-de', [self::DE], 357.0);
+
+        $everywhere = new ShippingMethodEntity();
+        $everywhere->setId('sm-alle');
+        $everywhere->setUniqueIdentifier('sm-alle');
+        $rule = new RuleEntity();
+        $rule->setId('rule-alle');
+        $rule->setUniqueIdentifier('rule-alle');
+        $rule->setConditions(new RuleConditionCollection([
+            $this->condition('cartGoodsPrice', ['operator' => '>', 'amount' => 500.0]),
+        ]));
+        $everywhere->setAvailabilityRule($rule);
+
+        $shippingMethods = $this->createMock(EntityRepository::class);
+        $shippingMethods->method('search')->willReturn($this->searchResult(new ShippingMethodCollection([$germanyOnly, $everywhere])));
+
+        $reach = (new FreeShippingReachability($shippingMethods, $this->createMock(EntityRepository::class)))
+            ->reachableFrom(['sm-de', 'sm-alle'], $this->context(self::AT));
+
+        self::assertTrue($reach->applies);
+        self::assertFalse($reach->certain);
+    }
+
+    /**
      * Was: Die Regel nennt einen Betrag.
-     * Warum: **Der Kern.** Bis 1.4.0 stand derselbe Betrag an drei Stellen —
-     *        Regel, Einstellung, Freitext der Vertrauensleiste — und alle drei waren
-     *        verschieden. Gelesen wird jetzt die Regel; die Einstellung ist nur noch
-     *        Rückfall.
+     * Warum: Der Betrag steht in der Regel, an der die Versandkostenfreiheit tatsächlich
+     *        hängt. Eine zweite Stelle mit derselben Zahl läuft früher oder später
+     *        auseinander; die Einstellung ist nur Rückfall.
      */
     public function testTheThresholdIsReadFromTheRule(): void
     {
@@ -135,11 +164,92 @@ final class FreeShippingReachabilityTest extends TestCase
     }
 
     /**
-     * @param list<string>|null $allowedCountryIds null = Versandart ohne Regel
+     * Was: Die Betragsbedingung vergleicht in die andere Richtung („unter 50 €“).
+     * Warum: Aus so einer Bedingung lässt sich keine Schwelle für Versandkostenfreiheit
+     *        ablesen, sie beschreibt das Gegenteil. Würde der Betrag trotzdem übernommen,
+     *        stünde im Shop „noch 50 € bis versandkostenfrei“, während die Regel bei genau
+     *        diesem Betrag aufhört zu greifen.
      */
+    public function testAnAmountConditionWithTheWrongOperatorIsIgnored(): void
+    {
+        $reach = $this->reachabilityWithConditions([
+            ['customerShippingCountry', ['operator' => '=', 'countryIds' => [self::DE]]],
+            ['cartGoodsPrice', ['operator' => '<', 'amount' => 50.0]],
+        ])->reachableFrom(['sm-x'], $this->context(self::DE));
+
+        self::assertTrue($reach->applies);
+        self::assertNull($reach->threshold, 'Aus einer Kleiner-Bedingung darf keine Schwelle werden.');
+    }
+
     /**
-     * @param list<string>|null $allowedCountryIds null = Versandart ohne Regel
-     * @param list<float>       $amounts           je ein Betrag = je eine Versandart
+     * Was: Der Betrag ist keine Zahl.
+     * Warum: Regelwerte kommen aus der Datenbank und lassen sich von Hand ändern. Eine
+     *        Zeichenkette darf nicht als Betrag durchgehen — sonst rechnet die Anzeige mit
+     *        einer Null und verspricht Versandkostenfreiheit ab dem ersten Cent.
+     */
+    public function testAnAmountThatIsNoNumberIsIgnored(): void
+    {
+        $reach = $this->reachabilityWithConditions([
+            ['customerShippingCountry', ['operator' => '=', 'countryIds' => [self::DE]]],
+            ['cartGoodsPrice', ['operator' => '>', 'amount' => 'fifty']],
+        ])->reachableFrom(['sm-x'], $this->context(self::DE));
+
+        self::assertNull($reach->threshold);
+    }
+
+    /**
+     * Was: Die Länderbedingung schließt aus, statt einzuschließen („Land ist nicht …“).
+     * Warum: Aus einer Ausschlussliste lässt sich die Menge der erlaubten Länder nicht
+     *        bestimmen. Die Antwort muss dann „unbekannt“ lauten; der Hinweis erscheint mit der Bedingung im Text, statt ein Land zu nennen, das
+     *        gar nicht gemeint ist.
+     */
+    public function testAnExcludingCountryConditionMakesTheAnswerUncertain(): void
+    {
+        $reach = $this->reachabilityWithConditions([
+            ['customerShippingCountry', ['operator' => '!=', 'countryIds' => [self::AT]]],
+        ])->reachableFrom(['sm-x'], $this->context(self::DE));
+
+        self::assertTrue($reach->applies);
+        self::assertFalse($reach->certain);
+    }
+
+    /**
+     * Baut eine Versandart mit genau den übergebenen Bedingungen — auch mit solchen, die der
+     * gewöhnliche Baukasten oben nicht hergibt.
+     *
+     * @param list<array{0: string, 1: array<string, mixed>}> $conditions
+     */
+    private function reachabilityWithConditions(array $conditions): FreeShippingReachability
+    {
+        $method = new ShippingMethodEntity();
+        $method->setId('sm-x');
+        $method->setUniqueIdentifier('sm-x');
+
+        $rule = new RuleEntity();
+        $rule->setId('rule-x');
+        $rule->setUniqueIdentifier('rule-x');
+        $rule->setConditions(new RuleConditionCollection(
+            array_map(fn (array $c): RuleConditionEntity => $this->condition($c[0], $c[1]), $conditions)
+        ));
+        $method->setAvailabilityRule($rule);
+
+        $shippingMethods = $this->createMock(EntityRepository::class);
+        $shippingMethods->method('search')->willReturn($this->searchResult(new ShippingMethodCollection([$method])));
+
+        $country = new CountryEntity();
+        $country->setId(self::DE);
+        $country->setUniqueIdentifier(self::DE);
+        $country->setName('Deutschland');
+
+        $countries = $this->createMock(EntityRepository::class);
+        $countries->method('search')->willReturn($this->searchResult(new CountryCollection([$country])));
+
+        return new FreeShippingReachability($shippingMethods, $countries);
+    }
+
+    /**
+     * @param list<string>|null $allowedCountryIds
+     * @param list<float>       $amounts
      */
     private function reachability(?array $allowedCountryIds, array $amounts = []): FreeShippingReachability
     {

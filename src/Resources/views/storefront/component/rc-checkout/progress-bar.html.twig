@@ -1,16 +1,15 @@
 {% set rc = page.extensions.rcCheckoutEnhancer %}
 {# Vergleichsgruppe eines laufenden A/B-Tests: Dieser Baustein bleibt weg. Die
    Entscheidung fällt beim Rendern, weil der Verkaufskanal-Kontext beim Seitenaufbau
-   noch nicht steht — siehe ab-suppressed.html.twig. #}
+   noch nicht steht; siehe ab-suppressed.html.twig. #}
 {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
 {% if not rcSuppressed and rc and rc.progressBarEnabled %}
     {% set currentStep = rc.currentStep %}
     {% set labels = rc.stepLabels %}
 
-    {# Step 2 ist je nach Session unterschiedlich erreichbar:
-       - eingeloggter Kunde (kein Gast) -> /account/address (Adressübersicht im Konto)
-       - Gast oder anonym vor Register -> /checkout/register (Standardroute)
-       Gäste dürfen NICHT auf /account/address -> Shopware leitet auf Login, der wieder zurück, -> Redirect-Loop. #}
+    {# Schritt 2 führt angemeldete Kunden zur Adressübersicht im Konto, Gäste und noch nicht
+       Registrierte zur Registrierung. Ein Gast auf `/account/address` landete in einer
+       Umleitungsschleife über die Anmeldung. #}
     {% set customer = context.customer %}
     {% set isGuest = customer is not null and customer.guest %}
     {% set step2Url = (customer is not null and not isGuest)
@@ -23,6 +22,17 @@
         { num: 3, label: labels.step3 ?: ('rcCheckout.progressStep3'|trans), url: path('frontend.checkout.confirm.page'), disabled: false },
         { num: 4, label: labels.step4 ?: ('rcCheckout.progressStep4'|trans), url: null, disabled: false }
     ] %}
+    {# Im einseitigen Checkout sind Adresse und Bestätigung eine Ansicht. Drei Schritte, und beide
+       Seiten zählen als der zweite; sonst spränge die Anzeige weiter, obwohl der Kunde dieselbe
+       Ansicht vor sich hat. #}
+    {% if include('@RcCheckoutEnhancer/storefront/component/rc-checkout/checkout-layout.html.twig')|trim == 'one_page' %}
+        {% set steps = [
+            { num: 1, label: labels.step1 ?: ('rcCheckout.progressStep1'|trans), url: path('frontend.checkout.cart.page') },
+            { num: 2, label: 'rcCheckout.onePage.progressStep'|trans, url: null, disabled: false },
+            { num: 3, label: labels.step4 ?: ('rcCheckout.progressStep4'|trans), url: null, disabled: false }
+        ] %}
+        {% set currentStep = currentStep == 1 ? 1 : (currentStep == 4 ? 3 : 2) %}
+    {% endif %}
 
     <nav class="rc-checkout-progress mb-4" aria-label="{{ 'rcCheckout.progressLabel'|trans }}">
         <ol class="rc-checkout-progress__list">

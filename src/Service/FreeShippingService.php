@@ -7,16 +7,21 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
+/**
+ * Vergleicht den Warenwert des Warenkorbs mit der Versandkostenfrei-Schwelle, umgerechnet in die
+ * Währung des Besuchers, und sagt, wie viel noch fehlt.
+ *
+ * Nicht `final`, weil die Tests des Indikator-Subscribers ihn als Test-Double ersetzen.
+ */
 class FreeShippingService
 {
     public function calculate(Cart $cart, SalesChannelContext $context, float $threshold): FreeShippingStatus
     {
-        // Positions-Summe (Warenwert ohne Versand) — getPositionPrice() statt getTotalPrice(),
-        // weil sonst der Versand-Schwellenwert sich selbst kompensieren würde.
-        // Hinweis: In einem netto-anzeigenden Kanal (B2B) ist dieser Wert netto; der Schwellenwert
-        // ist als Brutto in Shop-Standardwährung konfiguriert. Für Brutto-Kanäle (B2C-Regelfall)
-        // stimmt der Vergleich; die volle Steuer-State-Umrechnung ist eine bewusste Produktentscheidung.
-        // Der Indikator ist ein konfigurierter Marketing-Hinweis, kein Abgleich mit realen Lieferkosten.
+        // Der Warenwert ohne Versand: Mit getTotalPrice() zählten die Versandkosten selbst zur
+        // Schwelle, die sie aufheben sollen.
+        // In einem Netto-Kanal (B2B) ist dieser Wert netto, die Schwelle aber brutto
+        // eingestellt. Umgerechnet wird trotzdem nicht: Der Indikator ist ein Werbehinweis und
+        // kein Abgleich mit den echten Versandkosten, und im Brutto-Kanal stimmt der Vergleich.
         $cartPositionPrice = $cart->getPrice()->getPositionPrice();
 
         // Schwelle in die aktive Kontext-Währung umrechnen (Standardwährung: Faktor 1,0),

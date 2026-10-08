@@ -37,7 +37,7 @@
     {% if page.extensions.rcShippingEstimate is defined %}
         {% block page_checkout_cart_rc_shipping_estimate %}
             {% set rcShippingEstimate = page.extensions.rcShippingEstimate %}
-            {% sw_include '@Storefront/storefront/component/rc-checkout/shipping-estimate.html.twig' %}
+            {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/shipping-estimate.html.twig' %}
         {% endblock %}
     {% endif %}
 {% endblock %}

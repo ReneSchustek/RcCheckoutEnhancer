@@ -19,8 +19,8 @@ final class FreeShippingThresholdProviderTest extends TestCase
 {
     /**
      * Was: Die Regel nennt 357, die Einstellung 500.
-     * Warum: **Der Kern.** Genau diese Lage lag am 2026-08-04 im Shop vor, und angezeigt
-     *        wurde die falsche Zahl.
+     * Warum: Die Versandkostenfreiheit hängt an der Regel. Zeigte der Hinweis die Einstellung,
+     *        nennte er eine Zahl, die im Shop nicht gilt.
      */
     public function testTheRuleBeatsTheSetting(): void
     {

@@ -33,6 +33,11 @@ use Shopware\Storefront\Page\Checkout\Offcanvas\OffcanvasCartPage;
 use Shopware\Storefront\Page\Checkout\Offcanvas\OffcanvasCartPageLoadedEvent;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Wann der Hinweis zur Versandkostenfreiheit im Warenkorb und in der Leiste erscheint und wann
+ * er schweigt: abgeschaltet, ohne Betrag, unerreichbarer Lieferort, nicht lieferbarer Warenkorb
+ * oder erreichte Schwelle bei trotzdem berechneten Versandkosten.
+ */
 final class FreeShippingThresholdSubscriberTest extends TestCase
 {
     public function testGetSubscribedEventsIncludesBothCartEvents(): void
@@ -82,11 +87,10 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
     /**
      * Der Fall, für den es die zweite Prüfung gibt.
      *
-     * Bis 1.5.3 leitete der Hinweis seine Zusage allein aus den Verfügbarkeits-Regeln ab. Die
-     * Gewichtsgrenze steht aber in den Preisbändern: Oberhalb des obersten Bands bleibt eine
-     * Versandart *verfügbar* und scheitert erst am fehlenden Preis. Der Shop versprach dort
-     * kostenlosen Versand für einen Warenkorb, den er gar nicht ausliefert — an echten
-     * Versanddaten mit 530 kg gemessen.
+     * Die Verfügbarkeits-Regeln allein reichen für die Zusage nicht. Die Gewichtsgrenze steht in
+     * den Preisbändern: Oberhalb des obersten Bands bleibt eine Versandart *verfügbar* und
+     * scheitert erst am fehlenden Preis. Der Shop verspräche dort kostenlosen Versand für einen
+     * Warenkorb, den er gar nicht ausliefert; an echten Versanddaten mit 530 kg gemessen.
      */
     public function testOnCartPageStaysSilentWhenTheCartCannotBeShipped(): void
     {
@@ -178,17 +182,14 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
     }
 
     /**
-     * Gibt die Einstellung keinen brauchbaren Betrag her, rechnet der Indikator gegen
-     * seinen eingebauten Rückfall — er hört nicht auf zu werben, nur weil im Admin
-     * nichts steht.
+     * Was: Weder Regel noch Einstellung nennen einen Betrag.
+     * Warum: Die Vertrauensleiste streicht dann ihre Zeile. Rechnete der Hinweis gegen einen
+     *        angenommenen Betrag, versprächen zwei Stellen derselben Seite Verschiedenes.
      */
-    public function testOnCartPageUsesDefaultThresholdWhenNoneConfigured(): void
+    public function testWithoutAnyThresholdTheIndicatorStaysSilent(): void
     {
         $service = $this->createMock(FreeShippingService::class);
-        $service->expects($this->once())
-            ->method('calculate')
-            ->with($this->anything(), $this->anything(), 50.0)
-            ->willReturn(new FreeShippingStatus(50.0, 50.0, false, 'EUR'));
+        $service->expects($this->never())->method('calculate');
 
         $subscriber = new FreeShippingThresholdSubscriber(
             $this->configService(threshold: null),
@@ -200,16 +201,15 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
 
         $subscriber->onCartPageLoaded($event);
 
-        self::assertTrue($event->getPage()->hasExtension('rcFreeShipping'));
+        self::assertFalse($event->getPage()->hasExtension('rcFreeShipping'));
     }
 
     /**
      * Was: Die Schwelle ist erreicht, der Warenkorb trägt aber Versandkosten.
-     * Warum: **Der Kern.** An einem Shop mit echten Versanddaten stand bei 530 kg „Glückwunsch —
-     *        versandkostenfrei" über einer Zusammenfassung, die 8,93 € berechnete. Die
-     *        versandkostenfreie Versandart war für das Gewicht gesperrt; geliefert hätte ein
-     *        Paketdienst zum Normaltarif. Der Hinweis rechnete nur Warenwert gegen Schwelle
-     *        und wusste davon nichts.
+     * Warum: An einem Shop mit echten Versanddaten stünde sonst bei 530 kg „Glückwunsch —
+     *        versandkostenfrei" über einer Zusammenfassung, die 8,93 € berechnet. Die
+     *        versandkostenfreie Versandart ist für das Gewicht gesperrt, geliefert hätte ein
+     *        Paketdienst zum Normaltarif. Warenwert gegen Schwelle allein weiß davon nichts.
      * Erwartet: gar keine Zusage — auch kein „noch X € fehlen", die Schwelle ist ja
      *        überschritten.
      */
@@ -258,7 +258,7 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
     }
 
     /**
-     * Die Schwelle ist **nicht** erreicht und der Versand kostet etwas — der Normalfall.
+     * Die Schwelle ist nicht erreicht und der Versand kostet etwas, der Normalfall.
      * „Noch X € bis zur versandkostenfreien Lieferung" ist genau dann richtig und muss
      * stehen bleiben; der Riegel darf nur die erreichte Zusage treffen.
      */
@@ -339,8 +339,38 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
     }
 
     /**
-     * Die Erreichbarkeit sagt „lässt sich nicht ablesen", also gilt der Hinweis — das ist
-     * genau das Verhalten von vor 1.3.0, gegen das die Tests hier geschrieben wurden.
+     * Was: Der Lieferort liegt außerhalb der Versandkostenfreiheit.
+     * Warum: Sonst stünde die Zusage auch dem Gast in Österreich vor der Nase, für den sie nie
+     *        eintritt, während der Versandkostenrechner direkt darunter für dasselbe Land eine
+     *        Zahl größer null nennt. Zwei Aussagen an derselben Stelle widersprächen einander.
+     */
+    public function testOnCartPageStaysSilentWhenTheDestinationIsOutOfReach(): void
+    {
+        $service = $this->createMock(FreeShippingService::class);
+        $service->expects($this->never())->method('calculate');
+
+        $reachability = $this->createMock(FreeShippingReachability::class);
+        $reachability->method('reachableFrom')->willReturn(FreeShippingReach::outOfReach());
+
+        $subscriber = new FreeShippingThresholdSubscriber(
+            $this->configService(),
+            $service,
+            $reachability,
+            $this->estimateService(true),
+        );
+        $event = $this->createCartEvent();
+
+        $subscriber->onCartPageLoaded($event);
+
+        self::assertFalse(
+            $event->getPage()->hasExtension('rcFreeShipping'),
+            'Wo die Versandkostenfreiheit nicht gilt, darf sie nicht beworben werden.',
+        );
+    }
+
+    /**
+     * Vorgabe: Die Erreichbarkeit sagt „lässt sich nicht ablesen", also gilt der Hinweis. Den
+     * Lieferort außer Reichweite prüft ein eigener Test.
      */
     private function reachability(): FreeShippingReachability
     {

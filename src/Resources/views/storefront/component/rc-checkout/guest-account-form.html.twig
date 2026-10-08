@@ -1,0 +1,61 @@
+{#
+    Kennwort setzen, aus dem Gastkonto wird ein Kundenkonto. Erwartet `email`, die Adresse der
+    Bestellung; sie wird genannt, damit der Kunde weiß, unter welcher er sich künftig anmeldet.
+    Felder und Datenschutzhinweis wie im Formular des Kerns (`page/account/convert.html.twig`).
+#}
+{% block component_rc_checkout_guest_account_form %}
+    <div class="rc-guest-account">
+        <h2 class="h5">{{ 'rcCheckout.guestAccount.heading'|trans|sw_sanitize }}</h2>
+        <p>{{ 'rcCheckout.guestAccount.info'|trans({ '%email%': email })|sw_sanitize }}</p>
+
+        <form action="{{ path('frontend.rc-checkout.guest-account') }}"
+              method="post"
+              class="rc-guest-account__form"
+              data-form-handler="true">
+            {% set passwordDescription = '' %}
+            {% if config('core.loginRegistration.passwordMinLength') != 0 %}
+                {% set passwordDescription = 'account.personalPasswordDescription'|trans({
+                    '%minLength%': config('core.loginRegistration.passwordMinLength')
+                })|sw_sanitize %}
+            {% endif %}
+
+            {% sw_include '@Storefront/storefront/component/form/form-input.html.twig' with {
+                type: 'password',
+                label: 'account.personalPasswordLabel'|trans|sw_sanitize,
+                id: 'rcGuestAccountPassword',
+                name: 'password',
+                autocomplete: 'new-password',
+                description: passwordDescription,
+                validationRules: 'required,minLength',
+                minlength: config('core.loginRegistration.passwordMinLength')
+            } %}
+
+            {% if config('core.loginRegistration.requirePasswordConfirmation') %}
+                {% sw_include '@Storefront/storefront/component/form/form-input.html.twig' with {
+                    type: 'password',
+                    label: 'account.personalPasswordConfirmationLabel'|trans|sw_sanitize,
+                    id: 'rcGuestAccountPasswordConfirmation',
+                    name: 'passwordConfirmation',
+                    autocomplete: 'new-password',
+                    validationRules: 'required,confirmation'
+                } %}
+            {% endif %}
+
+            {# `raw` wie im Kern: `sw_sanitize` entfernte die data-Attribute der Knöpfe, und die
+               Fenster mit Datenschutz und AGB gingen nicht mehr auf. Eingesetzt werden nur Pfade
+               aus der Shop-Konfiguration, keine Eingaben. #}
+            <p class="rc-guest-account__privacy small">
+                {{ 'account.privacyNoticeTextModal'|trans({
+                    '%privacyModalTagOpen%': '<button type="button" class="btn btn-link-inline" aria-haspopup="dialog" data-ajax-modal="true" data-url="' ~ path('frontend.cms.page', { id: config('core.basicInformation.privacyPage') }) ~ '">',
+                    '%privacyModalTagClose%': '</button>',
+                    '%tosModalTagOpen%': '<button type="button" class="btn btn-link-inline" aria-haspopup="dialog" data-ajax-modal="true" data-url="' ~ path('frontend.cms.page', { id: config('core.basicInformation.tosPage') }) ~ '">',
+                    '%tosModalTagClose%': '</button>',
+                })|raw }}
+            </p>
+
+            <button type="submit" class="btn btn-primary">
+                {{ 'rcCheckout.guestAccount.button'|trans|sw_sanitize }}
+            </button>
+        </form>
+    </div>
+{% endblock %}

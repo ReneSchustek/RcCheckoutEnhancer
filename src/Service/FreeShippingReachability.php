@@ -14,21 +14,21 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
  * Beantwortet, ob Versandkostenfreiheit für den Lieferort dieses Besuchers überhaupt
  * erreichbar ist.
  *
- * Warum nicht einfach die Versandarten-Route fragen, so wie es der Versandkostenrechner
- * tut: Die Route sagt, was für den Warenkorb **jetzt** verfügbar ist. Ein Warenkorb
- * unter dem Schwellwert hat die versandkostenfreie Versandart naturgemäß nicht — genau
- * dann soll der Hinweis aber erscheinen. Die Route kann „fehlt noch am Betrag" nicht von
- * „falsches Land" unterscheiden, und der Unterschied ist der ganze Punkt.
+ * Die Versandarten-Route, die der Versandkostenrechner fragt, taugt dafür nicht: Sie sagt, was
+ * für den Warenkorb in diesem Moment verfügbar ist. Ein Warenkorb unter der Schwelle hat die
+ * versandkostenfreie Versandart naturgemäß nicht, und genau dann soll der Hinweis erscheinen.
+ * Die Route unterscheidet „fehlt noch am Betrag" nicht von „falsches Land".
  *
- * Gelesen wird deshalb die **Verfügbarkeitsregel** der eingestellten Versandarten, und
- * zwar nur ihre Land-Bedingungen. Das ist keine Nachbildung: Ändert der Betreiber die
- * Regel, ändert sich die Antwort mit. Nachgebaut wäre „wenn Land = DE" im Code — genau
- * das soll es nicht geben.
+ * Gelesen werden deshalb die Land-Bedingungen der Verfügbarkeitsregel der eingestellten
+ * Versandarten. Ändert der Betreiber die Regel, ändert sich die Antwort mit; ein „wenn Land = DE"
+ * im Code liefe ihr hinterher.
  *
- * Die Grenze dieses Vorgehens steht hier ausdrücklich: Verschachtelte Oder-Container
- * werden nicht ausgewertet. Im Zweifel — keine Land-Bedingung lesbar, keine Versandart
- * eingestellt — lautet die Antwort **ja**. Lieber ein Hinweis mit Bedingung im Text als
- * ein Shop, der still aufhört zu werben.
+ * Verschachtelte Oder-Container werden nicht ausgewertet. Im Zweifel, also ohne lesbare
+ * Land-Bedingung oder ohne eingestellte Versandart, lautet die Antwort „ja": Lieber ein Hinweis
+ * mit Bedingung im Text als ein Shop, der still aufhört zu werben.
+ *
+ * Nicht `final`, weil die Tests der Vertrauensleiste und des Indikators ihn als Test-Double
+ * ersetzen.
  */
 class FreeShippingReachability
 {
@@ -85,9 +85,8 @@ class FreeShippingReachability
     /**
      * Der Warenwert aus der Regel, ab dem versandkostenfrei geliefert wird.
      *
-     * Damit steht der Betrag nur noch an **einer** Stelle. Bis 1.4.0 stand er an dreien —
-     * in der Regel, in der Einstellung dieses Plugins und im Freitext der Vertrauensleiste —
-     * und am 2026-08-04 waren alle drei verschieden.
+     * Der Betrag steht nur in der Regel; eine zweite Stelle in der Einstellung oder im Freitext
+     * der Vertrauensleiste liefe früher oder später auseinander.
      *
      * Bei mehreren Versandarten gewinnt der niedrigste Betrag: Ab dem ist
      * Versandkostenfreiheit überhaupt erreichbar, und genau das sagt der Hinweis zu.
@@ -124,46 +123,14 @@ class FreeShippingReachability
     /**
      * Die Länder, in denen mindestens eine der eingestellten Versandarten greifen kann.
      *
-     * `null` heißt: nicht ermittelbar — dann trägt der Aufrufer die Unsicherheit, nicht
-     * dieser Dienst.
+     * `null` heißt: nicht ermittelbar. Dann trägt der Aufrufer die Unsicherheit.
      *
      * @return array<string, string>|null Kennung => angezeigter Name
      */
     private function allowedCountries(ShippingMethodCollection $methods, SalesChannelContext $context): ?array
     {
-        $countryIds = [];
-        $found = false;
-
-        foreach ($methods as $method) {
-            $rule = $method->getAvailabilityRule();
-            if ($rule === null) {
-                // Eine Versandart ohne Regel ist überall verfügbar — damit ist die Frage
-                // nach dem Land beantwortet, und zwar mit „überall".
-                return null;
-            }
-
-            foreach ($rule->getConditions() ?? [] as $condition) {
-                if ($condition->getType() !== self::CONDITION_COUNTRY) {
-                    continue;
-                }
-
-                $value = $condition->getValue() ?? [];
-                if (($value['operator'] ?? '=') !== '=' || !\is_array($value['countryIds'] ?? null)) {
-                    // Eine Ausschluss-Bedingung („alles außer diesen Ländern") lässt sich
-                    // ohne die Liste aller Länder nicht in eine Erlaubnis übersetzen.
-                    return null;
-                }
-
-                $found = true;
-                foreach ($value['countryIds'] as $countryId) {
-                    if (\is_string($countryId)) {
-                        $countryIds[] = $countryId;
-                    }
-                }
-            }
-        }
-
-        if (!$found) {
+        $countryIds = $this->collectCountryIds($methods);
+        if ($countryIds === null) {
             return null;
         }
 
@@ -178,5 +145,72 @@ class FreeShippingReachability
         }
 
         return $result;
+    }
+
+    /**
+     * `null` heißt „nicht in eine Erlaubnis übersetzbar" und hat drei Gründe: eine Versandart ohne
+     * Regel (die greift überall), eine Ausschluss-Bedingung, oder in keiner Regel eine
+     * Länder-Bedingung.
+     *
+     * @return array<int, string>|null
+     */
+    private function collectCountryIds(ShippingMethodCollection $methods): ?array
+    {
+        $countryIds = [];
+
+        foreach ($methods as $method) {
+            $rule = $method->getAvailabilityRule();
+            if ($rule === null) {
+                return null;
+            }
+
+            // Jede Versandart für sich: Eine ohne Länder-Bedingung liefert überall kostenlos. Ließe
+            // man sie aus, weil eine andere Länder nennt, schwiege der Hinweis in Ländern, in denen
+            // sie gilt.
+            $restricted = false;
+            foreach ($rule->getConditions() ?? [] as $condition) {
+                if ($condition->getType() !== self::CONDITION_COUNTRY) {
+                    continue;
+                }
+
+                $ids = $this->countryIdsOf($condition->getValue() ?? []);
+                if ($ids === null) {
+                    return null;
+                }
+
+                $restricted = true;
+                $countryIds = array_merge($countryIds, $ids);
+            }
+
+            if (!$restricted) {
+                return null;
+            }
+        }
+
+        return $countryIds === [] ? null : $countryIds;
+    }
+
+    /**
+     * `null` heißt: Diese Bedingung ist keine Erlaubnis. Eine Ausschluss-Bedingung („alles außer
+     * diesen Ländern") lässt sich ohne die Liste aller Länder nicht umdrehen.
+     *
+     * @param array<string, mixed> $value
+     *
+     * @return array<int, string>|null
+     */
+    private function countryIdsOf(array $value): ?array
+    {
+        if (($value['operator'] ?? '=') !== '=' || !\is_array($value['countryIds'] ?? null)) {
+            return null;
+        }
+
+        $ids = [];
+        foreach ($value['countryIds'] as $countryId) {
+            if (\is_string($countryId)) {
+                $ids[] = $countryId;
+            }
+        }
+
+        return $ids;
     }
 }

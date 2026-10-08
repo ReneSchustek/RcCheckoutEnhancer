@@ -14,28 +14,24 @@ use Shopware\Core\Framework\Uuid\Uuid;
  *
  * Ohne sie stünde der Versandkostenfrei-Indikator nach dem Update mit Vorgabewerten da:
  * Schwellwert 50 € statt des eingestellten, keine ausgewählten Versandarten, und damit
- * ein Hinweis, der in jedem Land erscheint. Auf dem Live-Shop ist das konfiguriert —
- * ein Update darf eine gepflegte Einstellung nicht stillschweigend zurücksetzen.
+ * ein Hinweis, der in jedem Land erscheint. Ein Update darf eine gepflegte Einstellung
+ * nicht stillschweigend zurücksetzen.
  *
- * Zwei Eigenschaften, auf die es ankommt:
+ * Übernommen wird je Verkaufskanal getrennt. Ein Wert in `system_config` gilt entweder für
+ * alle Kanäle (`sales_channel_id IS NULL`) oder für genau einen; würde beides
+ * zusammengelegt, erbte ein Kanal den Wert eines anderen.
  *
- * - **Je Verkaufskanal getrennt.** Ein Wert in `system_config` gilt entweder für alle
- *   Kanäle (`sales_channel_id IS NULL`) oder für genau einen. Beides wird einzeln
- *   übernommen; sonst erbte ein Kanal den Wert eines anderen.
- * - **Der alte Wert schlägt den Vorgabewert.** Ein vorhandener neuer Wert wird
- *   überschrieben — und das ist Absicht, nicht Nachlässigkeit. Shopware schreibt die
- *   `defaultValue` aus `config.xml` nämlich **vor** dem Lauf der Migrationen in die
- *   Datenbank. Ein Riegel „nur anlegen, nie überschreiben" fände deshalb immer einen
- *   Wert vor und täte nie etwas. An einem echten Shop gemessen: Der
- *   eingeschaltete Versandkostenrechner stand nach dem Update auf „aus", weil der
- *   Vorgabewert schon dastand.
+ * Der alte Wert überschreibt einen vorhandenen neuen. Shopware schreibt die `defaultValue`
+ * aus `config.xml` vor dem Lauf der Migrationen in die Datenbank, ein Riegel „nur anlegen,
+ * nie überschreiben" fände also immer einen Wert vor und täte nie etwas. An einem echten
+ * Shop stand so der eingeschaltete Versandkostenrechner nach dem Update auf „aus".
  *
  * Wiederholte Läufe sind dennoch unbedenklich: Shopware führt eine Migration genau
  * einmal aus und merkt sich das in der Tabelle `migration`. Wer nach dem Update im
  * Admin etwas ändert, behält seine Änderung.
  *
- * **Reihenfolge beim Ausrollen:** erst dieses Plugin aktualisieren, dann RcCheckout
- * deinstallieren. Andersherum sind die Quellwerte weg, bevor sie jemand liest.
+ * Beim Ausrollen erst dieses Plugin aktualisieren, dann RcCheckout deinstallieren.
+ * Andersherum sind die Quellwerte weg, bevor sie jemand liest.
  */
 class Migration1786406400MigrateRcCheckoutConfig extends MigrationStep
 {
@@ -43,8 +39,7 @@ class Migration1786406400MigrateRcCheckoutConfig extends MigrationStep
      * Alter Schlüssel => neuer Schlüssel.
      *
      * Die Namen ändern sich dort, wo der alte im zusammengeführten Plugin mehrdeutig
-     * wäre: `enabled` und `threshold` sagen nicht, welche der sechs Funktionen gemeint
-     * ist.
+     * wäre: `enabled` und `threshold` sagen nicht, welche Funktion gemeint ist.
      */
     private const KEY_MAP = [
         'RcCheckout.config.enabled' => 'RcCheckoutEnhancer.config.freeShippingIndicatorEnabled',

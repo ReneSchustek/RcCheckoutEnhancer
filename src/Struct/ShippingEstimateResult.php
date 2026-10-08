@@ -9,10 +9,10 @@ use Shopware\Core\Framework\Struct\Struct;
 /**
  * Das Ergebnis einer Versandkosten-Anfrage.
  *
- * Der Zustand wird ausdrücklich mitgeführt, statt ihn aus einer leeren Liste zu
- * erraten: „keine Versandart in dieses Land" und „die Berechnung ist gescheitert"
- * sehen sonst gleich aus, verlangen dem Kunden gegenüber aber gegensätzliche
- * Aussagen — das eine ist eine Auskunft, das andere eine Entschuldigung.
+ * Der Zustand wird mitgeführt, statt ihn aus einer leeren Liste zu erraten: „keine
+ * Versandart in dieses Land" und „die Berechnung ist gescheitert" sähen sonst gleich
+ * aus, verlangen dem Kunden gegenüber aber verschiedene Aussagen. Das eine ist eine
+ * Auskunft, das andere eine Entschuldigung.
  */
 class ShippingEstimateResult extends Struct
 {

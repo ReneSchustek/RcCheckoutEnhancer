@@ -1,0 +1,17 @@
+{% sw_extends '@Storefront/storefront/page/checkout/finish/finish-details.html.twig' %}
+
+{#
+    Meldet Shopware den Gast hier ab, erscheint das Angebot des Kerns nicht mehr; an seiner Stelle
+    steht dann das Kennwortfeld der Checkout-Erweiterung. Ohne Abmeldung bleibt der Kern-Block.
+#}
+{% block page_checkout_finish_create_account %}
+    {% if page.extensions.rcGuestAccount is defined %}
+        <div class="finish-create-account-container">
+            {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/guest-account-form.html.twig' with {
+                email: page.extensions.rcGuestAccount.email
+            } %}
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

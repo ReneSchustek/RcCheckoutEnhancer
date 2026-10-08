@@ -1,5 +1,13 @@
 {
     "rcCheckout": {
+        "onePage": {
+            "pathLegend": "How would you like to order?",
+            "pathGuest": "Guest order",
+            "pathLogin": "Existing customer",
+            "pathRegister": "New customer account",
+            "finalStepHint": "Once you have entered your address, you will see the final price including shipping and can place your order.",
+            "progressStep": "Checkout"
+        },
         "progressLabel": "Checkout progress",
         "progressStep1": "Cart",
         "progressStep2": "Login",
@@ -12,11 +20,35 @@
         "miniCartShipping": "Shipping",
         "miniCartTotal": "Total",
         "enquiryHint": "Unfortunately we cannot deliver this cart by our regular shipping route. Please contact us for an individual solution — we will get back to you as soon as possible.",
-        "enquiryHintPickupOnly": "For this cart we can only offer self-collection. If you would like it delivered, we will gladly prepare a quote.",
+        "enquiryHintPickupOnly": "This basket cannot be shipped. Please get in touch — we will arrange collection or delivery with you personally.",
         "enquiryButton": "Request a quote",
-        "enquiryButtonDelivery": "Request a delivery quote",
+        "enquiryButtonDelivery": "Get in touch",
         "enquiryCartTaken": "Your cart has been carried over. You can add to the text below before sending.",
-        "enquiryIntro": "Dear Sir or Madam,\n\nunfortunately I was told that this cart cannot be shipped as it stands. I would be glad to receive an individual quote.\n\nKind regards"
+        "enquiryIntro": "Dear Sir or Madam,\n\nunfortunately I was told that this cart cannot be shipped as it stands. I would be glad to receive an individual quote.\n\nKind regards",
+        "pickupHint": "You have chosen to collect your order yourself. Please make sure you are able to transport the goods. Your cart weighs {weight} in total and its longest item measures {length}.",
+        "pickupHintWeightOnly": "You have chosen to collect your order yourself. Please make sure you are able to transport the goods. Your cart weighs {weight} in total.",
+        "pickupHintLengthOnly": "You have chosen to collect your order yourself. Please make sure you are able to transport the goods. The longest item in your cart measures {length}.",
+        "pickupDialogTitle": "Please confirm collection in person",
+        "pickupDialogConfirm": "Understood — I will collect it myself",
+        "pickupDialogCancel": "Cancel — have it delivered instead",
+        "pickupReopen": "Read and confirm the notice",
+        "pickupDialogError": "The confirmation could not be saved. Please reload the page and try again.",
+        "pickupDocumentNote": "Collection in person: loading and transport of the goods are the buyer’s responsibility.",
+        "pickupDocumentConfirmedAt": "Confirmed on %date%.",
+        "phoneNumberHint": "Your phone number is still missing for this order. We need it for questions about the delivery — the carrier will call you before delivering.",
+        "phoneNumberLabel": "Phone number",
+        "phoneNumberButton": "Save number",
+        "phoneNumberSaved": "Thank you, your phone number has been saved.",
+        "phoneNumberInvalid": "That does not look like a phone number. Please enter it including the area code, for example 09568 8039770.",
+        "guestAccount": {
+            "heading": "Turn this order into a customer account",
+            "info": "Your details from this order are already here. Choose a password and from now on log in with %email% to see your orders in your account.",
+            "button": "Create customer account",
+            "created": "Your customer account has been created. Log in with %email% and your new password.",
+            "expired": "The offer to create a customer account has expired. You can register at any time.",
+            "emailTaken": "There is already a customer account for this email address. Please log in there; if you have forgotten the password, use \"Forgot password\".",
+            "invalidPassword": "The password is too short or the confirmation does not match. Please use at least %minLength% characters."
+        }
     },
     "rc-checkout": {
         "freeShipping": {
@@ -37,10 +69,29 @@
             "errorZipRequired": "Please enter a postcode.",
             "errorZipInvalid": "We cannot process this postcode."
         },
+        "shippingPlaceholder": {
+            "costs": "calculated once you enter your delivery address"
+        },
         "offcanvasShipping": {
+            "toggle": "Calculate shipping costs",
             "known": "Shipping to %country% %zip%: %price%",
-            "stale": "The cart has changed — shipping costs need to be recalculated.",
-            "link": "Calculate shipping costs"
+            "stale": "The cart has changed — shipping costs need to be recalculated."
+        },
+        "freightHint": {
+            "title": "Shipped by freight",
+            "reasonLength": "because of its length (%measure%)",
+            "reasonWeight": "because of its weight (%measure%)",
+            "range": "%country%: %min% – %max%",
+            "single": "%country%: %price%",
+            "byZip": "depending on the postcode",
+            "quantity": "for the minimum order of %quantity% pieces",
+            "toggle": "Calculate for my postcode",
+            "submit": "Calculate"
         }
+    },
+    "checkout": {
+        "rc-checkout-pickup-acknowledgement-required": "Please confirm the collection notice before completing your order.",
+        "rc-checkout-shipping-enquiry-required": "This basket cannot be ordered. Please get in touch using the note above.",
+        "rc-checkout-phone-number-required": "This order is missing a phone number. Please enter it above before completing your order."
     }
 }

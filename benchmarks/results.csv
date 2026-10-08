@@ -1,0 +1,20 @@
+datum;fassung;rechner;instanz;art;messung;ms;streuung
+2026-10-05;1.32.0;devbox;live-clone;seite;Warenkorb;841;HTTP 200
+2026-10-05;1.32.0;devbox;live-clone;seite;Warenkorb-Leiste;485;HTTP 200
+2026-10-05;1.32.0;devbox;live-clone;seite;Bestätigung;580;HTTP 200
+2026-10-05;1.32.0;devbox;live-clone;seite;Produktseite;876;HTTP 200
+2026-10-05;1.32.0;devbox;live-clone;seite;Speditionshinweis;699;HTTP 200
+2026-10-05;1.32.0;devbox;live-clone;dienst;FreightHintBench::benchUncached;367.594;±0.97%
+2026-10-05;1.32.0;devbox;live-clone;dienst;FreightHintBench::benchCached;5.560;±5.89%
+2026-10-05;1.32.0;devbox;live-clone;dienst;ShippingCheckBench::benchCanShipToContextLocation;46.639;±7.26%
+2026-10-05;1.32.0;devbox;live-clone;dienst;ShippingCheckBench::benchSingleCartRecalculation;8.479;±8.70%
+2026-10-05;1.33.0;devbox;live-clone;seite;Warenkorb;796;HTTP 200
+2026-10-05;1.33.0;devbox;live-clone;seite;Warenkorb-Leiste;431;HTTP 200
+2026-10-05;1.33.0;devbox;live-clone;seite;Bestätigung;587;HTTP 200
+2026-10-05;1.33.0;devbox;live-clone;seite;Produktseite;849;HTTP 200
+2026-10-05;1.33.0;devbox;live-clone;seite;Speditionshinweis;715;HTTP 200
+2026-10-05;1.33.0;devbox;live-clone;dienst;FreightHintBench::benchUncached;343.340;±3.75%
+2026-10-05;1.33.0;devbox;live-clone;dienst;FreightHintBench::benchCached;5.507;±3.06%
+2026-10-05;1.33.0;devbox;live-clone;dienst;ShippingCheckBench::benchCanShipWithPricedDelivery;0.001;±22.03%
+2026-10-05;1.33.0;devbox;live-clone;dienst;ShippingCheckBench::benchCanShipWithBlockedDelivery;51.028;±4.46%
+2026-10-05;1.33.0;devbox;live-clone;dienst;ShippingCheckBench::benchSingleCartRecalculation;8.286;±6.67%

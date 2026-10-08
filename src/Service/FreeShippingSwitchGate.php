@@ -6,10 +6,10 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
 /**
  * Entscheidet, ob der Versandkostenfrei-Indikator für den aktuellen Besucher
- * unterdrückt wird — die Brücke zu einem optionalen A/B-Test (RcAbTesting).
- * Bewusst ein eigenes, schmales Interface: der Subscriber bleibt so ohne harte
- * Abhängigkeit zu RcAbTesting und im Test mockbar. Die konkrete Anbindung an den
- * Schalter liegt in {@see RcAbTestingFreeShippingSwitchGate}.
+ * unterdrückt wird, also die Brücke zu einem optionalen A/B-Test (RcAbTesting).
+ * Über diese schmale Schnittstelle bleibt der Subscriber ohne harte Abhängigkeit zu
+ * RcAbTesting und im Test ersetzbar. Die Anbindung an den Schalter liegt in
+ * {@see RcAbTestingFreeShippingSwitchGate}.
  */
 interface FreeShippingSwitchGate
 {

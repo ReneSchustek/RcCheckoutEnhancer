@@ -4,14 +4,15 @@ import HttpClient from 'src/service/http-client.service';
 /**
  * Schickt Land und Postleitzahl an den Rechner und tauscht die Ergebnisliste aus.
  *
- * Der Warenkorb wird nach jeder Mengenänderung per AJAX neu geladen. Shopware
- * bindet JS-Plugins dabei erneut an — ohne `destroy()` sammeln sich die
- * Ereignis-Behandler auf, und ein Klick löst nach dem dritten Nachladen vier
- * Anfragen aus.
+ * Lädt Shopware den Warenkorb per AJAX neu, entsteht neues Markup mit einer neuen
+ * Instanz; ein erneutes `initializePlugins()` auf demselben Element ruft nur
+ * `update()` und bindet nichts doppelt. `destroy()` nimmt die Zuhörer ab, wenn
+ * eine Instanz ausdrücklich abgebaut wird.
  */
 export default class RcShippingEstimatePlugin extends Plugin {
     static options = {
         url: '',
+        errorText: '',
     };
 
     init() {
@@ -44,7 +45,7 @@ export default class RcShippingEstimatePlugin extends Plugin {
     /**
      * Die Eingabetaste im Postleitzahl-Feld löst dieselbe Abfrage aus wie die
      * Schaltfläche. Ohne das müsste, wer mit der Tastatur arbeitet, erst
-     * weitertabben — für eine Eingabe aus zwei Feldern ein unnötiger Umweg.
+     * weitertabben, für eine Eingabe aus zwei Feldern ein unnötiger Umweg.
      */
     _onKeydown(event) {
         if (event.key !== 'Enter') {
@@ -75,11 +76,28 @@ export default class RcShippingEstimatePlugin extends Plugin {
         data.append('countryIso', this._country.value);
         data.append('zipCode', zip);
 
-        this._client.post(this.options.url, data, (response) => {
-            this._output.innerHTML = response;
+        this._client.post(this.options.url, data, (response, request) => {
             this._setLoading(false);
+
+            // Eine Fehlerseite (Begrenzung, Serverfehler) gehört nicht in den Kasten; dort stünde
+            // sonst eine ganze Seite mitten im Warenkorb. Stattdessen der Satz, den der Rechner
+            // auch bei einer gescheiterten Berechnung zeigt.
+            if (!request || request.status >= 400 || request.status === 0) {
+                this._showError();
+
+                return;
+            }
+
+            this._output.innerHTML = response;
             window.PluginManager.initializePlugins();
         });
+    }
+
+    _showError() {
+        const message = document.createElement('p');
+        message.className = 'rc-shipping-estimate-failed alert alert-warning mb-0';
+        message.textContent = this.options.errorText;
+        this._output.replaceChildren(message);
     }
 
     _setLoading(loading) {

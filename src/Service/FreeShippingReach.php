@@ -8,10 +8,10 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
  * Die Antwort auf „gilt Versandkostenfreiheit für diesen Lieferort?" — mit drei
  * Ausgängen statt zwei.
  *
- * Der dritte, `unknown`, ist der wichtige: Er trennt „nein, hier nicht" von „das lässt
- * sich aus der Regel nicht ablesen". Aus einem Ja/Nein hätte der Aufrufer für beide
- * Fälle dieselbe Anzeige gewählt, und eine davon wäre falsch gewesen — entweder ein
- * Versprechen, das nicht gilt, oder ein Shop, der still aufhört zu werben.
+ * Der dritte, `unknown`, trennt „nein, hier nicht" von „das lässt sich aus der Regel nicht
+ * ablesen". Mit Ja/Nein wählte der Aufrufer für beide Fälle dieselbe Anzeige, und eine davon
+ * wäre falsch: entweder ein Versprechen, das nicht gilt, oder ein Shop, der still aufhört zu
+ * werben.
  */
 final class FreeShippingReach
 {

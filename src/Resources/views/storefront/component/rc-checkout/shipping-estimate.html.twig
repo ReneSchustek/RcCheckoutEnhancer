@@ -1,18 +1,25 @@
 {# Versandkostenrechner im Warenkorb: Land und Postleitzahl eingeben, Preise je
    Versandart erhalten.
 
-   Seit 1.9.0 auch für angemeldete Kunden — mit ihrer Kontoanschrift vorbelegt. Er ist
-   die einzige Stelle im Warenkorb, an der jemand erfährt, dass es für seine Sendung gar
-   keine Versandart gibt; ausgerechnet der Stammkunde mit der großen Bestellung sah das
-   vorher nicht.
+   Auch für angemeldete Kunden, mit ihrer Kontoanschrift vorbelegt: Nur hier erfährt
+   jemand im Warenkorb, dass es für seine Sendung gar keine Versandart gibt, und das trifft
+   gerade den Stammkunden mit der großen Bestellung.
 
-   Kein `<form>`-Element: Das Buy-Widget und der Warenkorb enthalten bereits
-   Formulare, und verschachtelte Formulare sind in HTML nicht erlaubt. Die
-   Absendung übernimmt das JS-Plugin. #}
+   Kein `<form>`-Element: Warenkorbseite und Leiste enthalten bereits Formulare, und
+   verschachtelte Formulare sind in HTML nicht erlaubt. Die Absendung übernimmt das
+   JS-Plugin. #}
+{# Die Spalten kommen von außen (`rcEstimateStacked`). In der Leiste, die beim Hineinlegen
+   aufgeht, stehen nur rund 315 Pixel zur Verfügung, die Bootstrap-Spalten richten sich aber
+   nach der Fensterbreite und nicht nach der Breite ihres Kastens. Auf einem breiten Bildschirm
+   stünde der Knopf sonst neben den Feldern und wäre zu schmal. Gestapelt heißt: jedes Feld
+   eine Zeile, der Knopf darunter. #}
+{% set rcEstimateColumn = rcEstimateStacked|default(false) ? 'col-12' : '' %}
+
 <div class="rc-shipping-estimate card mb-3"
      data-rc-shipping-estimate="true"
      data-rc-shipping-estimate-options='{{ {
-         "url": path("frontend.rc-checkout.shipping-estimate")
+         "url": path("frontend.rc-checkout.shipping-estimate"),
+         "errorText": "rc-checkout.shippingEstimate.failed"|trans
      }|json_encode }}'>
 
     <div class="card-body">
@@ -21,7 +28,7 @@
         </p>
 
         <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-5">
+            <div class="{{ rcEstimateColumn ?: 'col-12 col-md-5' }}">
                 <label class="form-label" for="rcShippingEstimateCountry">
                     {{ "rc-checkout.shippingEstimate.countryLabel"|trans }}
                 </label>
@@ -37,7 +44,7 @@
                 </select>
             </div>
 
-            <div class="col-12 col-md-4">
+            <div class="{{ rcEstimateColumn ?: 'col-12 col-md-4' }}">
                 {# Sichtbares Label statt Platzhalter: Ein Platzhalter verschwindet beim
                    Tippen und liefert Sprachausgaben keinen verlässlichen Namen. #}
                 <label class="form-label" for="rcShippingEstimateZip">
@@ -57,7 +64,7 @@
                 </span>
             </div>
 
-            <div class="col-12 col-md-3">
+            <div class="{{ rcEstimateColumn ?: 'col-12 col-md-3' }}">
                 <button type="button"
                         class="btn btn-primary w-100"
                         data-rc-shipping-estimate-submit>
@@ -67,7 +74,7 @@
         </div>
 
         <div class="rc-shipping-estimate-output mt-3" data-rc-shipping-estimate-output>
-            {% sw_include '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig' %}
+            {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/shipping-estimate-result.html.twig' %}
         </div>
     </div>
 </div>

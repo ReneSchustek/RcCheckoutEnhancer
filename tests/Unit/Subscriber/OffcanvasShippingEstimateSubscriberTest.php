@@ -7,6 +7,7 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Subscriber;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\CartFingerprint;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
+use Ruhrcoder\RcCheckoutEnhancer\Service\EstimateFormData;
 use Ruhrcoder\RcCheckoutEnhancer\Service\LastShippingEstimateStore;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\LastShippingEstimate;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\OffcanvasShippingEstimateSubscriber;
@@ -14,6 +15,10 @@ use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Framework\Struct\ArrayStruct;
+use Shopware\Core\System\Country\CountryCollection;
+use Shopware\Core\System\Country\CountryEntity;
+use Shopware\Core\System\Country\SalesChannel\AbstractCountryRoute;
+use Shopware\Core\System\Country\SalesChannel\CountryRouteResponse;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Checkout\Offcanvas\OffcanvasCartPage;
 use Shopware\Storefront\Page\Checkout\Offcanvas\OffcanvasCartPageLoadedEvent;
@@ -47,8 +52,8 @@ final class OffcanvasShippingEstimateSubscriberTest extends TestCase
 
     /**
      * Was: Eine Berechnung liegt vor, aber der Warenkorb hat sich geändert.
-     * Warum: **Der Kern des Entwurfs.** Ein veralteter Versandpreis ist schlechter als
-     *        gar keiner — er ist eine Zusage, die der Shop nicht hält. Neu gerechnet wird
+     * Warum: Ein veralteter Versandpreis ist schlechter als gar keiner, er ist eine Zusage,
+     *        die der Shop nicht hält. Neu gerechnet wird
      *        hier trotzdem nicht: Eine Berechnung kostet so viele Warenkorb-Durchläufe,
      *        wie es Versandarten gibt, und die Leiste geht oft auf.
      * Erwartet: Zustand „veraltet".
@@ -125,7 +130,17 @@ final class OffcanvasShippingEstimateSubscriberTest extends TestCase
         $config = $this->createMock(ConfigService::class);
         $config->method('isShippingEstimatorEnabled')->willReturn($enabled);
 
-        return new OffcanvasShippingEstimateSubscriber($config, $store, new CartFingerprint());
+        $country = new CountryEntity();
+        $country->setId('country-de');
+        $country->setUniqueIdentifier('country-de');
+
+        $antwort = $this->createMock(CountryRouteResponse::class);
+        $antwort->method('getCountries')->willReturn(new CountryCollection([$country]));
+
+        $route = $this->createMock(AbstractCountryRoute::class);
+        $route->method('load')->willReturn($antwort);
+
+        return new OffcanvasShippingEstimateSubscriber($config, $store, new CartFingerprint(), new EstimateFormData($route));
     }
 
     private function storeWith(?LastShippingEstimate $estimate): LastShippingEstimateStore
@@ -147,6 +162,19 @@ final class OffcanvasShippingEstimateSubscriberTest extends TestCase
         $cart->add(new LineItem('li-1', LineItem::PRODUCT_LINE_ITEM_TYPE, 'ref-1', $quantity));
 
         return $cart;
+    }
+
+    /**
+     * Was: Die Ereignisliste.
+     * Warum: Im Schnellansicht-Warenkorb ist der Rechner die einzige Stelle, an der die
+     *        Versandkosten vor dem Bestellvorgang auftauchen.
+     */
+    public function testItListensToTheOffcanvasCart(): void
+    {
+        self::assertSame(
+            [OffcanvasCartPageLoadedEvent::class => 'onOffcanvasLoaded'],
+            OffcanvasShippingEstimateSubscriber::getSubscribedEvents()
+        );
     }
 
     private function event(Cart $cart, bool $loggedIn = false): OffcanvasCartPageLoadedEvent

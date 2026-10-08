@@ -11,11 +11,11 @@ use Throwable;
  * Bindet den RcAbTesting-Frontend-Schalter `free_shipping_indicator` an. Der
  * Resolver ist optional (services.xml `on-invalid="null"`): fehlt RcAbTesting oder
  * läuft kein Schalter-Experiment, ist `$resolver` null und der Indikator wird nie
- * unterdrückt — RcCheckout funktioniert unverändert ohne RcAbTesting.
+ * unterdrückt; er läuft dann ohne A/B-Test.
  *
- * Der Schlüssel/Wert ist bewusst als Literal hinterlegt statt über eine
- * RcAbTesting-Konstante, damit ohne installiertes RcAbTesting keine dortige Klasse
- * geladen wird (der nullable Typ-Hint verlangt bei null keinen Autoload).
+ * Schlüssel und Wert stehen als Literal da und nicht als RcAbTesting-Konstante, damit
+ * ohne installiertes RcAbTesting keine dortige Klasse geladen wird. Der nullable
+ * Typ-Hint verlangt bei null keinen Autoload.
  */
 final class RcAbTestingFreeShippingSwitchGate implements FreeShippingSwitchGate
 {
@@ -36,8 +36,8 @@ final class RcAbTestingFreeShippingSwitchGate implements FreeShippingSwitchGate
         try {
             return $this->resolver->resolve(self::SWITCH_KEY) === self::VALUE_OFF;
         } catch (Throwable) {
-            // Fail-Soft: der Indikator ist optionaler Zusatz — ein Fehler im Fremd-Plugin-Resolver
-            // darf die Warenkorb-/Offcanvas-Seite nie mit einem 500 abreißen. Im Zweifel anzeigen.
+            // Ein Fehler im Fremd-Plugin darf Warenkorbseite und Leiste nicht mit einem 500
+            // abbrechen; der Indikator ist ein Zusatz. Im Zweifel wird er gezeigt.
             return false;
         }
     }

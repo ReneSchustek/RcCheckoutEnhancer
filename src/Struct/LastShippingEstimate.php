@@ -10,13 +10,12 @@ use Shopware\Core\Framework\Struct\Struct;
  * Die zuletzt abgefragte Versandkosten-Auskunft, so wie die Warenkorb-Seitenleiste
  * sie braucht.
  *
- * Mitgeführt wird ausdrücklich auch der Fingerabdruck des Warenkorbs, für den die
- * Auskunft gilt. Ohne ihn gäbe es nur zwei Möglichkeiten, und beide sind schlecht:
- * in der Leiste jedes Mal neu rechnen — eine Berechnung kostet so viele
- * Warenkorb-Durchläufe, wie es Versandarten gibt, und die Leiste geht oft auf —,
- * oder den gespeicherten Preis einfach anzeigen, womit nach jeder Mengenänderung
- * eine Zahl dasteht, die nicht mehr stimmt. Ein veralteter Versandpreis ist
- * schlechter als gar keiner: Er ist eine Zusage, die der Shop nicht hält.
+ * Mitgeführt wird auch der Fingerabdruck des Warenkorbs, für den die Auskunft gilt.
+ * Ohne ihn bliebe nur, in der Leiste jedes Mal neu zu rechnen, was je verfügbarer
+ * Versandart einen Warenkorb-Durchlauf kostet und bei einer oft geöffneten Leiste ins
+ * Gewicht fällt, oder den gespeicherten Preis einfach anzuzeigen, der nach jeder
+ * Mengenänderung nicht mehr stimmt. Ein veralteter Versandpreis ist schlechter als gar
+ * keiner, weil er eine Zusage ist, die der Shop nicht hält.
  */
 final class LastShippingEstimate extends Struct
 {

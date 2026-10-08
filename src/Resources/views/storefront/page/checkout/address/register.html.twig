@@ -1,0 +1,18 @@
+{% sw_extends '@Storefront/storefront/page/checkout/address/register.html.twig' %}
+
+{# Im einseitigen Checkout setzen die drei Knöpfe oben dieses Häkchen und blenden es aus. Es
+   bleibt im Formular, weil der Kern an ihm erkennt, ob er ein Konto anlegt. Ohne die Knöpfe hat
+   die Hülle keine Wirkung. #}
+{% block page_checkout_register_personal_guest %}
+    <div class="rc-checkout-path__account-toggle" data-rc-checkout-path-account-toggle>
+        {{ parent() }}
+    </div>
+{% endblock %}
+
+{# Im einseitigen Checkout steht „Weiter" unter Versandart, Zahlart und Summen; das Skript blendet
+   diesen Knopf dann aus. Ohne Skript und im geführten Checkout bleibt er, wo er ist. #}
+{% block component_account_register_submit %}
+    <div data-rc-checkout-path-form-submit>
+        {{ parent() }}
+    </div>
+{% endblock %}

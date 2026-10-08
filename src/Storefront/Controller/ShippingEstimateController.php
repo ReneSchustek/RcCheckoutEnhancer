@@ -22,10 +22,10 @@ use Symfony\Component\Routing\Attribute\Route;
  * Nimmt Land und Postleitzahl entgegen und gibt die Versandkosten je Versandart
  * als gerendertes Teilstück zurück.
  *
- * Der Endpunkt ist ohne Anmeldung erreichbar und löst pro Aufruf so viele
- * Warenkorb-Berechnungen aus, wie es Versandarten gibt. Ohne Begrenzung wäre das
- * eine offene Einladung, den Shop mit einer Schleife lahmzulegen — deshalb der
- * Rate-Limiter und die harte Längengrenze auf der Postleitzahl.
+ * Der Endpunkt ist ohne Anmeldung erreichbar und löst je Aufruf eine
+ * Warenkorb-Berechnung je verfügbarer Versandart aus. Ohne Begrenzung ließe sich der
+ * Shop mit einer Schleife lahmlegen; deshalb der Rate-Limiter und die harte
+ * Längengrenze auf der Postleitzahl.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class ShippingEstimateController extends StorefrontController
@@ -77,13 +77,28 @@ class ShippingEstimateController extends StorefrontController
         $result = $this->estimateService->estimate($cart, $context, $countryIso, $zipCode);
 
         // Zusammen mit dem Fingerabdruck des Warenkorbs, für den sie gilt. Die
-        // Seitenleiste zeigt die Auskunft nur, solange er stimmt — sonst stünde dort
+        // Seitenleiste zeigt die Auskunft nur, solange er stimmt; sonst stünde dort
         // nach der nächsten Mengenänderung eine Zahl, die der Shop nicht hält.
-        $this->lastEstimateStore->remember($result, $this->cartFingerprint->of($cart));
+        $this->lastEstimateStore->remember($result, $this->cartFingerprint->of($cart), $this->notShipping($context));
 
         return $this->renderStorefront(
             '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
             ['rcEstimate' => $result],
         );
+    }
+
+    /**
+     * Versandarten, die keine Lieferung sind: Abholung und Platzhalter. Die Leiste nennt sie nicht.
+     *
+     * @return list<string>
+     */
+    private function notShipping(SalesChannelContext $context): array
+    {
+        $salesChannelId = $context->getSalesChannelId();
+
+        return array_values(array_filter([
+            ...$this->configService->getNonDeliveryMethodIds($salesChannelId),
+            $this->configService->getShippingPlaceholderMethodId($salesChannelId),
+        ]));
     }
 }

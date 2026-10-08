@@ -6,6 +6,7 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Subscriber;
 
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
+use Ruhrcoder\RcCheckoutEnhancer\Service\EstimateFormData;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEstimateSubscriber;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
@@ -23,9 +24,8 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Die Bedingungen, unter denen der Versandkostenrechner überhaupt auf die Seite kommt.
  *
- * Bis 1.5.0 lief dieser Einstiegspunkt nur im Smoke-Test gegen echte Anfragen. Das prüft,
- * **dass** er funktioniert, aber nicht, **warum** er in den drei Fällen schweigt — und
- * genau die sind es, die beim nächsten Umbau kippen.
+ * Ein Smoke-Test gegen echte Anfragen prüft, dass der Einstiegspunkt funktioniert, aber nicht,
+ * warum er in den drei Fällen schweigt. Gerade diese Fälle kippen beim nächsten Umbau.
  */
 final class ShippingEstimateSubscriberTest extends TestCase
 {
@@ -55,13 +55,11 @@ final class ShippingEstimateSubscriberTest extends TestCase
 
     /**
      * Was: Ein angemeldeter Kunde sieht den Rechner ebenfalls.
-     * Warum: **Bewusste Umkehr einer früheren Entscheidung.** Bis 1.8.1 blieb er Gästen
-     *        vorbehalten — wer angemeldet ist, habe seine Adresse im Konto, und eine zweite
-     *        Zahl daneben wäre irreführend. Das galt, solange der Bestellvorgang immer zu
-     *        einem Ergebnis führte. Seit belegt ist, dass er in eine Sackgasse laufen kann,
-     *        ist der Rechner die einzige Stelle im Warenkorb, an der jemand erfährt, dass es
-     *        für seine Sendung gar keine Versandart gibt — und ausgerechnet der Stammkunde
-     *        mit der großen Bestellung sah das nicht.
+     * Warum: Naheliegend wäre, ihn Gästen vorzubehalten, weil Angemeldete ihre Adresse im
+     *        Konto haben. Der Bestellvorgang kann aber in eine Sackgasse laufen, und der Rechner
+     *        ist die einzige Stelle im Warenkorb, an der jemand erfährt, dass es für seine
+     *        Sendung gar keine Versandart gibt. Ausgerechnet der Stammkunde mit der großen
+     *        Bestellung sähe das sonst nicht.
      */
     public function testSignedInCustomersSeeTheEstimatorAsWell(): void
     {
@@ -97,7 +95,20 @@ final class ShippingEstimateSubscriberTest extends TestCase
         $route = $this->createMock(AbstractCountryRoute::class);
         $route->method('load')->willReturn($response);
 
-        return new ShippingEstimateSubscriber($config, $route);
+        return new ShippingEstimateSubscriber($config, new EstimateFormData($route));
+    }
+
+    /**
+     * Was: Die Ereignisliste.
+     * Warum: Der Versandkostenrechner hängt an der Warenkorbseite. Ein falscher Name lässt ihn
+     *        still verschwinden.
+     */
+    public function testItListensToTheCartPage(): void
+    {
+        self::assertSame(
+            [CheckoutCartPageLoadedEvent::class => 'onCartPageLoaded'],
+            ShippingEstimateSubscriber::getSubscribedEvents()
+        );
     }
 
     private function event(bool $loggedIn = false, bool $empty = false): CheckoutCartPageLoadedEvent

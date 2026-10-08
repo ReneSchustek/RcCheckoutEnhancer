@@ -59,15 +59,10 @@
         font-weight: 600;
         margin-bottom: 4px;
         background: var(--bs-gray-300, #dee2e6);
-        // gray-700 statt gray-600 — gemessen, nicht geschätzt.
-        //
-        // Mit Bootstraps Vorgabewerten sah gray-600 auf gray-300 mit 3,60:1 schon knapp aus.
-        // Mit den Werten des Trummer-Themes (gray-600 = #798490, gray-300 = #bcc1c7) sind es
-        // **2,10:1** — WCAG 1.4.3 verlangt bei 13,6 px fett 4,5:1. Der noch nicht erreichte
-        // Schritt war damit kaum lesbar. gray-700 kommt dort auf 4,51:1.
-        //
-        // Die Lehre: Ein Kontrastpaar aus zwei Theme-Variablen ist keine Zusage. Beide können
-        // sich unabhängig ändern, und niemand misst danach nach.
+        // gray-700 statt gray-600: WCAG 1.4.3 verlangt bei 13,6 px fett 4,5:1. Mit den Werten
+        // des Shop-Themes (gray-600 = #798490, gray-300 = #bcc1c7) kommt gray-600 nur auf
+        // 2,10:1, gray-700 auf 4,51:1. Ein Kontrastpaar aus zwei Theme-Variablen ist keine
+        // Zusage, weil sich beide unabhängig ändern können.
         color: var(--bs-gray-700, #495057);
 
         .is-done & {
@@ -84,7 +79,7 @@
     &__label {
         font-size: 0.75rem;
         // Ebenfalls gray-700: Auf Weiß erreicht der gray-600 des Themes (#798490) nur 3,81:1,
-        // nötig sind 4,5:1. Der gedämpfte Eindruck geht damit etwas verloren — lesbar schlägt
+        // nötig sind 4,5:1. Der gedämpfte Eindruck geht damit etwas verloren; lesbar schlägt
         // dezent. Die Unterscheidung der Schritte trägt ohnehin der Kreis, nicht die Schriftfarbe.
         color: var(--bs-gray-700, #495057);
 
@@ -141,10 +136,75 @@
 
 // === Confirm-Layout (Sidebar neben Hauptinhalt) ===
 
+// Die Bestätigungsseite gibt ihre Schmalfassung auf, solange die Leiste läuft.
+//
+// Der Kern zieht `.checkout-main` auf 8 von 12 Spalten mit 2 Spalten Versatz zusammen, richtig
+// für eine einspaltige Seite mit schmalem Satzspiegel. Mit der Warenkorb-Leiste wird diese
+// Spalte noch einmal geteilt: Auf einem 1920 breiten Bildschirm blieben dem Hauptbereich
+// 572 Pixel und den Karten für Zahlungs- und Versandart je 266, dort bräche schon „Zahlung bei
+// Erhalt der Ware" um, während links und rechts je rund 500 Pixel leer stünden.
+//
+// Nur mit Leiste: Wer sie abschaltet, bekommt den einspaltigen Bestellvorgang des Kerns samt
+// seiner Schmalfassung. Das gilt auch für die Vergleichsgruppe eines A/B-Tests.
+//
+// `:has()`, weil das Plugin Blöcke innerhalb von `.checkout-main` überschreibt und an das
+// Element selbst aus Twig nicht herankommt. Die drei Klassen davor braucht es, weil die Regel
+// des Kerns dieselbe Spezifität trägt; ohne sie passiert nichts.
+.is-active-route-frontend-checkout-confirm-page,
+.is-act-confirmpage {
+    .checkout .checkout-main:has(.rc-checkout-confirm-layout--with-sidebar) {
+        @media (min-width: 992px) {
+            width: 100%;
+            max-width: 100%;
+            margin-left: 0;
+        }
+    }
+
+    // Die untere Reihe rechnet wie die obere.
+    //
+    // Oberhalb teilt sich die volle Breite in Hauptbereich und Leiste (33,333 % plus
+    // Zwischenraum). Unterhalb stehen Zusatzangaben und Zusammenfassung im Raster des Kerns,
+    // 4 von 12 Spalten mit 2 Spalten Versatz. Ohne Angleichung ergäben zwei Rechnungen vier
+    // Blöcke mit vier verschiedenen linken Kanten.
+    //
+    // Die zwei Drittel: Die Rasterzeile ist um einen Zwischenraum breiter als der Behälter,
+    // und jede Spalte trägt einen halben davon als Innenabstand. Damit der Inhalt der unteren
+    // Spalten genau unter dem der oberen steht, verschiebt sich die Prozentzahl um zwei
+    // Drittel des Zwischenraums. Über `var(--bs-gutter-x)` gilt das für jedes Theme; der
+    // Demoshop rechnet mit 40 Pixeln, der Kern mit 24.
+    //
+    // Nur mit Leiste: Ohne sie bleibt die Bestätigungsseite einspaltig, und das Raster des
+    // Kerns ist dafür richtig.
+    .checkout .checkout-container:has(.rc-checkout-confirm-layout--with-sidebar) {
+        @media (min-width: 992px) {
+            .checkout-additional {
+                flex: 0 0 auto;
+                width: calc(66.6667% - (2 * var(--bs-gutter-x) / 3));
+                max-width: calc(66.6667% - (2 * var(--bs-gutter-x) / 3));
+                margin-left: 0;
+            }
+
+            .checkout-aside {
+                flex: 0 0 auto;
+                width: calc(33.3333% + (2 * var(--bs-gutter-x) / 3));
+                max-width: calc(33.3333% + (2 * var(--bs-gutter-x) / 3));
+                margin-left: 0;
+            }
+        }
+    }
+}
+
 .rc-checkout-confirm-layout--with-sidebar {
     display: flex;
     flex-wrap: wrap;
     gap: 1.5rem;
+
+    // Ab der Breite, ab der die Leiste neben dem Hauptbereich steht, übernimmt sie den
+    // Zwischenraum des Rasters. Nur so decken sich die Kanten mit der unteren Reihe. Darunter
+    // stehen die Blöcke untereinander, und der Abstand des Kerns bleibt.
+    @media (min-width: 992px) {
+        gap: var(--bs-gutter-x, 1.5rem);
+    }
 }
 
 .rc-checkout-confirm-layout__main {
@@ -161,11 +221,10 @@
     .rc-checkout-confirm-layout__sidebar {
         flex: 0 0 100%;
         max-width: 100%;
-        // Auf schmalen Bildschirmen VOR den Hauptbereich: Die Leiste ist die einzige Stelle,
-        // an der der Kunde seine Bestellung sieht — der Hauptbereich zeigt seine
-        // Positionstabelle nicht mehr, solange die Leiste läuft. Ohne diese Umkehrung
-        // stände der Warenkorb am Handy hinter AGB, Adressen, Zahlungs- und Versandart,
-        // also ganz unten.
+        // Auf schmalen Bildschirmen vor den Hauptbereich: Die Leiste ist die einzige Stelle,
+        // an der der Kunde seine Bestellung sieht, denn der Hauptbereich zeigt seine
+        // Positionstabelle nicht, solange die Leiste läuft. Ohne diese Umkehrung stünde der
+        // Warenkorb am Handy hinter AGB, Adressen, Zahlungs- und Versandart, also ganz unten.
         order: -1;
     }
 }
@@ -188,9 +247,9 @@
     }
 
     // Die Positionen kommen aus dem Core-Template (displayMode 'offcanvas'), damit die
-    // Positionsangaben anderer Plugins mitkommen — etwa die RAL-Farbe von RcColorPicker.
+    // Positionsangaben anderer Plugins mitkommen, etwa die RAL-Farbe von RcColorPicker.
     // Der Offcanvas-Warenkorb hat mehr Breite als diese Leiste, deshalb hier enger gefasst.
-    // Bewusst nur Größen und Abstände: Farben und Typografie bleiben beim Theme, sonst
+    // Nur Größen und Abstände: Farben und Typografie bleiben beim Theme, sonst
     // fällt die Leiste bei einem Theme-Wechsel aus dem Rahmen.
     &__items {
         .line-item {
@@ -213,7 +272,7 @@
             font-size: 0.875rem;
         }
 
-        // Lange Bezeichnungen brechen sonst mitten im Wort — aus „Vordachsystem" wurde in
+        // Lange Bezeichnungen brächen sonst mitten im Wort, aus „Vordachsystem" würde in
         // der schmalen Spalte „Vordachsys tem". `anywhere` erlaubt den Umbruch erst, wenn
         // eine Zeile sonst überliefe, und bevorzugt bis dahin die Wortgrenze.
         .line-item-label {
@@ -224,12 +283,9 @@
         // Der Offcanvas-Modus stellt Mengen-Auswahl und Produktnummer dar. Beides gehört
         // in den Warenkorb, nicht auf die Bestätigungsseite: Geändert wird dort nicht mehr.
         //
-        // **Die Klassennamen stammen aus dem Core-Template, nicht aus dem Gedächtnis.**
-        // Bis 1.8.0 standen hier `.line-item-quantity-select` und `.line-item-ordernumber`
-        // — beide gibt es in Shopware 6.7 nicht. Die Regeln zeigten ins Leere, und in der
-        // Leiste stand eine bedienbare Mengen-Auswahl, deren Zahl obendrein abgeschnitten
-        // war. Eine Regel auf einen Namen, den es nicht gibt, ist still wirkungslos und
-        // fällt nirgends auf; `MiniCartTemplateContractTest` nagelt die Namen deshalb fest.
+        // Die Klassennamen stammen aus dem Core-Template. Eine Regel auf einen Namen, den es
+        // nicht gibt, ist still wirkungslos, und in der Leiste stünde eine bedienbare
+        // Mengen-Auswahl; `MiniCartTemplateContractTest` hält die Namen deshalb fest.
         .line-item-quantity,
         .line-item-product-number {
             display: none;
@@ -241,9 +297,8 @@
 
 // Der Knopf des Versandkostenrechners trägt eine lange deutsche Beschriftung
 // („Versandkosten ermitteln"). Themes setzen auf `.btn` üblicherweise
-// `white-space: nowrap` mit `text-overflow: ellipsis` — in der schmalen Spalte
-// stand dort dann „Versandkosten ermitt…", also eine abgeschnittene Beschriftung.
-// Das ist kein Schönheitsfehler: Eine gekürzte Beschriftung nennt die Aktion
+// `white-space: nowrap` mit `text-overflow: ellipsis`, und in der schmalen Spalte
+// stünde dann „Versandkosten ermitt…". Eine gekürzte Beschriftung nennt die Aktion
 // nicht mehr vollständig.
 //
 // Umbruch statt Kürzung, und nur für diesen Knopf: Das Theme behält sein
@@ -257,4 +312,173 @@
     }
 }
 
+// === Speditionshinweis auf der Produktseite ===
 
+// Ein ruhiger Kasten unter „zzgl. Versandkosten": Er ist eine Auskunft, keine Warnung, deshalb
+// kein Alarmfarbton. Farben und Schrift bleiben beim Theme, hier stehen nur Abstände und Rahmen.
+.rc-freight-hint {
+    margin: .75rem 0 1rem;
+    padding: .75rem 1rem;
+    border: 1px solid var(--bs-border-color, #dee2e6);
+    border-radius: var(--bs-border-radius, .375rem);
+
+    p {
+        margin-bottom: .25rem;
+    }
+
+    &__title {
+        font-weight: 600;
+    }
+
+    &__price {
+        font-weight: 600;
+    }
+
+    &__note {
+        font-size: .875em;
+    }
+
+    &__toggle {
+        cursor: pointer;
+        margin-top: .5rem;
+        text-decoration: underline;
+    }
+
+    &__form {
+        margin-top: .5rem;
+    }
+
+    &__output:not(:empty) {
+        margin-top: .75rem;
+    }
+}
+
+// === Die Leiste, die beim Hineinlegen aufgeht ===
+
+// Der Rechner ist dort zugeklappt; die Zeile zum Aufklappen sieht aus wie ein Verweis, damit sie
+// neben der Schaltfläche zur Kasse nicht als zweiter Hauptknopf auftritt.
+.rc-offcanvas-estimate {
+    &__toggle {
+        cursor: pointer;
+        padding: .5rem 0;
+        text-decoration: underline;
+    }
+
+    &[open] > .rc-offcanvas-estimate__toggle {
+        margin-bottom: .5rem;
+    }
+}
+
+// Die Schaltfläche zur Kasse klebt am unteren Rand der Leiste. Artikel, Summe und
+// Versandhinweis füllen bei 800 px Fensterhöhe schon das ganze Fenster; ohne Kleben läge die
+// Schaltfläche darunter, und wer zur Kasse will, müsste in der Leiste scrollen.
+//
+// `position: sticky` bleibt innerhalb seines Elternkastens. Der Elternkasten wäre
+// `.offcanvas-cart-actions`; der steht selbst ganz unten, die Schaltfläche könnte also nicht
+// darüber hinaus nach oben wandern. `display: contents` nimmt diesen Kasten aus dem Aufbau, die
+// Schaltfläche richtet sich dann nach dem ganzen Warenkorb. Der Kern gibt
+// `.offcanvas-cart-actions` keine eigenen Stile, es geht also nichts verloren.
+//
+// Das Markup bleibt, wie es ist: PayPal und SwagCommercial hängen sich an die Blöcke um die
+// Schaltfläche, ein Umbau der Blöcke nähme ihnen den Platz. Gefunden wird sie über `:has()`;
+// ein Browser ohne `:has()` zeigt sie an ihrer gewohnten Stelle, nicht klebend, aber vorhanden.
+.offcanvas-cart .offcanvas-cart-actions {
+    display: contents;
+}
+
+.offcanvas-cart .offcanvas-cart-actions > .d-grid:has(> .begin-checkout-btn) {
+    position: sticky;
+    // Bis an den Rand des Fensters, nicht bis an den Innenabstand der Leiste: Sonst scheint in
+    // dem Streifen darunter der vorbeirollende Inhalt durch.
+    bottom: calc(-1 * var(--bs-offcanvas-padding-y, 1rem));
+    z-index: 2;
+    padding-top: .5rem;
+    padding-bottom: var(--bs-offcanvas-padding-y, 1rem);
+    background: var(--bs-offcanvas-bg, var(--bs-body-bg, #fff));
+    box-shadow: 0 -.5rem .5rem -.5rem rgba(0, 0, 0, .15);
+}
+
+
+
+// Der Textabsatz des Abhol-Hinweises trägt `mb-0`; der Abstand zur Versandartenliste darüber
+// kommt deshalb vom Kasten.
+.rc-pickup-hint {
+    margin-top: 1rem;
+}
+
+// Der Dialog, ohne die Modal-Mechanik von Bootstrap: Die bringt eigenes JavaScript und eigene
+// Zustände mit, und dieser Dialog kennt nur offen oder zu, entschieden
+// vom Server. `hidden` in der Vorlage nimmt ihn auch für Vorlesewerkzeuge aus dem Baum.
+.rc-pickup-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, .5);
+
+    &[hidden] {
+        display: none;
+    }
+
+    &__box {
+        max-width: 32rem;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 1.5rem;
+        border-radius: .5rem;
+        background: #fff;
+    }
+
+    &__title {
+        margin-bottom: .75rem;
+        font-size: 1.25rem;
+    }
+
+    &__text {
+        margin-bottom: 1.25rem;
+    }
+}
+
+// Solange der Dialog offen ist, soll die Seite dahinter nicht mitrollen.
+body.rc-pickup-dialog-open {
+    overflow: hidden;
+}
+
+// === Einseitiger Checkout: die drei Wege ===
+//
+// Untereinander in voller Breite, ab der kleinen Bildschirmbreite drei gleich breite Knöpfe.
+// Nebeneinander auf dem Telefon brächen „Neues Kundenkonto" und „Gastbestellung" in zwei Zeilen
+// um, und die Knöpfe wären unterschiedlich hoch.
+.rc-checkout-path__legend {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.rc-checkout-path__buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+
+    @include media-breakpoint-up(sm) {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.rc-checkout-path__choice {
+    white-space: normal;
+
+    // Gewählt sieht aus wie ein gedrückter Knopf. Nur die Farbe zu wechseln reichte nicht:
+    // `aria-pressed` hilft Vorlesern, Sehende brauchen einen Unterschied, der nicht an der
+    // Farbwahrnehmung hängt.
+    &.is-active {
+        color: var(--bs-btn-active-color);
+        background-color: var(--bs-btn-active-bg);
+        border-color: var(--bs-btn-active-border-color);
+        font-weight: 600;
+    }
+}

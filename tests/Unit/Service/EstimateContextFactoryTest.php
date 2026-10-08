@@ -12,6 +12,10 @@ use Shopware\Core\Checkout\Shipping\ShippingMethodEntity;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\Country\CountryEntity;
 
+/**
+ * Der abgeleitete Kontext für die Versandauskunft zeigt auf Zielland und Postleitzahl, trägt ein
+ * eigenes Token und lässt den Kontext des Besuchers unberührt.
+ */
 final class EstimateContextFactoryTest extends TestCase
 {
     public function testDerivedContextPointsAtTargetCountryAndZip(): void

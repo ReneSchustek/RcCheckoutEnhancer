@@ -7,6 +7,10 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingStatus;
 
+/**
+ * Die Struktur mit dem Stand zur Versandkostenfreiheit, die als Seitenerweiterung an die
+ * Vorlagen geht, samt ihrem Namen in der API.
+ */
 final class FreeShippingStatusTest extends TestCase
 {
     public function testConstructorAndGetters(): void

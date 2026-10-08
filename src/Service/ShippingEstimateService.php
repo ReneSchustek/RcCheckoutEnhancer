@@ -11,6 +11,7 @@ use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\CartBehavior;
 use Shopware\Core\Checkout\Cart\CartRuleLoader;
 use Shopware\Core\Checkout\Cart\Error\ErrorCollection;
+use Shopware\Core\Checkout\Shipping\Cart\Error\ShippingMethodBlockedError;
 use Shopware\Core\Checkout\Shipping\SalesChannel\AbstractShippingMethodRoute;
 use Shopware\Core\Checkout\Shipping\ShippingMethodEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -23,38 +24,40 @@ use Symfony\Component\HttpFoundation\Request;
 use Throwable;
 
 /**
- * Ermittelt, was der Versand des aktuellen Warenkorbs in ein bestimmtes Land kostet —
+ * Ermittelt, was der Versand des aktuellen Warenkorbs in ein bestimmtes Land kostet,
  * je verfügbarer Versandart.
  *
- * Der Kern der Sache: Es wird **nichts nachgebaut**. Die Berechnung läuft über
- * Shopwares eigene Warenkorb-Berechnung gegen einen Kontext mit der Zieladresse,
- * und welche Versandarten dorthin überhaupt verfügbar sind, beantwortet Shopwares
- * eigene Versandarten-Route mit `onlyAvailable`. Damit greifen Versandzonen,
- * PLZ-Regeln, Gewichts-, Preis-, Mengen- und Volumenstaffeln, regelbasierte Preise
- * und Gratisversand-Aktionen genau so, wie sie im Checkout greifen.
+ * Nachgebaut wird nichts. Die Berechnung läuft über Shopwares eigene
+ * Warenkorb-Berechnung gegen einen Kontext mit der Zieladresse, und welche
+ * Versandarten dorthin verfügbar sind, beantwortet die Versandarten-Route des Kerns mit
+ * `onlyAvailable`. Damit greifen Versandzonen, PLZ-Regeln, Gewichts-, Preis-, Mengen-
+ * und Volumenstaffeln, regelbasierte Preise und Gratisversand-Aktionen so wie im
+ * Checkout.
  *
- * Die Reihenfolge ist dabei nicht beliebig: Welche Regeln zutreffen, steht erst
- * **nach** der Berechnung fest. Deshalb erst rechnen, dann die Route fragen — wer
- * vorher filtert, verliert genau die Versandarten, die erst im Zielland greifen.
+ * Erst rechnen, dann die Route fragen: Welche Regeln zutreffen, steht erst nach der
+ * Berechnung fest, und wer vorher filtert, verliert die Versandarten, die erst im
+ * Zielland greifen.
  *
- * Warum nicht selbst über die Verfügbarkeits-Regel filtern: Eine eigene Prüfung
- * „Regel-Kennung in den zutreffenden Regeln" sieht identisch aus, ist aber eine
- * zweite Wahrheit neben der von Shopware. Läuft der Kern eines Tages anders — etwa
- * über ein Skript im `ShippingMethodRouteHook` —, weicht die Auskunft still vom
- * Checkout ab. Die Route ist die eine Quelle.
+ * Eine eigene Prüfung „Regel-Kennung in den zutreffenden Regeln" sähe gleich aus, wäre
+ * aber eine zweite Wahrheit neben der des Kerns. Läuft der Kern eines Tages anders,
+ * etwa über ein Skript im `ShippingMethodRouteHook`, wiche die Auskunft still vom
+ * Checkout ab.
+ *
+ * Nicht `final`, weil die Tests von Rechner-Controller und Indikator ihn als Test-Double
+ * ersetzen.
  */
 class ShippingEstimateService
 {
     /**
      * Ab wie vielen verfügbaren Versandarten abgebrochen wird.
      *
-     * Jede kostet eine eigene Warenkorb-Berechnung. Die Grenze greift erst **nach**
-     * der Verfügbarkeitsprüfung — nicht davor, denn ein Shop mit Gewichts- und
-     * Längenstaffeln hat schnell zweihundert Versandarten, von denen für einen
-     * konkreten Warenkorb nur eine Handvoll übrig bleibt. Eine Grenze davor hätte
-     * ganze Länder verschluckt.
+     * Jede kostet eine eigene Warenkorb-Berechnung; 25 liegt weit über der Handvoll, die
+     * für einen Warenkorb übrig bleibt, und deckelt eine Anfrage am öffentlichen Endpunkt
+     * auf 26 Berechnungen. Die Grenze greift erst nach der Verfügbarkeitsprüfung: Ein Shop
+     * mit Gewichts- und Längenstaffeln hat schnell zweihundert Versandarten, und eine
+     * Grenze davor verschluckte ganze Länder.
      */
-    private const MAX_BERECHNUNGEN = 25;
+    private const MAX_CALCULATIONS = 25;
 
     /**
      * @param EntityRepository<CountryCollection> $countryRepository
@@ -84,15 +87,7 @@ class ShippingEstimateService
                 return ShippingEstimateResult::withoutShippingMethod($countryIso, $zipCode);
             }
 
-            $available = $this->availableShippingMethods($cart, $context, $country, $zipCode);
-
-            $estimates = [];
-            foreach ($available as $shippingMethod) {
-                $estimate = $this->priceFor($cart, $context, $country, $zipCode, $shippingMethod);
-                if ($estimate !== null) {
-                    $estimates[] = $estimate;
-                }
-            }
+            $estimates = $this->estimatesFor($cart, $context, $country, $zipCode);
 
             return $estimates === []
                 ? ShippingEstimateResult::withoutShippingMethod($countryIso, $zipCode)
@@ -112,21 +107,19 @@ class ShippingEstimateService
     /**
      * Lässt sich dieser Warenkorb an den Ort ausliefern, der im Kontext steht?
      *
-     * Gedacht für Aussagen, die sonst ins Blaue gehen — allen voran den
-     * Versandkostenfrei-Hinweis. Der leitete seine Zusage bis 1.5.3 allein aus den
-     * Verfügbarkeits-Regeln ab und sah die Preisbänder nie an. Oberhalb des obersten
-     * Gewichtsbands ist eine Versandart aber weiterhin *verfügbar* und scheitert erst
-     * am fehlenden Preis; der Hinweis versprach dort kostenlosen Versand für einen
-     * Warenkorb, den der Shop gar nicht ausliefert. Am 2026-08-10 mit 530 kg gemessen.
+     * Gedacht für Aussagen, die sonst ins Blaue gehen, allen voran den
+     * Versandkostenfrei-Hinweis. Oberhalb des obersten Gewichtsbands ist eine Versandart
+     * weiterhin verfügbar und scheitert erst am fehlenden Preis; wer nur die
+     * Verfügbarkeits-Regeln liest, verspricht dort kostenlosen Versand für einen Warenkorb,
+     * den der Shop gar nicht ausliefert.
      *
-     * Die Prüfung baut nichts nach: Sie fragt dieselbe Route und rechnet mit derselben
-     * Kern-Berechnung wie die Auskunft weiter oben.
+     * Meist beantwortet der Warenkorb die Frage schon selbst, siehe `cartAlreadyAnswers()`.
+     * Sonst fragt die Prüfung dieselbe Route und rechnet mit derselben Kern-Berechnung wie die
+     * Auskunft weiter oben.
      *
-     * **Sie antwortet nur, wenn eine Postleitzahl bekannt ist.** Die Speditionstarife hängen an
-     * PLZ-Zonen; ohne Postleitzahl fielen Versandarten weg, die mit Adresse sehr wohl greifen,
-     * und der Hinweis verschwände zu Unrecht. Der Shop sagt an dieser Stelle selbst, dass er die
-     * Versandkosten erst mit der Lieferanschrift ermitteln kann. Ohne sie gibt es hier also
-     * keine Aussage, und „keine Aussage" heißt `true` — eine unklare Lage darf nicht
+     * Ohne Postleitzahl gibt es keine Aussage, und „keine Aussage" heißt `true`. Die
+     * Speditionstarife hängen an PLZ-Zonen; ohne Postleitzahl fielen Versandarten weg, die mit
+     * Adresse greifen, und der Hinweis verschwände zu Unrecht. Eine unklare Lage darf nicht
      * stillschweigend zur Verneinung werden.
      */
     public function canShipToContextLocation(Cart $cart, SalesChannelContext $context): bool
@@ -139,6 +132,10 @@ class ShippingEstimateService
         $zipCode = $context->getShippingLocation()->getAddress()?->getZipcode() ?? '';
 
         if ($zipCode === '') {
+            return true;
+        }
+
+        if ($this->cartAlreadyAnswers($cart)) {
             return true;
         }
 
@@ -164,12 +161,55 @@ class ShippingEstimateService
     }
 
     /**
+     * Der Warenkorb der Seite ist für genau den Lieferort im Kontext berechnet. Trägt er eine
+     * Lieferung und keinen Fehler zur Versandart, hat die gewählte Versandart dort einen Preis,
+     * und die Frage ist ohne Neuberechnung beantwortet. Das spart bei jedem Aufruf von Warenkorb
+     * und Leiste die eigene Rechnung (siehe `benchmarks/ShippingCheckBench.php`).
+     *
+     * Über dem obersten Gewichtsband behält der Kern die Lieferung, meldet aber
+     * `ShippingMethodBlockedError` („no shipping costs found"). Dann, und ohne Lieferung, wird wie
+     * bisher über alle verfügbaren Versandarten gerechnet; vielleicht hat eine andere einen Preis.
+     */
+    private function cartAlreadyAnswers(Cart $cart): bool
+    {
+        if ($cart->getDeliveries()->count() === 0) {
+            return false;
+        }
+
+        foreach ($cart->getErrors() as $error) {
+            if ($error instanceof ShippingMethodBlockedError) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Ein Preis je verfügbarer Versandart; Versandarten ohne Preis fallen weg.
+     *
+     * @return list<ShippingEstimate>
+     */
+    private function estimatesFor(Cart $cart, SalesChannelContext $context, CountryEntity $country, string $zipCode): array
+    {
+        $estimates = [];
+        foreach ($this->availableShippingMethods($cart, $context, $country, $zipCode) as $shippingMethod) {
+            $estimate = $this->priceFor($cart, $context, $country, $zipCode, $shippingMethod);
+            if ($estimate !== null) {
+                $estimates[] = $estimate;
+            }
+        }
+
+        return $estimates;
+    }
+
+    /**
      * Fragt Shopware, welche Versandarten in dieses Land für diesen Warenkorb
      * verfügbar sind.
      *
-     * Die Berechnung davor ist notwendig, nicht schmückend: Sie setzt die
-     * zutreffenden Regel-Kennungen auf dem Kontext, und genau die wertet die Route
-     * anschließend aus. Ohne sie stünden dort die Regeln des bisherigen Landes.
+     * Die Berechnung davor setzt die zutreffenden Regel-Kennungen auf dem Kontext, und
+     * die wertet die Route anschließend aus. Ohne sie stünden dort die Regeln des
+     * bisherigen Landes.
      *
      * @return list<ShippingMethodEntity>
      */
@@ -200,22 +240,20 @@ class ShippingEstimateService
 
         $available = array_values($methods->getElements());
 
-        if (\count($available) > self::MAX_BERECHNUNGEN) {
+        if (\count($available) > self::MAX_CALCULATIONS) {
             $this->logger->warning('Mehr verfügbare Versandarten als berechnet werden — Liste gekürzt', [
                 'countryIso' => $country->getIso(),
                 'available' => \count($available),
-                'shown' => self::MAX_BERECHNUNGEN,
+                'shown' => self::MAX_CALCULATIONS,
             ]);
 
-            $available = \array_slice($available, 0, self::MAX_BERECHNUNGEN);
+            $available = \array_slice($available, 0, self::MAX_CALCULATIONS);
         }
 
         return $available;
     }
 
     /**
-     * Rechnet den Preis einer einzelnen Versandart aus.
-     *
      * Eine eigene Berechnung je Versandart ist unvermeidbar: Die Versandkosten
      * hängen an der gewählten Versandart, und der Warenkorb trägt immer nur eine.
      */
@@ -248,15 +286,13 @@ class ShippingEstimateService
     }
 
     /**
-     * Lässt Shopware den Warenkorb im abgeleiteten Kontext durchrechnen.
-     *
      * Der Warenkorb wird geklont: Die Berechnung schreibt Lieferungen, Preise und
      * Erweiterungen in das übergebene Objekt. Ginge das Original hinein, stünde der
      * Kunde nach einer bloßen Preisabfrage mit fremden Versandkosten da.
      *
      * `true` sagt dem Lader ausdrücklich: nicht auf die Regeln des übergebenen
      * Warenkorbs vorfiltern. Sonst käme nur zum Zuge, was schon im bisherigen Land
-     * galt — und genau das soll sich hier ja ändern.
+     * galt.
      */
     private function calculate(Cart $cart, SalesChannelContext $derived): Cart
     {
@@ -266,15 +302,14 @@ class ShippingEstimateService
     }
 
     /**
-     * Eine Kopie des Warenkorbs — ohne seine Hinweise.
+     * Eine Kopie des Warenkorbs ohne seine Hinweise.
      *
-     * Ein schlichtes `clone` genügt hier nicht: `Struct` klont **tief**, und ein
-     * Warenkorb-Hinweis ist eine Exception. Die verbietet PHP zu klonen
-     * (`Exception::__clone` ist privat), also bricht der Klon mit „Trying to clone an
-     * uncloneable object" ab, sobald am Warenkorb auch nur ein Hinweis hängt — ein
-     * ausverkaufter Artikel, eine abgelaufene Aktion, eine Pflichtangabe aus einem
-     * anderen Plugin. Das ist der Normalfall, nicht die Ausnahme; die Auskunft
-     * scheiterte dann stillschweigend mit „Berechnung nicht möglich".
+     * Ein schlichtes `clone` genügt nicht: `Struct` klont tief, und ein Warenkorb-Hinweis
+     * ist eine Exception, die PHP nicht klonen lässt (`Exception::__clone` ist privat).
+     * Der Klon bräche mit „Trying to clone an uncloneable object" ab, sobald am Warenkorb
+     * auch nur ein Hinweis hängt, etwa ein ausverkaufter Artikel, eine abgelaufene Aktion
+     * oder eine Pflichtangabe aus einem anderen Plugin. Das ist der Normalfall, und die
+     * Auskunft scheiterte dann stillschweigend mit „Berechnung nicht möglich".
      *
      * Die Hinweise werden deshalb kurz abgehängt, kopiert wird ohne sie, und danach
      * hängen sie wieder am Original. Sie gehören ohnehin nicht in die Kopie: Sie

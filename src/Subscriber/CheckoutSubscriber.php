@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Subscriber;
 
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\CheckoutLayout;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider;
 use Shopware\Core\Framework\Struct\ArrayEntity;
@@ -15,21 +16,28 @@ use Shopware\Storefront\Page\Checkout\Finish\CheckoutFinishPageLoadedEvent;
 use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Hängt an jede Seite des Bestellvorgangs, was Fortschrittsanzeige, Vertrauenssignale,
+ * Mini-Warenkorb und Lieferzeit brauchen.
+ *
+ * Ob sich das Plugin für die Vergleichsgruppe eines A/B-Tests zurückhält, entscheidet die
+ * Vorlage über `ab_variant()`; hier stehen nur die Angaben und die Erlaubnis, die Funktion
+ * aufzurufen. So braucht der Subscriber keine Abhängigkeit zu RcAbTesting.
+ */
 final class CheckoutSubscriber implements EventSubscriberInterface
 {
     /**
-     * Die Twig-Erweiterung von RcAbTesting — als **Zeichenkette**, nicht als Klassenverweis.
+     * Die Twig-Erweiterung von RcAbTesting, als Zeichenkette und nicht als Klassenverweis.
      *
-     * Zwei Gründe: Ein PHP-Typ aus einem anderen Plugin ist für die statische Analyse nicht
-     * auffindbar (jedes Plugin wird im Gate für sich geprüft, mit eigenem `vendor`), und er
-     * würde Fremd-Plugins ausschließen, die ihn gar nicht kennen können. `class_exists()` nimmt
-     * eine Zeichenkette; für die Analyse ist das unsichtbar.
+     * Ein PHP-Typ aus einem anderen Plugin ist für die statische Analyse nicht auffindbar,
+     * weil jedes Plugin im Gate für sich mit eigenem `vendor` geprüft wird. `class_exists()`
+     * nimmt eine Zeichenkette, und die bleibt für die Analyse unsichtbar.
      *
-     * Geprüft wird das, weil die Vorlage sonst `ab_variant()` aufriefe — eine Funktion, die es
-     * ohne RcAbTesting nicht gibt. Twig bricht bei einer unbekannten Funktion schon beim
-     * Übersetzen ab, und dann steht der ganze Checkout.
+     * Geprüft wird, weil die Vorlage sonst `ab_variant()` aufriefe, eine Funktion, die es ohne
+     * RcAbTesting nicht gibt. Twig bricht bei einer unbekannten Funktion schon beim Übersetzen
+     * ab, und dann steht der ganze Checkout.
      */
-    private const AB_TWIG_EXTENSION = 'Ruhrcoder\\RcAbTesting\\Twig\\Extension\\RcAbTwigExtension';
+    private const AB_TWIG_EXTENSION = CheckoutLayout::AB_TWIG_EXTENSION;
 
     /**
      * Der Platzhalter, den der Betreiber in ein Vertrauenssignal schreiben kann, statt eine
@@ -58,21 +66,16 @@ final class CheckoutSubscriber implements EventSubscriberInterface
     {
         $salesChannelId = $event->getSalesChannelContext()->getSalesChannel()->getId();
 
-        $experimentKey = $this->configService->getAbExperimentKey($salesChannelId);
-
-        $step = match (true) {
-            $event instanceof CheckoutCartPageLoadedEvent => 1,
-            $event instanceof CheckoutRegisterPageLoadedEvent => 2,
-            $event instanceof CheckoutConfirmPageLoadedEvent => 3,
-            $event instanceof CheckoutFinishPageLoadedEvent => 4,
-        };
-
-        $labels = $this->configService->getProgressStepLabels($salesChannelId);
-
         $event->getPage()->addExtension('rcCheckoutEnhancer', new ArrayEntity([
-            'currentStep' => $step,
+            'currentStep' => match (true) {
+                $event instanceof CheckoutCartPageLoadedEvent => 1,
+                $event instanceof CheckoutRegisterPageLoadedEvent => 2,
+                $event instanceof CheckoutConfirmPageLoadedEvent => 3,
+                $event instanceof CheckoutFinishPageLoadedEvent => 4,
+            },
+            // Warenkorb, Anmeldung oder Adresse, Bestätigung, Abschluss.
             'totalSteps' => 4,
-            'stepLabels' => $labels,
+            'stepLabels' => $this->configService->getProgressStepLabels($salesChannelId),
             'progressBarEnabled' => $this->configService->isProgressBarEnabled($salesChannelId),
             'trustBadgesEnabled' => $this->configService->isTrustBadgesEnabled($salesChannelId),
             'trustBadges' => $this->fillThreshold(
@@ -82,21 +85,38 @@ final class CheckoutSubscriber implements EventSubscriberInterface
             'miniCartEnabled' => $this->configService->isMiniCartEnabled($salesChannelId),
             'deliveryTimeEnabled' => $this->configService->isDeliveryTimeEnabled($salesChannelId),
             'estimatedDeliveryTime' => $this->configService->getEstimatedDeliveryTime($salesChannelId),
-            // Für den A/B-Test: Die Vorlage entscheidet, ob sie sich zurückhält — hier stehen
-            // nur die Angaben dafür. `abActive` ist die Erlaubnis, `ab_variant()` überhaupt
-            // aufzurufen.
+            ...$this->abTestSettings($salesChannelId),
+        ]));
+    }
+
+    /**
+     * Die Angaben für den A/B-Test. Die Vorlage entscheidet, ob sie sich zurückhält; hier stehen
+     * nur die Angaben dafür.
+     *
+     * @return array<string, mixed>
+     */
+    private function abTestSettings(string $salesChannelId): array
+    {
+        $experimentKey = $this->configService->getAbExperimentKey($salesChannelId);
+        $checkoutLayout = $this->configService->getCheckoutLayout($salesChannelId);
+
+        return [
             'abExperimentKey' => $experimentKey,
             'abSuppressVariant' => $this->configService->getAbSuppressVariant($salesChannelId),
+            // Die Erlaubnis, `ab_variant()` überhaupt aufzurufen.
             'abActive' => $experimentKey !== '' && class_exists(self::AB_TWIG_EXTENSION),
-        ]));
+            'checkoutLayout' => $checkoutLayout,
+            // Wie bei `abActive`: die Erlaubnis, `ab_switch()` aufzurufen. Nur beim A/B-Test und nur,
+            // wenn es die Funktion gibt; sonst gilt in der Vorlage die geführte Darstellung.
+            'abSwitchAvailable' => $checkoutLayout === CheckoutLayout::AB_TEST && class_exists(self::AB_TWIG_EXTENSION),
+        ];
     }
 
     /**
      * Ersetzt den Platzhalter für den Versandkostenfrei-Betrag in den Vertrauenssignalen.
      *
-     * Bis 1.5.0 stand die Zahl dort als Freitext, während die Verfügbarkeitsregel des
-     * Shops eine andere verlangte. Wer lieber eine feste Zahl hinschreibt, kann das
-     * weiterhin tun — der Platzhalter ist ein Angebot, kein Zwang.
+     * Der Platzhalter nimmt den Betrag aus der Regel, damit keine zweite Zahl im Text
+     * auseinanderläuft. Eine feste Zahl im Text bleibt möglich.
      *
      * @param list<array{icon: string, text: string}> $badges
      *
@@ -119,22 +139,18 @@ final class CheckoutSubscriber implements EventSubscriberInterface
 
         $threshold = $this->freeShippingThreshold->thresholdFor($context);
         if ($threshold === null) {
-            // Kein Betrag ermittelbar — dann darf die Zeile nicht stehen bleiben. Bis 1.6.1
-            // ging sie unverändert an die Vorlage, und der Kunde las im Bestellvorgang
-            // wörtlich „Kostenloser Versand ab %freeShippingThreshold%". Ein Vertrauenssignal,
-            // das sich nicht füllen lässt, ist schlechter als keines: Es wirbt mit einer
-            // Zusage und zeigt an ihrer Stelle einen Platzhalter.
-            //
-            // Betroffen ist der Fall, dass weder die Verfügbarkeitsregel einer eingestellten
-            // Versandart noch die Einstellung einen brauchbaren Betrag hergibt.
+            // Weder Regel noch Einstellung geben einen Betrag her. Ohne die Zeile zu entfernen,
+            // läse der Kunde wörtlich „Kostenloser Versand ab %freeShippingThreshold%".
             return array_values(array_filter(
                 $badges,
                 static fn (array $badge): bool => !str_contains($badge['text'], self::THRESHOLD_PLACEHOLDER),
             ));
         }
 
+        // Die Schwelle steht in der Standardwährung. Umgerechnet wie im Versandkostenfrei-Hinweis,
+        // sonst nennten Leiste und Hinweis in Franken zwei verschiedene Beträge.
         $formatted = $this->currencyFormatter->formatCurrencyByLanguage(
-            $threshold,
+            round($threshold * $context->getCurrency()->getFactor(), 2),
             $context->getCurrency()->getIsoCode(),
             $context->getLanguageId(),
             $context->getContext(),

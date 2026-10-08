@@ -2,21 +2,23 @@
    Hinweis mit einer Schaltfläche, die den Warenkorb in das Kontaktformular überträgt.
 
    Kein Javascript: ein gewöhnliches Formular. Dieser Weg ist der letzte, der einem Kunden
-   bleibt, bevor er abbricht — er darf nicht daran scheitern, dass ein Skript klemmt. #}
+   bleibt, bevor er abbricht, und er darf nicht daran scheitern, dass ein Skript klemmt. #}
 {% set rcEnquiry = page.extensions.rcShippingEnquiry %}
 {% if rcEnquiry %}
     <div class="rc-shipping-enquiry alert alert-warning" role="status">
-        {# Bleibt die Abholung wählbar, wäre „wir können nicht liefern" falsch — es geht ja
-           etwas. Der eingestellte Text schlägt beide Vorgaben, wie bei der Vertrauenszeile. #}
+        {# Zwei Lagen, zwei Sätze: Bleibt gar keine Versandart übrig, ist es der allgemeine
+           Satz. Bleibt nur eine Nicht-Lieferart übrig, sagt der zweite, dass kein Versand
+           möglich ist und die Sache persönlich geklärt wird; bestellen lässt sich in diesem
+           Zustand nichts. Der eingestellte Text schlägt beide Vorgaben, wie bei der
+           Vertrauenszeile. #}
         <p class="rc-shipping-enquiry__hint">
             {{ rcEnquiry.hint ?: (rcEnquiry.pickupOnly ? 'rcCheckout.enquiryHintPickupOnly'|trans : 'rcCheckout.enquiryHint'|trans) }}
         </p>
 
         <form action="{{ path('frontend.rc-checkout.shipping-enquiry') }}" method="post">
-            {# Die Beschriftung muss sagen, wohin der Klick führt. Bleibt die Abholung
-               wählbar, ist „Angebot anfragen" zu unbestimmt — es könnte auch ein Angebot
-               für die Abholung sein. Gemeint ist die Lieferung, und genau die zögert der
-               Kunde an dieser Stelle heraus. #}
+            {# Die Beschriftung muss sagen, wohin der Klick führt. Im Fall „nur eine
+               Nicht-Lieferart übrig" ist weder „Angebot anfragen" noch „Lieferung anfragen"
+               richtig: Was ihn erwartet, ist ein Gespräch über beides. #}
             <button type="submit" class="btn btn-primary rc-shipping-enquiry__button">
                 {{ rcEnquiry.pickupOnly ? 'rcCheckout.enquiryButtonDelivery'|trans : 'rcCheckout.enquiryButton'|trans }}
             </button>

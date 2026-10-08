@@ -1,8 +1,12 @@
+includes:
+    - vendor/shopwarelabs/phpstan-shopware/rules.neon
+
 parameters:
     level: 8
     paths:
         - src
         - tests
+        - benchmarks
     excludePaths:
         - vendor
     # Optionale A/B-Integration: RcAbTesting ist keine harte Abhängigkeit
@@ -13,4 +17,9 @@ parameters:
         - phpstan-stubs/RcAbTesting.php
     bootstrapFiles:
         - vendor/autoload.php
-    ignoreErrors: []
+    ignoreErrors:
+        # In Tests gibt es keinen Aufrufer, aus dem sich ein Kontext ableiten ließe. Ein
+        # aufgebauter Nutzerkontext täuschte eine Abhängigkeit vor, die der Test nicht hat.
+        -
+            message: '#Do not use Shopware\\Core\\Framework\\Context::createDefaultContext#'
+            path: tests/*

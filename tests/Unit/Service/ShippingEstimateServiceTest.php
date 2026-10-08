@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Ruhrcoder\RcCheckoutEnhancer\Service\EstimateContextFactory;
@@ -18,12 +19,15 @@ use Shopware\Core\Checkout\Cart\Delivery\Struct\Delivery;
 use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryCollection;
 use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryDate;
 use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryPositionCollection;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\ShippingLocation;
 use Shopware\Core\Checkout\Cart\Error\GenericCartError;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
 use Shopware\Core\Checkout\Cart\RuleLoaderResult;
 use Shopware\Core\Checkout\Cart\Tax\Struct\CalculatedTaxCollection;
 use Shopware\Core\Checkout\Cart\Tax\Struct\TaxRuleCollection;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
+use Shopware\Core\Checkout\Shipping\Cart\Error\ShippingMethodBlockedError;
 use Shopware\Core\Checkout\Shipping\SalesChannel\AbstractShippingMethodRoute;
 use Shopware\Core\Checkout\Shipping\SalesChannel\ShippingMethodRouteResponse;
 use Shopware\Core\Checkout\Shipping\ShippingMethodCollection;
@@ -41,6 +45,11 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Stringable;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Die Versandauskunft für ein Zielland: je verfügbare Versandart ein Preis, gerechnet an einer
+ * Kopie, die den Warenkorb des Kunden nicht berührt, und ein Fehlerzustand statt einer Ausnahme.
+ * Dazu die Frage, ob sich der Warenkorb an den Lieferort des Kontexts liefern lässt.
+ */
 final class ShippingEstimateServiceTest extends TestCase
 {
     public function testEmptyCartYieldsNoShippingMethod(): void
@@ -56,11 +65,10 @@ final class ShippingEstimateServiceTest extends TestCase
     /**
      * Was: Ein Warenkorb, der einen Hinweis trägt — ein ausverkaufter Artikel, eine
      *      abgelaufene Aktion, eine Pflichtangabe aus einem anderen Plugin.
-     * Warum: **Der Befund vom 2026-08-04.** Die Berechnung kopierte den Warenkorb mit
-     *        einem schlichten `clone`. `Struct` klont tief, und ein Warenkorb-Hinweis ist
-     *        eine Exception — die verbietet PHP zu klonen. Der Rechner scheiterte damit
-     *        bei jedem Warenkorb mit Hinweis stillschweigend mit „Berechnung nicht
-     *        möglich", und Hinweise sind der Normalfall, nicht die Ausnahme.
+     * Warum: Ein schlichtes `clone` des Warenkorbs reicht nicht. `Struct` klont tief, und
+     *        ein Warenkorb-Hinweis ist eine Exception, die PHP nicht klonen lässt. Der
+     *        Rechner scheiterte dann bei jedem Warenkorb mit Hinweis stillschweigend mit
+     *        „Berechnung nicht möglich", und Hinweise sind der Normalfall.
      * Erwartet: Die Auskunft kommt trotzdem — und der Hinweis hängt hinterher
      *           unverändert am Original.
      */
@@ -350,6 +358,158 @@ final class ShippingEstimateServiceTest extends TestCase
     }
 
     /**
+     * Was: Ein leerer Warenkorb.
+     * Warum: Über nichts lässt sich nicht sagen, dass es unlieferbar sei. Die Prüfung hält
+     *        sich zurück, statt eine Zusage zu unterdrücken.
+     */
+    public function testAnEmptyCartIsAlwaysConsideredShippable(): void
+    {
+        $dienst = $this->service([$this->shippingMethod('Standard')], $this->findCountry('DE'));
+
+        self::assertTrue($dienst->canShipToContextLocation(new Cart('token'), SalesChannelContextBuilder::build()));
+    }
+
+    /**
+     * Was: Ein gefüllter Warenkorb, aber keine Postleitzahl im Kontext.
+     * Warum: Speditionstarife hängen an PLZ-Zonen. Ohne Postleitzahl fielen Versandarten weg,
+     *        die mit Anschrift sehr wohl greifen — die Antwort wäre falsch. Unklar heißt
+     *        deshalb `true`.
+     */
+    public function testWithoutAPostcodeTheAnswerStaysYes(): void
+    {
+        $dienst = $this->service([], $this->findCountry('DE'));
+
+        self::assertTrue($dienst->canShipToContextLocation($this->cart(), SalesChannelContextBuilder::build()));
+    }
+
+    /**
+     * Was: Mit Anschrift, und es bleibt eine Versandart mit Preis übrig.
+     * Warum: Der Normalfall — hier darf nichts unterdrückt werden.
+     */
+    public function testACartWithAnAvailableMethodCanBeShipped(): void
+    {
+        $dienst = $this->service([$this->shippingMethod('Spedition')], $this->findCountry('DE'), 12.90);
+
+        self::assertTrue($dienst->canShipToContextLocation($this->cart(), $this->contextWithAddress()));
+    }
+
+    /**
+     * Was: Mit Anschrift und drei Versandarten mit Preis wird zweimal gerechnet: einmal für die
+     *      Verfügbarkeitsregeln im Zielland, einmal für die erste Versandart mit Preis.
+     * Warum: Wächter der Geschwindigkeit. Die Prüfung läuft bei jedem Aufruf von Warenkorb und
+     *        Leiste mit, und jede Neuberechnung kostet dort messbar Zeit (siehe `benchmarks/`).
+     *        Schon die erste Versandart mit Preis beantwortet die Frage.
+     */
+    public function testTheCheckStopsAtTheFirstShippingMethodWithAPrice(): void
+    {
+        $cartRuleLoader = $this->cartRuleLoader(12.90);
+        $cartRuleLoader->expects(self::exactly(2))->method('loadByCart');
+
+        $dienst = new ShippingEstimateService(
+            $this->shippingMethodRoute([$this->shippingMethod('Paket'), $this->shippingMethod('Spedition'), $this->shippingMethod('Express')]),
+            $this->countryRepository($this->findCountry('DE')),
+            new EstimateContextFactory(),
+            $cartRuleLoader,
+            new NullLogger(),
+        );
+
+        self::assertTrue($dienst->canShipToContextLocation($this->cart(), $this->contextWithAddress()));
+    }
+
+    /**
+     * Was: Der Warenkorb trägt eine Lieferung ohne Versandart-Fehler.
+     * Warum: Wächter der Geschwindigkeit. Dann hat die gewählte Versandart am Lieferort einen
+     *        Preis; die Antwort steht im Warenkorb, und es wird weder geladen noch gerechnet.
+     */
+    public function testACartWithAPricedDeliveryAnswersWithoutRecalculating(): void
+    {
+        $cartRuleLoader = $this->cartRuleLoader(12.90);
+        $cartRuleLoader->expects(self::never())->method('loadByCart');
+        $route = $this->createMock(AbstractShippingMethodRoute::class);
+        $route->expects(self::never())->method('load');
+
+        $dienst = new ShippingEstimateService(
+            $route,
+            $this->countryRepository($this->findCountry('DE')),
+            new EstimateContextFactory(),
+            $cartRuleLoader,
+            new NullLogger(),
+        );
+
+        $context = $this->contextWithAddress();
+
+        self::assertTrue($dienst->canShipToContextLocation($this->cartWithDelivery($context), $context));
+    }
+
+    /**
+     * Was: Die gewählte Versandart ist gesperrt, etwa über dem obersten Gewichtsband, und keine
+     *      andere hat einen Preis.
+     * Warum: Der Kern behält die Lieferung und meldet nur den Fehler. Die Abkürzung darf das nicht
+     *        als lieferbar durchwinken; es gilt die volle Prüfung wie bisher.
+     */
+    public function testABlockedShippingMethodFallsBackToTheFullCheck(): void
+    {
+        $dienst = $this->service([], $this->findCountry('DE'));
+
+        $context = $this->contextWithAddress();
+        $cart = $this->cartWithDelivery($context);
+        $cart->addErrors(new ShippingMethodBlockedError(Uuid::randomHex(), 'Spedition', 'no shipping costs found'));
+
+        self::assertFalse($dienst->canShipToContextLocation($cart, $context));
+    }
+
+    /**
+     * Was: Mit Anschrift, und es bleibt keine Versandart übrig.
+     * Warum: So sieht ein Warenkorb über dem obersten Gewichtsband aus, gemessen mit 530 kg.
+     *        Der Shop darf dann nicht mit Versandkostenfreiheit werben, er liefert ihn gar nicht.
+     */
+    public function testACartWithoutAnyAvailableMethodCannotBeShipped(): void
+    {
+        $dienst = $this->service([], $this->findCountry('DE'));
+
+        self::assertFalse($dienst->canShipToContextLocation($this->cart(), $this->contextWithAddress()));
+    }
+
+    /**
+     * Was: Die Prüfung selbst fällt aus.
+     * Warum: Ein Aussetzer darf keine Zusage unterdrücken, die sonst richtig wäre — und er darf
+     *        die Seite nicht mitreißen.
+     */
+    public function testAFailingCheckDoesNotDenyShipping(): void
+    {
+        $route = $this->createMock(AbstractShippingMethodRoute::class);
+        $route->method('load')->willThrowException(new RuntimeException('Route kaputt'));
+
+        $dienst = new ShippingEstimateService(
+            $route,
+            $this->countryRepository($this->findCountry('DE')),
+            new EstimateContextFactory(),
+            $this->cartRuleLoader(),
+            new NullLogger(),
+        );
+
+        self::assertTrue($dienst->canShipToContextLocation($this->cart(), $this->contextWithAddress()));
+    }
+
+    /**
+     * Ein Kontext mit Lieferanschrift — der Baukasten oben liefert nur ein Land.
+     */
+    private function contextWithAddress(): SalesChannelContext
+    {
+        $context = SalesChannelContextBuilder::build();
+
+        $address = new CustomerAddressEntity();
+        $address->setId(Uuid::randomHex());
+        $address->setUniqueIdentifier(Uuid::randomHex());
+        $address->setZipcode('44787');
+        $address->setCountry($context->getShippingLocation()->getCountry());
+
+        $context->assign(['shippingLocation' => ShippingLocation::createFromAddress($address)]);
+
+        return $context;
+    }
+
+    /**
      * @param list<ShippingMethodEntity> $shippingMethods
      */
     private function service(
@@ -366,7 +526,7 @@ final class ShippingEstimateServiceTest extends TestCase
         );
     }
 
-    private function cartRuleLoader(float $shippingCosts = 0.0): CartRuleLoader
+    private function cartRuleLoader(float $shippingCosts = 0.0): CartRuleLoader&MockObject
     {
         $cartRuleLoader = $this->createMock(CartRuleLoader::class);
         $cartRuleLoader->method('loadByCart')->willReturnCallback(
@@ -463,6 +623,25 @@ final class ShippingEstimateServiceTest extends TestCase
     {
         $cart = new Cart('kunden-token');
         $cart->add(new LineItem(Uuid::randomHex(), LineItem::PRODUCT_LINE_ITEM_TYPE));
+
+        return $cart;
+    }
+
+    /**
+     * Ein Warenkorb, wie ihn die Seite für den Lieferort im Kontext berechnet hat.
+     */
+    private function cartWithDelivery(SalesChannelContext $context): Cart
+    {
+        $cart = $this->cart();
+        $cart->setDeliveries(new DeliveryCollection([
+            new Delivery(
+                new DeliveryPositionCollection(),
+                new DeliveryDate(new DateTimeImmutable(), new DateTimeImmutable()),
+                $context->getShippingMethod(),
+                $context->getShippingLocation(),
+                new CalculatedPrice(12.90, 12.90, new CalculatedTaxCollection(), new TaxRuleCollection()),
+            ),
+        ]));
 
         return $cart;
     }

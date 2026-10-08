@@ -5,3 +5,26 @@
     {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/trust-badges.html.twig' %}
     {{ parent() }}
 {% endblock %}
+
+{% block page_checkout_address %}
+    {% if page.extensions.rcOnePage is defined and include('@RcCheckoutEnhancer/storefront/component/rc-checkout/checkout-layout.html.twig')|trim == 'one_page' %}
+        {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/one-page-address.html.twig' %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{# Im einseitigen Checkout stehen die Summen im Hauptbereich, weil sie sich mit der Versandart
+   ändern. Die Seitenleiste würde nach einem Wechsel noch die alten zeigen; sie behält nur die
+   Artikel. #}
+{% block page_checkout_summary_header %}
+    {% if not (page.extensions.rcOnePage is defined and include('@RcCheckoutEnhancer/storefront/component/rc-checkout/checkout-layout.html.twig')|trim == 'one_page') %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block page_checkout_summary_list %}
+    {% if not (page.extensions.rcOnePage is defined and include('@RcCheckoutEnhancer/storefront/component/rc-checkout/checkout-layout.html.twig')|trim == 'one_page') %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

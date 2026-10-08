@@ -7,11 +7,9 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Template;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Pinning-Tests gegen die Confirm-Seiten-Integration. Hintergrund: das Plugin
- * überschrieb ursprünglich `page_checkout_confirm_container` — einen Block, den
- * der Storefront-Core in keiner unterstützten Version kennt — wodurch Mini-Cart
- * und Order-Summary auf der Bestätigungsseite still nicht rendern. Diese Tests
- * halten die Korrektur fest, bis ein voller Render-Smoke-Test steht.
+ * Hält die Einbindung in die Bestätigungsseite fest. Ein Override auf einen Block, den der
+ * Storefront-Kern nicht kennt (etwa `page_checkout_confirm_container`), rendert still nichts;
+ * Mini-Warenkorb und Seitenleiste fehlten dann ohne jede Fehlermeldung.
  */
 final class ConfirmTemplateContractTest extends TestCase
 {
@@ -40,19 +38,9 @@ final class ConfirmTemplateContractTest extends TestCase
     }
 
     /**
-     * Die Seitenleiste zeigt ausschließlich den Warenkorb.
-     *
-     * Sie enthielt zusätzlich eine Bestellübersicht mit Adresse, Versand- und Zahlungsart —
-     * alles Angaben, die der Hauptbereich vollständig und mit funktionierenden Ändern-Wegen
-     * führt. Doppelte Anzeige derselben Sache auf einer Seite irritiert und wird für
-     * Screenreader zur doppelten Vorlesung; ihre eigenen Ändern-Schaltflächen sprangen
-     * außerdem auf Anker, die es im Dokument nicht gibt. Dieser Test hält fest, dass sie
-     * nicht zurückkehrt.
-     */
-    /**
      * Zeigt die Leiste den Warenkorb, darf der Hauptbereich seine Positionstabelle nicht
      * ebenfalls rendern — sonst steht dieselbe Bestellung zweimal auf der Seite. Der Test
-     * hält beide Hälften der Regel fest: Block überschrieben UND an die Leiste gekoppelt.
+     * hält beide Hälften der Regel fest: Block überschrieben und an die Leiste gekoppelt.
      */
     public function testProductTableIsSuppressedWhileSidebarShowsTheCart(): void
     {
@@ -63,16 +51,20 @@ final class ConfirmTemplateContractTest extends TestCase
     /**
      * Hält sich die Leiste wegen eines A/B-Tests zurück, muss die Tabelle zurückkommen.
      *
-     * **Das ist der gefährlichste Punkt am ganzen Test.** Bliebe die Tabelle unterdrückt und die
-     * Leiste weg, sähe die Vergleichsgruppe auf der Bestätigungsseite überhaupt keinen Warenkorb
-     * — und bestätigte eine Bestellung, die sie nicht mehr prüfen kann. Derselbe Fehler wie am
-     * 2026-07-28, nur eine Stufe schlimmer: damals fehlte eine Angabe, hier die ganze Übersicht.
+     * Bliebe die Tabelle unterdrückt und die Leiste weg, sähe die Vergleichsgruppe auf der
+     * Bestätigungsseite überhaupt keinen Warenkorb und bestätigte eine Bestellung, die sie nicht
+     * mehr prüfen kann.
      */
     public function testTheProductTableReturnsWhenTheSidebarIsSuppressed(): void
     {
         self::assertStringContainsString('{% if rcSuppressed or not rc.miniCartEnabled %}', $this->template);
     }
 
+    /**
+     * Die Seitenleiste zeigt nur den Warenkorb. Adresse, Versand- und Zahlungsart führt der
+     * Hauptbereich vollständig und mit seinen Ändern-Wegen; eine zweite Übersicht in der Leiste
+     * zeigte dieselbe Sache doppelt und würde im Screenreader zweimal vorgelesen.
+     */
     public function testSidebarShowsCartOnly(): void
     {
         self::assertStringContainsString(
@@ -89,7 +81,7 @@ final class ConfirmTemplateContractTest extends TestCase
      * Die Funktion gibt es nur mit RcAbTesting, und Twig bricht bei einer unbekannten Funktion
      * schon beim Übersetzen ab — nicht erst beim Aufruf. Stünde sie in einer Vorlage, die immer
      * übersetzt wird, stünde ohne RcAbTesting der ganze Checkout. Ausgelagert in eine eigene
-     * Datei, die nur eingebunden wird, wenn ein Experiment konfiguriert **und** das Plugin
+     * Datei, die nur eingebunden wird, wenn ein Experiment konfiguriert und das Plugin
      * geladen ist, wird sie nie gesucht.
      */
     public function testTheAbFunctionLivesInExactlyOneTemplate(): void
@@ -114,8 +106,8 @@ final class ConfirmTemplateContractTest extends TestCase
     /**
      * Die drei weiteren Checkout-Overrides (cart/address/finish) hängen ihre Progress-Bar/
      * Trust-Badges an den Basis-Block `base_main_inner` (aus base.html.twig, transitiv geerbt).
-     * Verschwindet der Block im Core, würde das Markup still nicht rendern — dieselbe
-     * Phantom-Klasse wie der historische Confirm-Bug. Hier gegen Rückfall gepinnt.
+     * Verschwindet der Block im Kern, rendert das Markup still nicht, wie bei jedem Override
+     * auf einen Block, den es nicht gibt.
      *
      * @return array<string, array{0: string}>
      */

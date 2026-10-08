@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\CheckoutLayout;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\CheckoutSubscriber;
 use Shopware\Core\Framework\Struct\ArrayEntity;
+use Shopware\Core\System\Currency\CurrencyEntity;
 use Shopware\Core\System\Currency\CurrencyFormatter;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
@@ -25,6 +27,11 @@ use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPage;
 use Shopware\Storefront\Page\Checkout\Register\CheckoutRegisterPageLoadedEvent;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Was der Subscriber an die vier Checkout-Seiten hängt: Schritt der Fortschrittsleiste, die
+ * Einstellungen, die Vertrauenszeilen mit eingesetztem Betrag und die Angaben, aus denen die
+ * Vorlage die A/B-Entscheidung trifft.
+ */
 #[CoversClass(CheckoutSubscriber::class)]
 final class CheckoutSubscriberTest extends TestCase
 {
@@ -181,9 +188,8 @@ final class CheckoutSubscriberTest extends TestCase
 
     /**
      * Was: Eine Vertrauenszeile mit Platzhalter, wenn kein Betrag ermittelbar ist.
-     * Warum: Bis 1.6.1 ging sie unverändert an die Vorlage. Der Kunde las dann wörtlich
-     *        „Kostenloser Versand ab %freeShippingThreshold%" — an einem Shop mit echten Versanddaten
-     *        nachgestellt, indem RcCheckout deaktiviert wurde. Von dort kommt der Betrag.
+     * Warum: Ginge sie unverändert an die Vorlage, läse der Kunde wörtlich
+     *        „Kostenloser Versand ab %freeShippingThreshold%".
      */
     #[Test]
     public function trustBadgeWithPlaceholderIsDroppedWhenNoThresholdIsAvailable(): void
@@ -252,6 +258,100 @@ final class CheckoutSubscriberTest extends TestCase
         self::assertSame($expected, $extension->get('trustBadges'));
     }
 
+    /**
+     * Was: Ein Betrag ist ermittelbar — die Zeile mit dem Platzhalter bekommt ihn eingesetzt.
+     * Warum: Dafür gibt es den Platzhalter. Die beiden Tests darüber halten fest, was ohne
+     *        Betrag passiert; ohne diesen hier wäre nie geprüft, dass der Betrag überhaupt
+     *        ankommt, und der Kunde sähe im besten Fall gar nichts, im schlimmsten
+     *        die rohe Zeichenkette.
+     */
+    #[Test]
+    public function trustBadgePlaceholderIsReplacedByTheFormattedThreshold(): void
+    {
+        $threshold = $this->createMock(FreeShippingThresholdProvider::class);
+        $threshold->method('thresholdFor')->willReturn(50.0);
+
+        $formatter = $this->createMock(CurrencyFormatter::class);
+        $formatter->method('formatCurrencyByLanguage')->willReturn('50,00 €');
+
+        $subscriber = new CheckoutSubscriber($this->configService, $threshold, $formatter);
+
+        $this->configService->method('isProgressBarEnabled')->willReturn(true);
+        $this->configService->method('isTrustBadgesEnabled')->willReturn(true);
+        $this->configService->method('getTrustBadges')->willReturn([
+            ['icon' => 'truck', 'text' => 'Kostenloser Versand ab %freeShippingThreshold%'],
+            ['icon' => 'lock', 'text' => 'Sichere Bestellung'],
+        ]);
+        $this->configService->method('isMiniCartEnabled')->willReturn(true);
+        $this->configService->method('isDeliveryTimeEnabled')->willReturn(false);
+        $this->configService->method('getEstimatedDeliveryTime')->willReturn('');
+        $this->configService->method('getProgressStepLabels')->willReturn([
+            'step1' => '', 'step2' => '', 'step3' => '', 'step4' => '',
+        ]);
+
+        $page = new CheckoutCartPage();
+        $subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent($page, $this->salesChannelContext, new Request()));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertSame(
+            [
+                ['icon' => 'truck', 'text' => 'Kostenloser Versand ab 50,00 €'],
+                ['icon' => 'lock', 'text' => 'Sichere Bestellung'],
+            ],
+            $extension->get('trustBadges'),
+        );
+    }
+
+    /**
+     * Was: Warenkorb in Franken, Schwelle 357 in der Standardwährung, Faktor 0,9.
+     * Warum: Der Versandkostenfrei-Hinweis rechnet mit dem Faktor um; ohne ihn nennte die Leiste
+     *        357 Franken, der Hinweis daneben 321,30.
+     */
+    #[Test]
+    public function theThresholdIsConvertedIntoTheCurrencyOfTheContext(): void
+    {
+        $threshold = $this->createMock(FreeShippingThresholdProvider::class);
+        $threshold->method('thresholdFor')->willReturn(357.0);
+
+        $formatter = $this->createMock(CurrencyFormatter::class);
+        $formatter->expects(self::once())
+            ->method('formatCurrencyByLanguage')
+            ->with(321.3, 'CHF')
+            ->willReturn('CHF 321,30');
+
+        $currency = new CurrencyEntity();
+        $currency->setFactor(0.9);
+        $currency->setIsoCode('CHF');
+
+        $context = $this->createMock(SalesChannelContext::class);
+        $context->method('getSalesChannel')->willReturn($this->salesChannelContext->getSalesChannel());
+        $context->method('getCurrency')->willReturn($currency);
+
+        $this->configureDefaultMocksWithBadge();
+
+        $page = new CheckoutCartPage();
+        (new CheckoutSubscriber($this->configService, $threshold, $formatter))
+            ->onCheckoutPage(new CheckoutCartPageLoadedEvent($page, $context, new Request()));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertSame([['icon' => 'truck', 'text' => 'ab CHF 321,30']], $extension->get('trustBadges'));
+    }
+
+    private function configureDefaultMocksWithBadge(): void
+    {
+        $this->configService->method('isProgressBarEnabled')->willReturn(true);
+        $this->configService->method('isTrustBadgesEnabled')->willReturn(true);
+        $this->configService->method('getTrustBadges')->willReturn([['icon' => 'truck', 'text' => 'ab %freeShippingThreshold%']]);
+        $this->configService->method('isMiniCartEnabled')->willReturn(true);
+        $this->configService->method('isDeliveryTimeEnabled')->willReturn(false);
+        $this->configService->method('getEstimatedDeliveryTime')->willReturn('');
+        $this->configService->method('getProgressStepLabels')->willReturn([
+            'step1' => '', 'step2' => '', 'step3' => '', 'step4' => '',
+        ]);
+    }
+
     private function configureDefaultMocks(): void
     {
         $this->configService->method('isProgressBarEnabled')->willReturn(true);
@@ -267,11 +367,10 @@ final class CheckoutSubscriberTest extends TestCase
 
     /**
      * Was: Die Angaben, aus denen die Vorlage ihre Entscheidung baut.
-     * Warum: Der Abonnent unterdrückt **nicht** selbst. Er kann es nicht: Shopware legt den
-     *        Verkaufskanal-Kontext erst an, wenn ihn jemand anfordert — beim Seitenaufbau gibt
-     *        es ihn noch nicht, und die Zuordnung schlägt dort still fehl (am 2026-08-03 am
-     *        laufenden Shop gemessen). Entschieden wird deshalb beim Rendern; hier stehen nur
-     *        die Angaben dafür.
+     * Warum: Der Abonnent unterdrückt nicht selbst, weil er es nicht kann. Shopware legt den
+     *        Verkaufskanal-Kontext erst an, wenn ihn jemand anfordert; beim Seitenaufbau gibt
+     *        es ihn noch nicht, und die Zuordnung schlägt dort still fehl, am laufenden Shop
+     *        gemessen. Entschieden wird deshalb beim Rendern, hier stehen nur die Angaben dafür.
      * Erwartet: Schlüssel und Variante werden durchgereicht.
      */
     #[Test]
@@ -295,7 +394,7 @@ final class CheckoutSubscriberTest extends TestCase
 
     /**
      * Was: Ohne konfiguriertes Experiment.
-     * Warum: **Der Schalter, der die Vorlage vor einem Absturz bewahrt.** `abActive` ist die
+     * Warum: Dieser Schalter bewahrt die Vorlage vor einem Absturz. `abActive` ist die
      *        Erlaubnis, `ab_variant()` aufzurufen — eine Funktion, die es ohne RcAbTesting nicht
      *        gibt. Twig bricht bei einer unbekannten Funktion schon beim Übersetzen ab; wäre
      *        `abActive` fälschlich wahr, stünde der ganze Checkout.
@@ -322,7 +421,7 @@ final class CheckoutSubscriberTest extends TestCase
     /**
      * Was: Experiment konfiguriert, RcAbTesting aber nicht installiert.
      * Warum: Ein stehengebliebener Eintrag in den Einstellungen darf den Checkout nicht
-     *        umlegen. Geprüft wird das über einen Klassennamen als **Zeichenkette** — für die
+     *        umlegen. Geprüft wird das über einen Klassennamen als Zeichenkette, für die
      *        statische Analyse unsichtbar, und Fremd-Plugins schließt es nicht aus.
      * Erwartet: `abActive` bleibt falsch, solange die Klasse fehlt.
      */
@@ -347,5 +446,44 @@ final class CheckoutSubscriberTest extends TestCase
         $extension = $page->getExtension('rcCheckoutEnhancer');
         self::assertInstanceOf(ArrayEntity::class, $extension);
         self::assertFalse($extension->get('abActive'));
+    }
+
+    /**
+     * Was: Die Darstellung des Checkouts geht an die Vorlage.
+     * Warum: Bei „eine Seite" zählt die Fortschrittsanzeige drei statt vier Schritte. Entscheiden
+     *        kann das erst die Vorlage, weil beim A/B-Test die Variante des Besuchers erst beim
+     *        Rendern feststeht.
+     */
+    #[Test]
+    public function theCheckoutLayoutIsPassedToTheTemplate(): void
+    {
+        $this->configureDefaultMocks();
+        $this->configService->method('getCheckoutLayout')->willReturn(CheckoutLayout::ONE_PAGE);
+
+        $page = new CheckoutConfirmPage();
+        $this->subscriber->onCheckoutPage(new CheckoutConfirmPageLoadedEvent($page, $this->salesChannelContext, new Request()));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertSame(CheckoutLayout::ONE_PAGE, $extension->get('checkoutLayout'));
+    }
+
+    /**
+     * Was: A/B-Test eingestellt, RcAbTesting fehlt.
+     * Warum: Die Vorlage darf `ab_switch()` nur aufrufen, wenn es die Funktion gibt; sonst bricht
+     *        Twig schon beim Übersetzen ab und der ganze Checkout steht.
+     */
+    #[Test]
+    public function withoutTheAbPluginTheLayoutSwitchStaysClosed(): void
+    {
+        $this->configureDefaultMocks();
+        $this->configService->method('getCheckoutLayout')->willReturn(CheckoutLayout::AB_TEST);
+
+        $page = new CheckoutCartPage();
+        $this->subscriber->onCheckoutPage(new CheckoutCartPageLoadedEvent($page, $this->salesChannelContext, new Request()));
+
+        $extension = $page->getExtension('rcCheckoutEnhancer');
+        self::assertInstanceOf(ArrayEntity::class, $extension);
+        self::assertFalse($extension->get('abSwitchAvailable'));
     }
 }

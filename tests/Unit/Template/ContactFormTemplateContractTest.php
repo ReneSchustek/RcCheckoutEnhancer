@@ -7,17 +7,13 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Template;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Nagelt die Einhängestellen im Kontaktformular fest — und den Rückfall auf den Kern.
+ * Nagelt die Einhängestellen im Kontaktformular fest, und den Rückfall auf den Kern.
  *
- * Zwei Fehler sind hier möglich, und beide sind still:
- *
- * 1. **Ein Blockname, den es im Kern nicht gibt.** Twig ignoriert ihn wortlos; das Feld
- *    bliebe einfach leer, ohne dass irgendwo etwas rot wird. Genau so ist der
- *    Versandkostenfrei-Banner von 1.1.1 monatelang nie erschienen.
- * 2. **Ein fehlender `parent()`-Zweig.** Diese Vorlage liegt auf **jeder** Kontaktseite.
- *    Ohne Rückfall verlöre jede gewöhnliche Kontaktanfrage ihre Felder — der teuerste
- *    denkbare Fehler dieses Briefs, und er beträfe Besucher, die mit dem Bestellvorgang
- *    nie in Berührung kamen.
+ * Zwei Fehler sind hier möglich, und beide sind still. Einen Blocknamen, den es im Kern nicht
+ * gibt, ignoriert Twig wortlos; das Feld bliebe einfach leer, ohne dass irgendwo etwas rot
+ * wird. Fehlt der `parent()`-Zweig, verlöre jede gewöhnliche Kontaktanfrage ihre Felder, denn
+ * diese Vorlage liegt auf jeder Kontaktseite. Das wäre der teuerste denkbare Fehler hier, und er
+ * träfe Besucher, die mit dem Bestellvorgang nie in Berührung kommen.
  */
 final class ContactFormTemplateContractTest extends TestCase
 {
@@ -56,7 +52,7 @@ final class ContactFormTemplateContractTest extends TestCase
     }
 
     /**
-     * **Die wichtigste Zusicherung dieser Datei.** Ohne übernommenen Warenkorb muss jeder
+     * Die wichtigste Zusicherung dieser Datei: Ohne übernommenen Warenkorb muss jeder
      * Block das Formular des Kerns rendern, unverändert.
      */
     public function testEveryOverriddenBlockFallsBackToTheCore(): void
@@ -77,8 +73,8 @@ final class ContactFormTemplateContractTest extends TestCase
 
     /**
      * Das Wabenfeld der Spam-Abwehr steht in einem eigenen Block, ist ausgeblendet und muss
-     * leer bleiben. Wer es anfasst, macht die Abwehr wirkungslos — auf Live ist es seit dem
-     * Abschalten des Bilderrätsels die einzige verbliebene Hürde.
+     * leer bleiben. Wer es anfasst, macht die Abwehr wirkungslos; ohne Bilderrätsel ist es die
+     * einzige Hürde.
      */
     public function testTheCaptchaBlockIsLeftAlone(): void
     {
