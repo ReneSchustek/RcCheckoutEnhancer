@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\PaymentPlaceholderFilter;
 use Shopware\Core\Checkout\Payment\PaymentMethodCollection;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 
 /**
- * @covers \Ruhrcoder\RcCheckoutEnhancer\Service\PaymentPlaceholderFilter
+ * Prüft, dass die Platzhalter-Zahlart in keiner Auswahl steht, ohne eine Liste leer zu machen.
  */
+#[CoversClass(PaymentPlaceholderFilter::class)]
 final class PaymentPlaceholderFilterTest extends TestCase
 {
     public function testThePlaceholderIsNeverListed(): void

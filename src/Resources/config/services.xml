@@ -251,6 +251,7 @@
              nicht über die final-Klasse. -->
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\RcAbTestingFreeShippingSwitchGate">
             <argument type="service" id="Ruhrcoder\RcAbTesting\Service\FrontendSwitch\FrontendSwitchValueResolver" on-invalid="null"/>
+            <argument type="service" id="logger"/>
         </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\FreeShippingThresholdSubscriber">

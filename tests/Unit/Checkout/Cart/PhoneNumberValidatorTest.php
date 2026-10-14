@@ -41,6 +41,7 @@ final class PhoneNumberValidatorTest extends TestCase
         $error = $errors->first();
         self::assertInstanceOf(PhoneNumberRequiredError::class, $error);
         self::assertTrue($error->blockOrder());
+        self::assertFalse($error->isPersistent());
     }
 
     /**

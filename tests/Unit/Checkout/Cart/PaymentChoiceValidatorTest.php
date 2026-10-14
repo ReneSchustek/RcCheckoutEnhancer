@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Checkout\Cart;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PaymentChoiceRequiredError;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PaymentChoiceValidator;
@@ -21,25 +22,24 @@ use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
 
 /**
- * Die Sperre der Platzhalter-Zahlart: nur dort, wo gewählt oder bestellt wird.
+ * Die Sperre der Platzhalter-Zahlart: überall außer in den Warenkorb-Ansichten.
  *
- * Eine zu breite Sperre wäre sichtbar und falsch: Beim Hinzufügen eines Artikels entstanden, stünde der Hinweis
- * „Bitte wählen Sie oben eine Zahlungsart" im Warenkorb, wo es keine Auswahl gibt.
- *
- * @covers \Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PaymentChoiceValidator
+ * Sie schließt sicher: Eine unbekannte Route sperrt. Damit die Meldung beim Ändern des Warenkorbs nicht als Hinweis in
+ * der nächsten Ansicht erscheint, ist der Fehler nicht dauerhaft.
  */
+#[CoversClass(PaymentChoiceValidator::class)]
 final class PaymentChoiceValidatorTest extends TestCase
 {
     private const PLACEHOLDER = 'placeholder-id';
 
     /**
-     * Was: Platzhalter im Kontext, auf der Bestellseite, beim Absenden und in der einseitigen Kasse.
-     * Warum: Dort wählt der Kunde die Zahlart; ohne Wahl darf die Bestellung nicht durchgehen.
-     * Erwartet: je eine sperrende Meldung.
+     * Was: Platzhalter im Kontext, auf der Bestellseite, beim Absenden und auf einer unbekannten Route.
+     * Warum: Ohne Wahl darf keine Bestellung durchgehen, auch nicht, wenn Shopware eine Route umbenennt.
+     * Erwartet: je eine sperrende, nicht dauerhafte Meldung.
      */
-    public function testItBlocksWhereThePaymentIsChosen(): void
+    public function testItBlocksOutsideTheCartViews(): void
     {
-        foreach (['frontend.checkout.confirm.page', 'frontend.checkout.finish.order', 'frontend.rc-checkout.one-page.selection'] as $route) {
+        foreach (['frontend.checkout.confirm.page', 'frontend.checkout.finish.order', 'frontend.some.renamed.route'] as $route) {
             $errors = new ErrorCollection();
             $this->validator($route)->validate(new Cart('token'), $errors, $this->context(self::PLACEHOLDER));
 
@@ -47,17 +47,19 @@ final class PaymentChoiceValidatorTest extends TestCase
             $error = $errors->first();
             self::assertInstanceOf(PaymentChoiceRequiredError::class, $error);
             self::assertTrue($error->blockOrder());
+            // Nicht dauerhaft: Shopware übernimmt sie weder in die nächste Berechnung noch als Hinweis.
+            self::assertFalse($error->isPersistent());
         }
     }
 
     /**
-     * Was: Platzhalter im Kontext, aber beim Hinzufügen eines Artikels, im Warenkorb und in der Leiste.
-     * Warum: Eine dort entstandene Meldung zeigte Shopware auf der nächsten Seite an, ohne Zahlartwahl darüber.
+     * Was: Platzhalter im Kontext, in Warenkorb, Leiste und Warenkorb-Zähler.
+     * Warum: Dort gibt es keine Zahlartwahl; die Meldung führte ins Leere.
      * Erwartet: keine Meldung.
      */
-    public function testItStaysQuietOutsideTheOrderSteps(): void
+    public function testItStaysQuietInTheCartViews(): void
     {
-        foreach (['frontend.checkout.line-item.add', 'frontend.checkout.cart.page', 'frontend.cart.offcanvas'] as $route) {
+        foreach (['frontend.checkout.cart.page', 'frontend.cart.offcanvas', 'frontend.checkout.info'] as $route) {
             $errors = new ErrorCollection();
             $this->validator($route)->validate(new Cart('token'), $errors, $this->context(self::PLACEHOLDER));
 

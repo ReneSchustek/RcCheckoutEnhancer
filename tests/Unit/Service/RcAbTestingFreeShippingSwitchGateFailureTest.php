@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Ruhrcoder\RcAbTesting\Service\FrontendSwitch\FrontendSwitchValueResolver;
 use Ruhrcoder\RcCheckoutEnhancer\Service\RcAbTestingFreeShippingSwitchGate;
 use RuntimeException;
@@ -32,8 +33,15 @@ final class RcAbTestingFreeShippingSwitchGateFailureTest extends TestCase
             }
         };
 
-        $gate = new RcAbTestingFreeShippingSwitchGate($resolver);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with(
+            self::anything(),
+            self::callback(static fn (array $context): bool => $context['exception'] === RuntimeException::class),
+        );
 
+        $gate = new RcAbTestingFreeShippingSwitchGate($resolver, $logger);
+
+        // Der Ausfall bleibt sichtbar: protokolliert, aber ohne Serverfehler.
         self::assertFalse($gate->isIndicatorSuppressed());
     }
 

@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.37.2] - 2026-10-15: Bestellsperren ohne Hinweis im Warenkorb
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console cache:clear`.
+
+### Behoben
+
+- Die Hinweise der drei Bestellsperren (Zahlungsart wählen, Telefonnummer, Abholung bestätigen) erschienen nach dem
+  Hinzufügen eines Artikels oder dem Ändern der Menge im Warenkorb, und die Bestätigung „Artikel hinzugefügt" fehlte.
+  Die Sperrfehler sind jetzt nicht dauerhaft; Shopware übernimmt sie weder in die nächste Berechnung noch als Hinweis
+  auf die nächste Seite. Auf der Bestellseite und beim Absenden sperren sie wie bisher, auch auf unbekannten Routen.
+- Ein Fehler im A/B-Schalter von RcAbTesting wird protokolliert, statt still übergangen zu werden.
+
+### Intern
+
+- Die drei Sperren teilen sich eine Ausschlussliste der Warenkorb-Ansichten (`CartViewRoutes`).
+
 ## [1.37.1] - 2026-10-14: Zahlart-Hinweis nur beim Bestellen
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console cache:clear`.
@@ -7,7 +23,7 @@
 ### Behoben
 
 - Der Hinweis „Bitte wählen Sie oben eine Zahlungsart …" erschien nach dem Hinzufügen eines Artikels im Warenkorb, wo
-  es keine Zahlartwahl gibt. Er entsteht nur noch auf der Bestellseite, beim Absenden und in der einseitigen Kasse.
+  es keine Zahlartwahl gibt.
 
 ## [1.37.0] - 2026-10-14: Keine Zahlart vorausgewählt
 

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\CartAccessoryService;
 
 /**
- * @covers \Ruhrcoder\RcCheckoutEnhancer\Service\CartAccessoryService
+ * Prüft die Mischung von „Dazu passt" und die Erkennung von Bausätzen für „Haben Sie an alles gedacht?".
  */
+#[CoversClass(CartAccessoryService::class)]
 final class CartAccessoryServiceTest extends TestCase
 {
     /**

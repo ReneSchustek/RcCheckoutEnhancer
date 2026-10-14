@@ -42,6 +42,15 @@ final class PickupAcknowledgementRequiredError extends Error
         return true;
     }
 
+    /**
+     * Nicht dauerhaft: Die Sperre entsteht bei jeder Berechnung neu. Ein dauerhafter Fehler wanderte in die nächste
+     * Berechnung und als Hinweis auf die nächste Seite, etwa nach dem Hinzufügen eines Artikels in den Warenkorb.
+     */
+    public function isPersistent(): bool
+    {
+        return false;
+    }
+
     public function getParameters(): array
     {
         return [];

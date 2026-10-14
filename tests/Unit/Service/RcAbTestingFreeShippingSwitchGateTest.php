@@ -25,7 +25,7 @@ final class RcAbTestingFreeShippingSwitchGateTest extends TestCase
     /**
      * Was: die Dienstdefinition des Schalters.
      * Warum: Gebunden war die `final`-Klasse von RcAbTesting statt ihrer Schnittstelle.
-     * Erwartet: Die Schnittstelle, weiterhin optional.
+     * Erwartet: Die Schnittstelle, weiterhin optional, dazu der Logger.
      */
     public function testTheServiceBindsTheInterface(): void
     {
@@ -35,8 +35,10 @@ final class RcAbTestingFreeShippingSwitchGateTest extends TestCase
         $arguments = $xml->xpath('//s:service[@id="' . RcAbTestingFreeShippingSwitchGate::class . '"]/s:argument');
 
         self::assertIsArray($arguments);
-        self::assertCount(1, $arguments);
+        self::assertCount(2, $arguments);
         self::assertSame('Ruhrcoder\\RcAbTesting\\Service\\FrontendSwitch\\FrontendSwitchValueResolver', (string) $arguments[0]['id']);
         self::assertSame('null', (string) $arguments[0]['on-invalid']);
+        // Der zweite ist der Logger: Ein Fehler im Schalter wird protokolliert.
+        self::assertSame('logger', (string) $arguments[1]['id']);
     }
 }

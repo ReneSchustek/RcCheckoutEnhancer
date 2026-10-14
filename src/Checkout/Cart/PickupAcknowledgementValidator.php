@@ -35,15 +35,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 final class PickupAcknowledgementValidator implements CartValidatorInterface
 {
-    /**
-     * Die Ansichten, in denen der Warenkorb ohne Versandartenauswahl erscheint.
-     */
-    private const CART_VIEW_ROUTES = [
-        'frontend.checkout.cart.page',
-        'frontend.cart.offcanvas',
-        'frontend.checkout.info',
-    ];
-
     public function __construct(
         private readonly PickupHintDecider $decider,
         private readonly PickupAcknowledgementStore $store,
@@ -58,7 +49,7 @@ final class PickupAcknowledgementValidator implements CartValidatorInterface
             return;
         }
 
-        if ($this->isCartView()) {
+        if (CartViewRoutes::isCartView($this->requestStack)) {
             return;
         }
 
@@ -72,24 +63,5 @@ final class PickupAcknowledgementValidator implements CartValidatorInterface
         }
 
         $errors->add(new PickupAcknowledgementRequiredError());
-    }
-
-    /**
-     * Geprüft werden laufende und Haupt-Anfrage, weil der Warenkorb-Zähler im Kopfbereich je nach
-     * Vorlage als Unteranfrage gerendert wird; dann trägt nur eine der beiden die Route.
-     */
-    private function isCartView(): bool
-    {
-        foreach ([$this->requestStack->getCurrentRequest(), $this->requestStack->getMainRequest()] as $request) {
-            if ($request === null) {
-                continue;
-            }
-
-            if (\in_array($request->attributes->get('_route'), self::CART_VIEW_ROUTES, true)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

@@ -51,6 +51,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
         $error = $errors->first();
         self::assertInstanceOf(PickupAcknowledgementRequiredError::class, $error);
         self::assertTrue($error->blockOrder());
+        self::assertFalse($error->isPersistent());
     }
 
     /**

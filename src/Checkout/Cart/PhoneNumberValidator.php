@@ -30,15 +30,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 final class PhoneNumberValidator implements CartValidatorInterface
 {
-    /**
-     * Die Ansichten, in denen der Warenkorb ohne das Feld für die Nummer erscheint.
-     */
-    private const CART_VIEW_ROUTES = [
-        'frontend.checkout.cart.page',
-        'frontend.cart.offcanvas',
-        'frontend.checkout.info',
-    ];
-
     public function __construct(
         private readonly PhoneNumberRequirement $requirement,
         private readonly RequestStack $requestStack,
@@ -52,7 +43,7 @@ final class PhoneNumberValidator implements CartValidatorInterface
             return;
         }
 
-        if ($this->isCartView()) {
+        if (CartViewRoutes::isCartView($this->requestStack)) {
             return;
         }
 
@@ -61,24 +52,5 @@ final class PhoneNumberValidator implements CartValidatorInterface
         }
 
         $errors->add(new PhoneNumberRequiredError());
-    }
-
-    /**
-     * Geprüft werden laufende und Haupt-Anfrage, weil der Warenkorb-Zähler im Kopfbereich je nach
-     * Vorlage als Unteranfrage gerendert wird; dann trägt nur eine der beiden die Route.
-     */
-    private function isCartView(): bool
-    {
-        foreach ([$this->requestStack->getCurrentRequest(), $this->requestStack->getMainRequest()] as $request) {
-            if ($request === null) {
-                continue;
-            }
-
-            if (\in_array($request->attributes->get('_route'), self::CART_VIEW_ROUTES, true)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
