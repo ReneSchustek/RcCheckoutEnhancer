@@ -14,15 +14,17 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Sperrt die Bestellung, solange die Platzhalter-Zahlart gilt.
  *
- * Nicht im Warenkorb und in der Leiste: Dort gibt es keine Zahlartwahl, und eine Sperre ließe „Zur Kasse" grau werden.
- * Gewählt wird auf der Bestellseite; dort steht die Meldung, bis der Kunde eine Zahlart anklickt.
+ * Die Meldung entsteht nur dort, wo eine Zahlart gewählt oder die Bestellung abgeschickt wird. Jede andere Berechnung
+ * des Warenkorbs, etwa beim Hinzufügen eines Artikels, gäbe sie als Hinweis an die nächste Seite weiter, und im
+ * Warenkorb stünde „Bitte wählen Sie oben eine Zahlungsart" ohne Auswahl darüber.
  */
 final class PaymentChoiceValidator implements CartValidatorInterface
 {
-    private const CART_VIEW_ROUTES = [
-        'frontend.checkout.cart.page',
-        'frontend.cart.offcanvas',
-        'frontend.checkout.info',
+    // Bestellseite, Absenden der Bestellung und die Auswahl der einseitigen Kasse.
+    private const ORDER_ROUTES = [
+        'frontend.checkout.confirm.page',
+        'frontend.checkout.finish.order',
+        'frontend.rc-checkout.one-page.selection',
     ];
 
     public function __construct(
@@ -33,7 +35,7 @@ final class PaymentChoiceValidator implements CartValidatorInterface
 
     public function validate(Cart $cart, ErrorCollection $errors, SalesChannelContext $context): void
     {
-        if (!StorefrontRequestScope::isStorefront($this->requestStack) || $this->isCartView()) {
+        if (!StorefrontRequestScope::isStorefront($this->requestStack) || !$this->isOrderStep()) {
             return;
         }
 
@@ -42,10 +44,11 @@ final class PaymentChoiceValidator implements CartValidatorInterface
         }
     }
 
-    private function isCartView(): bool
+    private function isOrderStep(): bool
     {
+        // Beide Anfragen zählen: Läuft die Berechnung in einer Unteranfrage, trägt nur die Hauptanfrage die Route.
         foreach ([$this->requestStack->getCurrentRequest(), $this->requestStack->getMainRequest()] as $request) {
-            if ($request !== null && \in_array($request->attributes->get('_route'), self::CART_VIEW_ROUTES, true)) {
+            if ($request !== null && \in_array($request->attributes->get('_route'), self::ORDER_ROUTES, true)) {
                 return true;
             }
         }

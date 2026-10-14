@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.37.1] - 2026-10-14: Zahlart-Hinweis nur beim Bestellen
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console cache:clear`.
+
+### Behoben
+
+- Der Hinweis „Bitte wählen Sie oben eine Zahlungsart …" erschien nach dem Hinzufügen eines Artikels im Warenkorb, wo
+  es keine Zahlartwahl gibt. Er entsteht nur noch auf der Bestellseite, beim Absenden und in der einseitigen Kasse.
+
 ## [1.37.0] - 2026-10-14: Keine Zahlart vorausgewählt
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console cache:clear`. Danach eine
