@@ -1,0 +1,58 @@
+{% sw_extends '@Storefront/storefront/component/checkout/offcanvas-cart-summary.html.twig' %}
+
+{# Automatische Aktionen stehen in der Liste nicht als Position (siehe line-item.html.twig). Die
+   Zwischensumme zeigt dann den Warenwert davor, die Aktion folgt als eigene Zeile. #}
+{% block component_offcanvas_summary_total %}
+    {% set rcDiscounts = rc_summary_discounts(page.cart.lineItems) %}
+    {% if rcDiscounts is empty %}
+        {{ parent() }}
+    {% else %}
+        <dt class="summary-label summary-total">
+            {{ 'checkout.subtotalAmount'|trans|sw_sanitize }}
+        </dt>
+        <dd class="summary-value summary-total">
+            <strong>{{ (page.cart.price.positionPrice - rc_summary_discount_total(page.cart.lineItems))|currency }}</strong>
+        </dd>
+
+        {% for rcDiscount in rcDiscounts %}
+            <dt class="summary-label rc-summary-discount">{{ rcDiscount.label }}</dt>
+            <dd class="summary-value rc-summary-discount">&minus;{{ rcDiscount.price.totalPrice|abs|currency }}</dd>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block component_offcanvas_summary_content_info %}
+    {# Offene Versandkosten (kein Kunde, also keine Adresse, und 0,00 €) bekommen keine Zeile:
+       „+ 0,00 €" läse sich als „kostenlos". Es bleibt „zzgl. Versandkosten" darunter und der
+       Rechner „Versandkosten berechnen". Erreichte Versandkostenfreiheit ist eine echte
+       Aussage und bleibt stehen. #}
+    {% set rcShippingOpen = (page.extensions.rcShippingOpen.open ?? false)
+        and not (page.extensions.rcFreeShipping.achieved ?? false) %}
+    {# Wie in der Zusammenfassung der Warenkorbseite: Beim Platzhalter steht ein Satz statt
+       „+ 0,00 €". Die Bezeichnung links bleibt die des Kerns, samt Knopf zum Wechseln der
+       Versandart; über ihn kommt der angemeldete Kunde vom Platzhalter zur Abholung. #}
+    {% if rcShippingOpen %}
+        {# keine Zeile #}
+    {% elseif activeShipping.shippingMethod.id == config('RcCheckoutEnhancer.config.shippingPlaceholderMethodId') %}
+        <div class="row offcanvas-shipping-info rc-shipping-placeholder">
+            <span class="shipping-label shipping-cost">
+                <strong>{{ 'checkout.summaryShipping'|trans|sw_sanitize }}</strong>
+                {% if loop.first %}
+                    {% if page.shippingMethods|length %}
+                        <button class="btn btn-sm btn-link js-toggle-shipping-selection">
+                            ({{ activeShipping.shippingMethod.translated.name }})
+                        </button>
+                    {% else %}
+                        <small>({{ activeShipping.shippingMethod.translated.name }})</small>
+                    {% endif %}
+                {% endif %}
+            </span>
+
+            <span class="pb-2 shipping-value shipping-cost">
+                <small>{{ 'rc-checkout.shippingPlaceholder.costs'|trans|sw_sanitize }}</small>
+            </span>
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

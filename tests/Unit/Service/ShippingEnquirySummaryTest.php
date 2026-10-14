@@ -1,0 +1,395 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
+
+use PHPUnit\Framework\TestCase;
+use Ruhrcoder\RcCheckoutEnhancer\Service\CartExposedCustomFields;
+use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquirySummary;
+use Shopware\Core\Checkout\Cart\Cart;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\DeliveryInformation;
+use Shopware\Core\Checkout\Cart\Delivery\Struct\ShippingLocation;
+use Shopware\Core\Checkout\Cart\LineItem\LineItem;
+use Shopware\Core\Checkout\Cart\Price\Struct\CalculatedPrice;
+use Shopware\Core\Checkout\Cart\Tax\Struct\CalculatedTaxCollection;
+use Shopware\Core\Checkout\Cart\Tax\Struct\TaxRuleCollection;
+use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
+use Shopware\Core\System\Country\CountryEntity;
+use Shopware\Core\System\Currency\CurrencyEntity;
+use Shopware\Core\System\SalesChannel\SalesChannelContext;
+
+/**
+ * Die Zusammenfassung, die der Vertrieb bekommt.
+ *
+ * Der Maßstab ist nicht „sieht hübsch aus", sondern: **Kann jemand danach ein Frachtangebot
+ * rechnen, ohne beim Kunden nachzufragen?** Danach sind die Tests geschnitten.
+ */
+final class ShippingEnquirySummaryTest extends TestCase
+{
+    public function testAnEmptyCartYieldsNothing(): void
+    {
+        self::assertSame('', $this->summary()->forCart(new Cart('token'), $this->context()));
+    }
+
+    /**
+     * Was: Menge, Artikelnummer, Bezeichnung und Positionspreis.
+     * Warum: Ohne Artikelnummer muss der Vertrieb das Produkt suchen — genau der
+     *        Telefonaufwand, den die Anfrage ersparen soll.
+     */
+    public function testItNamesQuantityNumberLabelAndPrice(): void
+    {
+        $cart = $this->cartWith($this->productLineItem());
+
+        $text = $this->summary()->forCart($cart, $this->context());
+
+        self::assertStringContainsString('10 × GVS-1 — Vordachsystem Komplettset', $text);
+        self::assertStringContainsString('6.490,00 €', $text);
+    }
+
+    /**
+     * Was: Ein Payload-Schlüssel, den Shopware nicht selbst schreibt.
+     * Warum: Die RAL-Farbe von RcColorPicker und die Zuschnittlänge von
+     *        TmmsProductCustomerInputs hängen genau dort. Fehlen sie in der Anfrage, ruft
+     *        der Vertrieb wieder an, und bei lackierten Teilen ist eine falsche Farbe
+     *        kein Umtausch, sondern Ausschuss.
+     */
+    public function testCustomerInputFromOtherPluginsIsCarriedOver(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('rcColorPickerRal', 'RAL 7016');
+        $lineItem->setPayloadValue('tmmsCutLength', 2400);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringContainsString('rcColorPickerRal: RAL 7016', $text);
+        self::assertStringContainsString('tmmsCutLength: 2400', $text);
+    }
+
+    /**
+     * Die Gegenprobe: Was Shopware selbst in den Payload legt, ist keine Kundeneingabe.
+     * Ohne diesen Test bestünde die Anfrage zur Hälfte aus Kennungen und Lagerständen.
+     */
+    public function testTechnicalCorePayloadIsLeftOut(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('stock', 42);
+        $lineItem->setPayloadValue('taxId', 'abc123');
+        $lineItem->setPayloadValue('categoryIds', ['x', 'y']);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringNotContainsString('stock', $text);
+        self::assertStringNotContainsString('taxId', $text);
+        self::assertStringNotContainsString('categoryIds', $text);
+    }
+
+    /**
+     * `productType` setzt der Kern außerhalb des Blocks, aus dem die Ausschlussliste stammt,
+     * einzeln über `LineItem::PAYLOAD_PRODUCT_TYPE`. Fehlte er in der Liste, stünde
+     * „productType: physical" in der Anfrage. Eigener Test, weil er belegt, dass die Liste
+     * unvollständig sein kann.
+     */
+    public function testTheProductTypeIsNotMistakenForCustomerInput(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('productType', 'physical');
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringNotContainsString('productType', $text);
+    }
+
+    /**
+     * Ein Wahrheitswert ist ein Schalter für die Anzeige, keine Angabe für den Vertrieb.
+     */
+    public function testSwitchesAreNotListed(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('rcColorPickerActive', true);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringNotContainsString('rcColorPickerActive', $text);
+    }
+
+    /**
+     * Was: Gesamtgewicht und längste Position.
+     * Warum: Genau daran scheitert die Sendung. Ohne beides ist die Anfrage nicht rechenbar.
+     */
+    public function testItSumsWeightAndNamesTheLongestItem(): void
+    {
+        $text = $this->summary()->forCart($this->cartWith($this->productLineItem()), $this->context());
+
+        self::assertStringContainsString('Gesamtgewicht: 530 kg', $text);
+        self::assertStringContainsString('Längste Position: 1400 mm', $text);
+        self::assertStringContainsString('Warenwert:', $text);
+    }
+
+    /**
+     * Was: Lieferland und Postleitzahl, sofern bekannt.
+     * Warum: Der Frachtpreis hängt an der Zone. Ist die Anschrift noch nicht gewählt,
+     *        steht wenigstens das Land da — und keine erfundene Postleitzahl.
+     */
+    public function testItNamesTheDestinationWithoutInventingAPostcode(): void
+    {
+        $text = $this->summary()->forCart($this->cartWith($this->productLineItem()), $this->context());
+
+        self::assertStringContainsString('Lieferung nach: Deutschland', $text);
+    }
+
+    /**
+     * Was: Die vollständige Lieferanschrift, sobald sie feststeht.
+     * Warum: Ein Frachtpreis hängt an der Abladestelle, nicht am Land. Mit Straße und Ort
+     *        kann der Vertrieb rechnen; mit „Deutschland 44787" muss er nachfragen.
+     */
+    public function testItNamesTheFullDeliveryAddressWhenItIsKnown(): void
+    {
+        $text = $this->summary()->forCart(
+            $this->cartWith($this->productLineItem()),
+            $this->contextWithAddress(),
+        );
+
+        self::assertStringContainsString('Lieferung nach:', $text);
+        self::assertStringContainsString('Musterstraße 5', $text);
+        self::assertStringContainsString('44787 Bochum', $text);
+        self::assertStringContainsString('Deutschland', $text);
+    }
+
+    /**
+     * Was: Die Firma steht über der Straße.
+     * Warum: Bei einer Spedition entscheidet sie über Abladestelle und Preis — eine
+     *        Baustelle ohne Rampe kostet Hebebühne.
+     */
+    public function testItNamesTheCompanyWhenTheAddressCarriesOne(): void
+    {
+        $text = $this->summary()->forCart(
+            $this->cartWith($this->productLineItem()),
+            $this->contextWithAddress('Muster Metallbau GmbH'),
+        );
+
+        self::assertStringContainsString('Muster Metallbau GmbH', $text);
+    }
+
+    /**
+     * Ein sehr langes Freitextfeld darf die Anfrage nicht überschwemmen.
+     */
+    public function testAnOverlongValueIsShortened(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('tmmsBemerkung', str_repeat('A', 500));
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringContainsString('tmmsBemerkung: ' . str_repeat('A', 200) . "\n", $text . "\n");
+        self::assertStringNotContainsString(str_repeat('A', 201), $text);
+    }
+
+    /**
+     * Was: Eine Position ohne Artikelnummer und ohne Preis.
+     * Warum: Beides kann fehlen — bei Positionen, die ein anderes Plugin in den Warenkorb legt,
+     *        oder solange nichts gerechnet wurde. Die Zeile muss trotzdem lesbar sein, sonst
+     *        steht in der Anfrage „10 × “ und der Empfänger rät.
+     */
+    public function testAPositionWithoutNumberAndPriceIsStillReadable(): void
+    {
+        $lineItem = new LineItem('li-2', LineItem::PRODUCT_LINE_ITEM_TYPE, 'ref-2', 3);
+        $lineItem->setLabel('Sonderanfertigung');
+        $lineItem->setGood(true);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringContainsString('3 × Sonderanfertigung', $text);
+        self::assertStringNotContainsString('×  —', $text);
+    }
+
+    /**
+     * Was: Die gewählte Ausführung einer Variante.
+     * Warum: Für ein Angebot ist sie der halbe Auftrag. Ein Geländer in RAL 9006 ist ein
+     *        anderer Preis als eines in blank; ohne die Ausführung müsste der Empfänger
+     *        nachfragen, und genau das soll der Anfrageweg ersparen.
+     */
+    public function testTheChosenVariantOptionsAreListed(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('options', [
+            ['group' => 'Farbe', 'option' => 'RAL 9006'],
+            ['group' => 'Länge', 'option' => '2,5 m'],
+            'unsinn',
+            ['group' => null, 'option' => 'ohne Gruppe'],
+        ]);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringContainsString('Farbe: RAL 9006', $text);
+        self::assertStringContainsString('Länge: 2,5 m', $text);
+        self::assertStringNotContainsString('ohne Gruppe', $text, 'Ohne Gruppenname ist die Angabe wertlos.');
+    }
+
+    /**
+     * Was: Kundeneingaben, die als Zusatzfelder an der Position hängen.
+     * Warum: Nicht jedes Plugin legt eigene Payload-Schlüssel an; manche schreiben in
+     *        `customFields`. Was der Kunde eingetippt hat, gehört in die Anfrage — egal, welchen
+     *        Weg es genommen hat.
+     */
+    public function testCustomFieldsAreCarriedOverAsWell(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('customFields', [
+            'wunschtermin' => '15.09.2026',
+            'leer' => null,
+        ]);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringContainsString('wunschtermin: 15.09.2026', $text);
+        self::assertStringNotContainsString('leer:', $text);
+    }
+
+    /**
+     * Was: Ein internes Zusatzfeld des Produkts ohne Freigabe für den Warenkorb.
+     * Warum: Shopware entfernt es erst beim Speichern des Warenkorbs. Wird er in derselben Anfrage
+     *        neu berechnet, stünde es sonst als „Kundeneingabe" im vorbelegten Kontaktformular.
+     */
+    public function testInternalCustomFieldsStayOut(): void
+    {
+        $lineItem = $this->productLineItem();
+        $lineItem->setPayloadValue('customFields', [
+            'wunschtermin' => '15.09.2026',
+            'erp_einkaufspreis_intern' => '12,40',
+        ]);
+
+        $text = $this->summary()->forCart($this->cartWith($lineItem), $this->context());
+
+        self::assertStringContainsString('wunschtermin', $text);
+        self::assertStringNotContainsString('erp_einkaufspreis_intern', $text);
+    }
+
+    /**
+     * Was: Warenkorb in Schweizer Franken.
+     * Warum: Die Beträge stehen in der Währung des Warenkorbs; ein Euro-Zeichen daneben wäre falsch.
+     */
+    public function testAmountsCarryTheCurrencyOfTheCart(): void
+    {
+        $text = $this->summary()->forCart($this->cartWith($this->productLineItem()), $this->context('CHF'));
+
+        self::assertStringContainsString(' CHF', $text);
+        self::assertStringNotContainsString('€', $text);
+    }
+
+    /**
+     * @param list<string> $exposedCustomFields
+     */
+    private function summary(array $exposedCustomFields = ['wunschtermin']): ShippingEnquirySummary
+    {
+        $exposed = $this->createMock(CartExposedCustomFields::class);
+        $exposed->method('names')->willReturn($exposedCustomFields);
+
+        return new ShippingEnquirySummary($exposed);
+    }
+
+    private function currency(string $symbol): CurrencyEntity
+    {
+        $currency = new CurrencyEntity();
+        $currency->setSymbol($symbol);
+
+        return $currency;
+    }
+
+    /**
+     * Was: Eine Anschrift ohne einen einzigen verwertbaren Eintrag — auch das Land ohne Namen.
+     * Warum: Dann darf keine Überschrift „Lieferung nach:“ erscheinen, unter der nichts steht.
+     *        Der Fall entsteht, wenn das Land ohne Übersetzung geladen wird und die Anschrift
+     *        noch leer ist — die Überschrift allein würde eine Angabe vortäuschen.
+     */
+    public function testAnEmptyAddressIsNotAnnounced(): void
+    {
+        $address = new CustomerAddressEntity();
+        $address->setId('address-leer');
+        $address->setUniqueIdentifier('address-leer');
+        $address->setStreet('');
+        $address->setCity('');
+
+        $context = $this->createMock(SalesChannelContext::class);
+        $namenlos = new CountryEntity();
+        $namenlos->setId('country-ohne-namen');
+        $namenlos->setUniqueIdentifier('country-ohne-namen');
+
+        $context->method('getShippingLocation')->willReturn(new ShippingLocation($namenlos, null, $address));
+
+        $text = $this->summary()->forCart($this->cartWith($this->productLineItem()), $context);
+
+        self::assertStringNotContainsString('Lieferung nach:', $text);
+    }
+
+    private function cartWith(LineItem $lineItem): Cart
+    {
+        $cart = new Cart('token');
+        $cart->add($lineItem);
+        $cart->setPrice(new \Shopware\Core\Checkout\Cart\Price\Struct\CartPrice(
+            5305.50,
+            6313.54,
+            6490.00,
+            new CalculatedTaxCollection(),
+            new TaxRuleCollection(),
+            \Shopware\Core\Checkout\Cart\Price\Struct\CartPrice::TAX_STATE_GROSS,
+        ));
+
+        return $cart;
+    }
+
+    private function productLineItem(): LineItem
+    {
+        $lineItem = new LineItem('li-1', LineItem::PRODUCT_LINE_ITEM_TYPE, 'ref-1', 10);
+        $lineItem->setLabel('Vordachsystem Komplettset');
+        $lineItem->setGood(true);
+        $lineItem->setStackable(true);
+        $lineItem->setPayloadValue('productNumber', 'GVS-1');
+        $lineItem->setPrice(new CalculatedPrice(649.0, 6490.0, new CalculatedTaxCollection(), new TaxRuleCollection(), 10));
+        $lineItem->setDeliveryInformation(new DeliveryInformation(100, 53.0, false, null, null, 100.0, 800.0, 1400.0));
+
+        return $lineItem;
+    }
+
+    private function context(string $currency = '€'): SalesChannelContext
+    {
+        $context = $this->createMock(SalesChannelContext::class);
+        $context->method('getShippingLocation')->willReturn(ShippingLocation::createFromCountry($this->country()));
+        $context->method('getCurrency')->willReturn($this->currency($currency));
+
+        return $context;
+    }
+
+    private function contextWithAddress(?string $company = null): SalesChannelContext
+    {
+        $address = new CustomerAddressEntity();
+        $address->setId('address-1');
+        $address->setUniqueIdentifier('address-1');
+        $address->setStreet('Musterstraße 5');
+        $address->setZipcode('44787');
+        $address->setCity('Bochum');
+        $address->setCountry($this->country());
+
+        if ($company !== null) {
+            $address->setCompany($company);
+        }
+
+        $context = $this->createMock(SalesChannelContext::class);
+        $context->method('getShippingLocation')->willReturn(
+            new ShippingLocation($this->country(), null, $address),
+        );
+        $context->method('getCurrency')->willReturn($this->currency('€'));
+
+        return $context;
+    }
+
+    private function country(): CountryEntity
+    {
+        $country = new CountryEntity();
+        $country->setId('country-de');
+        $country->setUniqueIdentifier('country-de');
+        $country->setName('Deutschland');
+
+        return $country;
+    }
+}

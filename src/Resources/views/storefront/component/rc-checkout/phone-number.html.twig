@@ -1,0 +1,39 @@
+{# Das Feld für die fehlende Telefonnummer.
+
+   Es steht dort, wo auch die Sperre steht: oben auf der Bestätigungsseite, vor allem anderen.
+   Der Kunde kommt vom PayPal-Express-Knopf hier heraus und soll nicht erst suchen, woran es
+   liegt, dass die Bestellung nicht abgeht.
+
+   Kein Javascript: ein gewöhnliches Formular. Wer den Bestellvorgang bis hierher gebracht hat,
+   darf nicht daran scheitern, dass ein Skript klemmt. #}
+{% if page.extensions.rcPhoneNumber is defined %}
+    <div class="rc-phone-number alert alert-warning" role="status">
+        <p class="rc-phone-number__hint">{{ 'rcCheckout.phoneNumberHint'|trans }}</p>
+
+        <form action="{{ path('frontend.rc-checkout.phone-number') }}"
+              method="post"
+              class="rc-phone-number__form">
+            <div class="rc-phone-number__field">
+                <label class="form-label" for="rcPhoneNumber">
+                    {{ 'rcCheckout.phoneNumberLabel'|trans }}
+                </label>
+                {# `type="tel"` bringt auf dem Telefon die Zifferntastatur. `autocomplete` lässt
+                   den Browser die hinterlegte Nummer anbieten — an dieser Stelle ist jeder
+                   gesparte Handgriff bares Geld. #}
+                <input type="tel"
+                       id="rcPhoneNumber"
+                       name="phoneNumber"
+                       class="form-control"
+                       autocomplete="tel"
+                       inputmode="tel"
+                       maxlength="64"
+                       required="required"
+                       value="">
+            </div>
+
+            <button type="submit" class="btn btn-primary rc-phone-number__button">
+                {{ 'rcCheckout.phoneNumberButton'|trans }}
+            </button>
+        </form>
+    </div>
+{% endif %}

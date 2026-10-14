@@ -1,0 +1,59 @@
+{# „Versand für dieses Produkt berechnen" unter „zzgl. Versandkosten".
+
+   Zugeklappt eine Zeile; aufgeklappt Land, Postleitzahl und Knopf, gerechnet wird für die Menge im Kaufbereich. Das
+   Ergebnis steht unter der Zeile, also auch dann sichtbar, wenn der Kasten zu ist.
+
+   Einmal eingegeben, merkt sich der Browser Land und Postleitzahl (`localStorage`, Schlüssel `rcShippingLocation`, nur
+   im Browser des Kunden). Jede weitere Produktseite rechnet damit von selbst, und der Rechner im Warenkorb ist
+   vorbelegt. Ohne Skript bleibt der Kasten verborgen, weil er ohne Skript nichts rechnen kann.
+
+   Kein `<form>`: Der Kasten steht im Kaufbereich, verschachtelte Formulare sind nicht erlaubt. #}
+{% set rcId = 'rcProductShipping-' ~ rcProductId %}
+
+<div class="rc-product-shipping"
+     data-rc-product-shipping="true"
+     data-rc-product-shipping-options='{{ {
+         "url": path("frontend.rc-checkout.product-shipping-estimate", { productId: rcProductId }),
+         "productId": rcProductId,
+         "errorText": "rc-checkout.shippingEstimate.failed"|trans,
+         "forText": "rc-checkout.productShipping.for"|trans
+     }|json_encode }}'
+     hidden>
+    <details class="rc-product-shipping__calc" data-rc-product-shipping-details>
+        <summary class="rc-product-shipping__toggle">{{ "rc-checkout.productShipping.toggle"|trans }}</summary>
+
+        <div class="rc-product-shipping__form row g-2 align-items-end">
+            <div class="col-12 col-sm-6">
+                <label class="form-label" for="{{ rcId }}-country">{{ "rc-checkout.shippingEstimate.countryLabel"|trans }}</label>
+                <select class="form-select" id="{{ rcId }}-country" data-rc-product-shipping-country>
+                    {% for country in rcShippingEstimate.countries %}
+                        <option value="{{ country.iso }}"
+                                {% if country.id == rcShippingEstimate.currentCountryId %}selected="selected"{% endif %}>
+                            {{ country.translated.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12 col-sm-6">
+                <label class="form-label" for="{{ rcId }}-zip">{{ "rc-checkout.shippingEstimate.zipLabel"|trans }}</label>
+                <input type="text"
+                       class="form-control"
+                       id="{{ rcId }}-zip"
+                       data-rc-product-shipping-zip
+                       required="required"
+                       maxlength="12"
+                       autocomplete="postal-code">
+            </div>
+
+            <div class="col-12">
+                <button type="button" class="btn btn-primary w-100" data-rc-product-shipping-submit>
+                    {{ "rc-checkout.productShipping.submit"|trans }}
+                </button>
+            </div>
+        </div>
+    </details>
+
+    <p class="rc-product-shipping__for" data-rc-product-shipping-for hidden></p>
+    <div class="rc-product-shipping__output" data-rc-product-shipping-output></div>
+</div>

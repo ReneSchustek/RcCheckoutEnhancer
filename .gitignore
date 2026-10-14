@@ -1,0 +1,28 @@
+# ============================================================
+# .gitignore – RcCheckoutEnhancer
+# ============================================================
+
+# Secrets / Umgebungsvariablen
+.env
+.env.local
+.env.*.local
+!.env.example
+secrets.json
+*.pfx
+*.p12
+*.key
+config/secrets/
+
+# Logs
+*.log
+/logs/
+
+# PHP / Shopware
+/vendor/
+/var/
+/node_modules/
+/composer.lock
+/.phpunit.cache/
+
+# composer.lock — Library-Plugins liefern keinen Lock mit
+composer.lock

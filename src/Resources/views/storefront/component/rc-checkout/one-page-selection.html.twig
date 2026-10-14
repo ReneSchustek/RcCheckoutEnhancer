@@ -1,0 +1,56 @@
+{# Versandart, Zahlart und Summen des einseitigen Checkouts.
+
+   Dieselbe Datei rendert die Adressseite und die Route des Ausschnitts (OnePageSelectionController).
+   Das Ajax-Verfahren des Kerns setzt die Antwort der Route als Ganzes in den Container der Seite;
+   der Container steht deshalb dort und nicht hier.
+
+   Die Bausteine je Methode und die Zusammenfassung sind die des Kerns. Sie lesen `page`, also
+   bekommen sie die Auswahl unter diesem Namen. #}
+{% set selection = rcOnePageSelection %}
+
+<div class="row g-3 rc-one-page-selection__methods">
+    <div class="col-12 col-md-6">
+        <div class="card checkout-card">
+            <fieldset class="card-body">
+                <legend class="card-title">{{ 'checkout.confirmShippingMethod'|trans|sw_sanitize }}</legend>
+                <form action="{{ path('frontend.checkout.configure') }}"
+                      method="post"
+                      data-form-auto-submit="true"
+                      data-form-auto-submit-options="{{ { useAjax: true, ajaxContainerSelector: '[data-rc-one-page-selection]', changeTriggerSelectors: ['.shipping-method-input'] }|json_encode }}">
+                    <input type="hidden" name="redirectTo" value="frontend.rc-checkout.one-page.selection">
+                    <div class="shipping-methods">
+                        {% for shipping in selection.shippingMethods %}
+                            {% sw_include '@Storefront/storefront/component/shipping/shipping-method.html.twig' with { page: selection } %}
+                        {% endfor %}
+                    </div>
+                </form>
+            </fieldset>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-6">
+        <div class="card checkout-card">
+            <fieldset class="card-body">
+                <legend class="card-title">{{ 'checkout.confirmPaymentMethod'|trans|sw_sanitize }}</legend>
+                <form action="{{ path('frontend.checkout.configure') }}"
+                      method="post"
+                      data-form-auto-submit="true"
+                      data-form-auto-submit-options="{{ { useAjax: true, ajaxContainerSelector: '[data-rc-one-page-selection]', changeTriggerSelectors: ['.payment-method-input'] }|json_encode }}">
+                    <input type="hidden" name="redirectTo" value="frontend.rc-checkout.one-page.selection">
+                    <div class="payment-methods">
+                        {% for payment in selection.paymentMethods %}
+                            {% sw_include '@Storefront/storefront/component/payment/payment-method.html.twig' with { page: selection } %}
+                        {% endfor %}
+                    </div>
+                </form>
+            </fieldset>
+        </div>
+    </div>
+</div>
+
+<div class="card checkout-card mt-3 rc-one-page-selection__summary">
+    <div class="card-body">
+        <h2 class="card-title">{{ 'checkout.summaryHeader'|trans|sw_sanitize }}</h2>
+        {% sw_include '@Storefront/storefront/page/checkout/summary.html.twig' with { page: selection } %}
+    </div>
+</div>

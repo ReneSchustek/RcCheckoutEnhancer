@@ -1,0 +1,13 @@
+{% sw_extends '@Storefront/storefront/page/checkout/summary/summary-shipping.html.twig' %}
+
+{% block page_checkout_summary_shipping_value %}
+    {# Der Platzhalter kostet 0,00 €, weil ohne Lieferadresse noch nichts zu berechnen ist. Als
+       Betrag hingeschrieben, läse der Kunde daraus kostenlosen Versand. #}
+    {% if delivery.shippingMethod.id == config('RcCheckoutEnhancer.config.shippingPlaceholderMethodId') %}
+        <dd class="col-5 checkout-aside-summary-value rc-shipping-placeholder">
+            <small>{{ 'rc-checkout.shippingPlaceholder.costs'|trans|sw_sanitize }}</small>
+        </dd>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

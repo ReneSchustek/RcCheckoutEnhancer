@@ -1,0 +1,27 @@
+{% sw_extends '@Storefront/storefront/page/checkout/summary/summary-position.html.twig' %}
+
+{# Steht eine automatische Aktion nicht mehr als Position da, zeigt die Zwischensumme den Warenwert
+   davor, und die Aktion folgt als eigene Zeile. Die Zwischensumme des Kerns enthält die Aktion
+   schon; ließe man sie stehen, zöge der Leser den Rabatt doppelt ab. #}
+{% block page_checkout_summary_position %}
+    {% set rcDiscounts = page.cart is defined ? rc_summary_discounts(summary.lineItems) : [] %}
+    {% if rcDiscounts is empty %}
+        {{ parent() }}
+    {% else %}
+        <dt class="col-7 checkout-aside-summary-label">
+            {{ 'checkout.summaryPositionPrice'|trans|sw_sanitize }}
+        </dt>
+        <dd class="col-5 checkout-aside-summary-value">
+            {{ (summary.price.positionPrice - rc_summary_discount_total(summary.lineItems))|currency(isoCode) }}
+        </dd>
+
+        {% for rcDiscount in rcDiscounts %}
+            <dt class="col-7 checkout-aside-summary-label rc-summary-discount">
+                {{ rcDiscount.label }}
+            </dt>
+            <dd class="col-5 checkout-aside-summary-value rc-summary-discount">
+                &minus;{{ rcDiscount.price.totalPrice|abs|currency(isoCode) }}
+            </dd>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,64 @@
+{# Die Adressseite im einseitigen Checkout: oben die drei Wege, darunter das passende Formular,
+   dann schon Versandart, Zahlart und Summen, am Ende „Weiter".
+
+   Ohne Skript bleiben die Knöpfe verborgen, Anmeldung und Formular stehen untereinander wie im
+   Kern, das Häkchen „Kundenkonto anlegen" ist sichtbar, und das Formular schickt mit seinem
+   eigenen Knopf ab. #}
+{% set rcInitialPath = (data is defined and data.getBoolean('createCustomerAccount')) ? 'register' : 'guest' %}
+
+<h1 class="address-main-header">
+    {{ 'checkout.addressHeader'|trans|sw_sanitize }}
+</h1>
+
+<div class="rc-checkout-path"
+     data-rc-checkout-path="true"
+     data-rc-checkout-path-options="{{ { initial: rcInitialPath }|json_encode }}">
+    <fieldset class="rc-checkout-path__choices mb-4" data-rc-checkout-path-choices hidden>
+        <legend class="rc-checkout-path__legend">{{ 'rcCheckout.onePage.pathLegend'|trans|sw_sanitize }}</legend>
+        <div class="rc-checkout-path__buttons">
+            <button type="button" class="btn btn-outline-primary rc-checkout-path__choice" data-rc-checkout-path-choice="guest" aria-pressed="false">
+                {{ 'rcCheckout.onePage.pathGuest'|trans|sw_sanitize }}
+            </button>
+            <button type="button" class="btn btn-outline-primary rc-checkout-path__choice" data-rc-checkout-path-choice="login" aria-pressed="false">
+                {{ 'rcCheckout.onePage.pathLogin'|trans|sw_sanitize }}
+            </button>
+            <button type="button" class="btn btn-outline-primary rc-checkout-path__choice" data-rc-checkout-path-choice="register" aria-pressed="false">
+                {{ 'rcCheckout.onePage.pathRegister'|trans|sw_sanitize }}
+            </button>
+        </div>
+    </fieldset>
+
+    <div class="rc-checkout-path__section" data-rc-checkout-path-section="login">
+        {% sw_include '@Storefront/storefront/component/account/login.html.twig' with {
+            cardTitle: 'account.loginHeader'|trans|sw_sanitize
+        } %}
+    </div>
+
+    <div class="rc-checkout-path__section" data-rc-checkout-path-section="form">
+        {% sw_include '@Storefront/storefront/page/checkout/address/register.html.twig' with {
+            cardTitle: 'checkout.addressRegisterCardTitle'|trans|sw_sanitize
+        } %}
+    </div>
+
+    <div class="rc-one-page-selection" data-rc-one-page-selection>
+        {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/one-page-selection.html.twig' with {
+            rcOnePageSelection: page.extensions.rcOnePage
+        } %}
+    </div>
+
+    <p class="rc-one-page__final-step alert alert-info mt-3" role="note">
+        {{ 'rcCheckout.onePage.finalStepHint'|trans|sw_sanitize }}
+    </p>
+
+    {# Schickt das Adressformular darüber ab. Ein Knopf außerhalb eines Formulars tut das nur über
+       das Skript; ohne Skript bleibt er verborgen, und der Knopf im Formular gilt. #}
+    <div class="rc-one-page__continue" data-rc-checkout-path-continue hidden>
+        {# Das Gitter sitzt eine Ebene tiefer: `d-grid` setzt seine Anzeige mit `!important` und
+           schlüge sonst das `hidden` dieser Hülle. #}
+        <div class="d-grid col-md-6 offset-md-6">
+            <button type="button" class="btn btn-primary btn-lg">
+                {{ 'account.registerSubmit'|trans|sw_sanitize }}
+            </button>
+        </div>
+    </div>
+</div>

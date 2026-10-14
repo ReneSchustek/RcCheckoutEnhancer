@@ -1,0 +1,19 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/confirm-shipping.html.twig' %}
+
+{# Der Abhol-Hinweis gehört unmittelbar unter die Versandart-Auswahl und nicht zu den
+   Seitenhinweisen weiter oben: Er ist die Folge einer Auswahl, die genau hier getroffen
+   wird. Steht er oben bei den Warnungen, muss der Kunde den Bezug selbst herstellen.
+
+   Überschrieben wird deshalb dieser Block und nicht `page_checkout_confirm_shipping` aus
+   der Seitenvorlage — die Auswahl liegt in einer eigenen Vorlage, die per `sw_include`
+   eingebunden wird, und deren Blöcke sind von der Seitenvorlage aus nicht erreichbar. #}
+{% block page_checkout_confirm_shipping_inner %}
+
+    {{ parent() }}
+
+    {% if page.extensions.rcPickupHint is defined %}
+        {% block page_checkout_confirm_shipping_rc_pickup_hint %}
+            {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/pickup-hint.html.twig' %}
+        {% endblock %}
+    {% endif %}
+{% endblock %}

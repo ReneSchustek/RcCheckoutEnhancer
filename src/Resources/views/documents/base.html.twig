@@ -1,0 +1,51 @@
+{% sw_extends '@Framework/documents/base.html.twig' %}
+
+{# Der Abhol-Hinweis auf dem Beleg: Verladen und Transport liegen beim Käufer.
+
+   In der Basisvorlage und nicht in `invoice.html.twig`, weil der Hinweis so auf alle Belegarten
+   zugleich wirkt: Rechnung, Lieferschein, Storno und Gutschrift. Ein Lieferschein zu einer
+   Abholbestellung trägt dieselbe Aussage wie die Rechnung.
+
+   Im Block `document_shipping`, weil dort die Versandart steht („Selbstabholer"). Der Hinweis
+   ist die Folge genau dieser Zeile und gehört unmittelbar darunter, nicht in den Fußbereich
+   zwischen Bankverbindung und Steuernummer.
+
+   `payment_shipping.html.twig` wird über die `block`-Funktion gerendert und lässt sich nicht
+   erweitern; seine Blöcke stehen aber in dieser Basisvorlage zur Verfügung und sind von hier aus
+   überschreibbar. Denselben Weg geht RcCustomFields für die Kundeneingaben je Position. #}
+{% block document_shipping %}
+    {{ parent() }}
+
+    {% set rcPickupNote = rc_pickup_document_note(order) %}
+    {% if rcPickupNote %}
+        {% block document_shipping_rc_pickup_note %}
+            {# Der Rückfall auf den ausgeschriebenen Satz: Belege werden außerhalb der
+               Storefront erzeugt. Löst ein Textbaustein der Erweiterung dort nicht auf, gibt die
+               Übersetzung den Schlüssel selbst zurück, und dann stünde
+               `rcCheckout.pickupDocumentNote` auf der Rechnung eines Kunden. Das fiele erst am
+               fertigen Beleg auf.
+
+               Deshalb wird geprüft, ob die Übersetzung etwas anderes zurückgibt als den
+               Schlüssel. Der Preis ist der Satz an zwei Stellen; der Gegenwert ist, dass im
+               schlimmsten Fall ein deutscher Satz auf einem englischen Beleg steht statt eines
+               Schlüssels auf einem deutschen. #}
+            {% set rcPickupText = 'rcCheckout.pickupDocumentNote'|trans %}
+            {% if rcPickupText == 'rcCheckout.pickupDocumentNote' %}
+                {% set rcPickupText = 'Selbstabholung: Verladen und Transport der Ware liegen beim Käufer.' %}
+            {% endif %}
+            {{ rcPickupText|sw_sanitize }}<br>
+
+            {# Ohne Bestätigung keine Datumszeile: „Bestätigt am …" ist eine Tatsachenbehauptung
+               und darf nicht dastehen, wenn niemand etwas bestätigt hat. #}
+            {% if rcPickupNote.confirmedAt %}
+                {% set rcPickupConfirmed = 'rcCheckout.pickupDocumentConfirmedAt'|trans({'%date%': rcPickupNote.confirmedAt}) %}
+                {% if rcPickupConfirmed == 'rcCheckout.pickupDocumentConfirmedAt' %}
+                    {% set rcPickupConfirmed = 'Bestätigt am ' ~ rcPickupNote.confirmedAt ~ '.' %}
+                {% endif %}
+                {{ rcPickupConfirmed|sw_sanitize }}<br>
+            {% endif %}
+
+            <br>
+        {% endblock %}
+    {% endif %}
+{% endblock %}

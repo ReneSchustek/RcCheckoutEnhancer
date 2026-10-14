@@ -1,0 +1,10 @@
+{% sw_extends '@Storefront/storefront/component/line-item/line-item.html.twig' %}
+
+{# Automatische Aktionen wie der Rabatt für Vorkasse stehen im Warenkorb als Zeile der
+   Zusammenfassung, nicht als Position. Bestellungen auf der Abschlussseite und in der Historie
+   tragen keinen `page.cart`; dort bleibt die Aktion Position. #}
+{% block component_line_item %}
+    {% if not (page.cart is defined and rc_is_summary_discount(lineItem)) %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

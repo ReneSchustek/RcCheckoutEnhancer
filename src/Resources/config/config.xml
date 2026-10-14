@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+
+    <card>
+        <title lang="de-DE">Fortschrittsanzeige</title>
+        <title lang="en-GB">Progress Bar</title>
+
+        <input-field type="bool">
+            <name>progressBarEnabled</name>
+            <label lang="de-DE">Fortschrittsanzeige aktivieren</label>
+            <label lang="en-GB">Enable progress bar</label>
+            <helpText lang="de-DE">Zeigt eine Schritt-für-Schritt-Anzeige im Checkout.</helpText>
+            <helpText lang="en-GB">Shows a step-by-step indicator in the checkout.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep1</name>
+            <label lang="de-DE">Schritt 1 – Bezeichnung</label>
+            <label lang="en-GB">Step 1 – Label</label>
+            <placeholder lang="de-DE">Warenkorb</placeholder>
+            <placeholder lang="en-GB">Cart</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep2</name>
+            <label lang="de-DE">Schritt 2 – Bezeichnung</label>
+            <label lang="en-GB">Step 2 – Label</label>
+            <placeholder lang="de-DE">Anmelden</placeholder>
+            <placeholder lang="en-GB">Login</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep3</name>
+            <label lang="de-DE">Schritt 3 – Bezeichnung</label>
+            <label lang="en-GB">Step 3 – Label</label>
+            <placeholder lang="de-DE">Prüfen &amp; Bestellen</placeholder>
+            <placeholder lang="en-GB">Review &amp; Order</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>progressStep4</name>
+            <label lang="de-DE">Schritt 4 – Bezeichnung</label>
+            <label lang="en-GB">Step 4 – Label</label>
+            <placeholder lang="de-DE">Abgeschlossen</placeholder>
+            <placeholder lang="en-GB">Complete</placeholder>
+            <helpText lang="de-DE">Leer lassen für Standard-Snippet.</helpText>
+            <helpText lang="en-GB">Leave empty for default snippet.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Vertrauenssignale</title>
+        <title lang="en-GB">Trust Badges</title>
+
+        <input-field type="bool">
+            <name>trustBadgesEnabled</name>
+            <label lang="de-DE">Vertrauenssignale aktivieren</label>
+            <label lang="en-GB">Enable trust badges</label>
+            <helpText lang="de-DE">Zeigt konfigurierbare Vertrauenssignale im Checkout.</helpText>
+            <helpText lang="en-GB">Shows configurable trust badges in the checkout.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="textarea">
+            <name>trustBadges</name>
+            <label lang="de-DE">Vertrauenssignale (eines pro Zeile)</label>
+            <label lang="en-GB">Trust badges (one per line)</label>
+            <helpText lang="de-DE">Format: icon;Text (Icon optional). Verfügbare Icons: lock, truck, undo, star. Beispiel: lock;Sichere Bestellung</helpText>
+            <helpText lang="en-GB">Format: icon;Text (icon optional). Available icons: lock, truck, undo, star. Example: lock;Secure order</helpText>
+            <defaultValue>lock;Sichere Bestellung (SSL-verschlüsselt)
+truck;Kostenloser Versand ab 50 €
+undo;14 Tage Widerrufsrecht</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Warenkorbübersicht</title>
+        <title lang="en-GB">Cart Overview</title>
+
+        <input-field type="bool">
+            <name>miniCartEnabled</name>
+            <label lang="de-DE">Mini-Warenkorb im Checkout anzeigen</label>
+            <label lang="en-GB">Show mini cart in checkout</label>
+            <helpText lang="de-DE">Zeigt eine kompakte Warenkorbübersicht auf der Bestätigungsseite.</helpText>
+            <helpText lang="en-GB">Shows a compact cart overview on the confirmation page.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Bestellzusammenfassung</title>
+        <title lang="en-GB">Order Summary</title>
+
+
+        <input-field type="bool">
+            <name>deliveryTimeEnabled</name>
+            <label lang="de-DE">Geschätzte Lieferzeit anzeigen</label>
+            <label lang="en-GB">Show estimated delivery time</label>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>estimatedDeliveryTime</name>
+            <label lang="de-DE">Geschätzte Lieferzeit</label>
+            <label lang="en-GB">Estimated delivery time</label>
+            <placeholder lang="de-DE">3-5 Werktage</placeholder>
+            <placeholder lang="en-GB">3-5 business days</placeholder>
+            <helpText lang="de-DE">Wird nur angezeigt wenn das Lieferzeit-Feature aktiv ist.</helpText>
+            <helpText lang="en-GB">Only shown when the delivery time feature is active.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Versandkostenfrei-Indikator</title>
+        <title lang="en-GB">Free shipping indicator</title>
+
+        <input-field type="bool">
+            <name>freeShippingIndicatorEnabled</name>
+            <label lang="de-DE">Versandkostenfrei-Indikator anzeigen</label>
+            <label lang="en-GB">Show free shipping indicator</label>
+            <helpText lang="de-DE">Zeigt im Warenkorb und in der Warenkorb-Leiste, wie viel bis zur versandkostenfreien Lieferung fehlt.</helpText>
+            <helpText lang="en-GB">Shows in the cart and the cart sidebar how much is missing until free shipping.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="float">
+            <name>freeShippingThreshold</name>
+            <label lang="de-DE">Schwellenwert (Brutto, in Shop-Währung)</label>
+            <label lang="en-GB">Threshold (incl. tax, in shop currency)</label>
+            <helpText lang="de-DE">Nur Rückfall. Der Betrag wird aus der Verfügbarkeitsregel der unten eingestellten Versandarten gelesen; dieser Wert greift nur, wenn sich dort keiner ablesen lässt.</helpText>
+            <helpText lang="en-GB">Fallback only. The amount is read from the availability rule of the shipping methods configured below; this value applies only when none can be read there.</helpText>
+            <defaultValue>50</defaultValue>
+        </input-field>
+
+        <component name="sw-entity-multi-id-select">
+            <name>freeShippingMethodIds</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Versandkostenfreie Versandarten</label>
+            <label lang="en-GB">Free shipping methods</label>
+            <helpText lang="de-DE">Aus deren Verfügbarkeitsregeln wird gelesen, für welche Länder der Hinweis überhaupt gilt. Bleibt das Feld leer, erscheint er überall — mit der Bedingung im Text.</helpText>
+            <helpText lang="en-GB">Their availability rules determine the countries the hint applies to. Left empty, it is shown everywhere — with the condition spelled out.</helpText>
+        </component>
+    </card>
+
+    <card>
+        <title lang="de-DE">Versandkostenrechner</title>
+        <title lang="en-GB">Shipping cost estimator</title>
+
+        <input-field type="bool">
+            <name>shippingEstimatorEnabled</name>
+            <label lang="de-DE">Versandkostenrechner im Warenkorb anzeigen</label>
+            <label lang="en-GB">Show shipping cost estimator in the cart</label>
+            <helpText lang="de-DE">Kunden können Land und Postleitzahl eingeben und sehen die Kosten je Versandart — und ob überhaupt eine angeboten wird. Für Angemeldete ist die Anschrift des Kontos vorbelegt.</helpText>
+            <helpText lang="en-GB">Customers can enter country and postcode and see the cost per shipping method — and whether one is offered at all. For signed-in customers the account address is prefilled.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="bool">
+            <name>productShippingEstimateEnabled</name>
+            <label lang="de-DE">Versandkostenrechner auf der Produktseite anzeigen</label>
+            <label lang="en-GB">Show shipping cost estimator on the product page</label>
+            <helpText lang="de-DE">Unter „zzgl. Versandkosten" steht „Versand für dieses Produkt berechnen": Land und Postleitzahl eingeben, Kosten je Versandart für die gewählte Menge sehen. Der Browser merkt sich die Eingabe; auf jeder weiteren Produktseite und im Warenkorb wird damit sofort gerechnet. Der Rechner im Speditionshinweis entfällt dann, weil dieser hier ihn ersetzt.</helpText>
+            <helpText lang="en-GB">Below "plus shipping" a "Calculate shipping for this product" box appears: enter country and postcode, see the cost per shipping method for the chosen quantity. The browser remembers the input; every further product page and the cart calculate with it right away. The calculator inside the freight hint is then left out, as this one replaces it.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Darstellung des Checkouts</title>
+        <title lang="en-GB">Checkout layout</title>
+
+        <input-field type="single-select">
+            <name>checkoutLayout</name>
+            <label lang="de-DE">Darstellung für Gäste und Neukunden</label>
+            <label lang="en-GB">Layout for guests and new customers</label>
+            <helpText lang="de-DE">Geführt: wie bisher, erst die Adresse, dann die Bestätigung. Eine Seite: oben die Wahl zwischen Gastbestellung, Bereits Kunde und Neues Kundenkonto, darunter schon Versandart, Zahlart und Summen; nach „Weiter" folgt die Bestätigungsseite mit Endpreis, AGB und Bestellknopf. A/B-Test: der Schalter „Checkout-Darstellung" aus RcAbTesting entscheidet je Besucher; ohne RcAbTesting gilt „Geführt". Angemeldete Kunden sehen immer direkt die Bestätigung.</helpText>
+            <helpText lang="en-GB">Guided: as before, address first, then confirmation. One page: guest order, existing customer and new account side by side at the top, shipping method, payment method and totals already below; after "Continue", the confirmation page follows with the final price, terms and order button. A/B test: the "checkout layout" switch of RcAbTesting decides per visitor; without RcAbTesting, "guided" applies. Logged-in customers always go straight to the confirmation.</helpText>
+            <options>
+                <option>
+                    <id>guided</id>
+                    <name lang="de-DE">Geführt (Adresse, dann Bestätigung)</name>
+                    <name lang="en-GB">Guided (address, then confirmation)</name>
+                </option>
+                <option>
+                    <id>one_page</id>
+                    <name lang="de-DE">Eine Seite</name>
+                    <name lang="en-GB">One page</name>
+                </option>
+                <option>
+                    <id>ab_test</id>
+                    <name lang="de-DE">A/B-Test (RcAbTesting entscheidet)</name>
+                    <name lang="en-GB">A/B test (RcAbTesting decides)</name>
+                </option>
+            </options>
+            <defaultValue>guided</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Vorauswahl der Versandart</title>
+        <title lang="en-GB">Shipping method preselection</title>
+
+        <input-field type="bool">
+            <name>shippingPreselectEnabled</name>
+            <label lang="de-DE">Versandart vorauswählen, wenn die eingestellte nicht verfügbar ist</label>
+            <label lang="en-GB">Preselect a shipping method when the configured one is unavailable</label>
+            <helpText lang="de-DE">Ist die Standard-Versandart des Verkaufskanals für einen Warenkorb nicht verfügbar — etwa wegen Gewicht oder Länge —, hakt Shopware nichts an. Der Kunde steht dann vor einer Liste ohne Auswahl. Mit dieser Einstellung wird die erste verfügbare Versandart nach Position vorausgewählt und ein Hinweis dazu angezeigt. Versandarten aus der Liste „keine Lieferung" unten bleiben dabei außen vor.</helpText>
+            <helpText lang="en-GB">When the sales channel's default shipping method is unavailable for a cart — because of weight or length, for example — Shopware preselects nothing and the customer faces a list without a selection. With this setting the first available shipping method by position is preselected and a notice is shown. Methods listed as "not a delivery" below are left out.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <component name="sw-entity-single-select">
+            <name>shippingPlaceholderMethodId</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Platzhalter-Versandart ohne Lieferadresse</label>
+            <label lang="en-GB">Placeholder shipping method without delivery address</label>
+            <helpText lang="de-DE">Eine Versandart, die nur verfügbar ist, solange keine Lieferadresse vorliegt (etwa mit der Regel „Lieferadresse PLZ ist leer"). Bleibt im Warenkorb keine Lieferart übrig, wird sie statt einer nicht angeklickten Selbstabholung vorausgewählt; die Abholung bleibt darunter wählbar. Statt der Versandkosten steht dann ein Hinweis, dass sie nach Eingabe der Lieferadresse berechnet werden. Leer lassen, wenn es keine solche Versandart gibt.</helpText>
+            <helpText lang="en-GB">A shipping method that is only available while no delivery address is known (for example with the rule "Delivery address postcode is empty"). If no delivery method remains in the cart, it is preselected instead of a self-collection the customer never clicked; collection stays selectable below. Instead of the shipping costs, a note says they are calculated once the delivery address is entered. Leave empty if there is no such method.</helpText>
+        </component>
+    </card>
+
+    <card>
+        <title lang="de-DE">Telefonnummer</title>
+        <title lang="en-GB">Phone number</title>
+
+        <input-field type="bool">
+            <name>phoneNumberRequired</name>
+            <label lang="de-DE">Fehlende Telefonnummer auf der Bestätigungsseite nachfordern</label>
+            <label lang="en-GB">Ask for a missing phone number on the confirmation page</label>
+            <helpText lang="de-DE">Shopware verlangt die Telefonnummer nur im Adressformular. Wege, die dieses Formular überspringen — allen voran der PayPal-Express-Knopf —, legen die Adresse ohne Nummer an, und sie bleibt dauerhaft ohne: Beim Verwenden einer gespeicherten Adresse prüft Shopware das Pflichtfeld nicht mehr. Mit dieser Einstellung wird die Bestellung angehalten, solange an der Rechnungsadresse keine Nummer steht, und auf der Bestätigungsseite erscheint ein Feld dafür. Die eingegebene Nummer wird in die gespeicherte Adresse geschrieben, nicht nur an die Bestellung.</helpText>
+            <helpText lang="en-GB">Shopware only enforces the phone number in the address form. Checkout paths that skip that form — the PayPal Express button above all — create the address without a number, and it stays that way: when a stored address is used, the required field is no longer checked. With this setting the order is held back while the billing address has no number, and a field for it appears on the confirmation page. The number entered is written to the stored address, not just to the order.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Kundenkonto nach der Bestellung</title>
+        <title lang="en-GB">Customer account after the order</title>
+
+        <input-field type="bool">
+            <name>guestAccountOfferEnabled</name>
+            <label lang="de-DE">Gästen auf der Abschlussseite ein Kundenkonto anbieten</label>
+            <label lang="en-GB">Offer guests a customer account on the finish page</label>
+            <helpText lang="de-DE">Shopware bietet Gästen nach der Bestellung selbst ein Konto an, aber nur, solange sie angemeldet bleiben. Ist „Gastkunden nach dem Bestellabschluss automatisch ausloggen" eingeschaltet, fehlt das Angebot. Mit dieser Einstellung erscheint dort trotzdem ein Kennwortfeld; die Abmeldung bleibt. Das Angebot gilt 30 Minuten, nur in diesem Browser und nur einmal. Danach meldet sich der Kunde mit seiner Mailadresse und dem neuen Kennwort an.</helpText>
+            <helpText lang="en-GB">Shopware offers guests an account after the order itself, but only while they stay logged in. With "Automatically log out guest customers after order completion" switched on, the offer is missing. With this setting a password field appears there anyway; the logout stays. The offer is valid for 30 minutes, only in this browser and only once. Afterwards the customer logs in with their email address and the new password.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Anfrage bei nicht möglicher Lieferung</title>
+        <title lang="en-GB">Enquiry when delivery is not possible</title>
+
+        <input-field type="bool">
+            <name>shippingEnquiryEnabled</name>
+            <label lang="de-DE">Anfrageweg anbieten</label>
+            <label lang="en-GB">Offer the enquiry path</label>
+            <helpText lang="de-DE">Bleibt im Bestellvorgang keine Versandart übrig, erscheint statt der Sackgasse ein Hinweis mit einer Schaltfläche zum Kontaktformular. Der Warenkorb wird dabei übernommen. Ohne ausgewählte Zielseite unten erscheint nichts.</helpText>
+            <helpText lang="en-GB">When no shipping method remains in the checkout, a hint with a button to the contact form is shown instead of a dead end. The cart is carried over. Nothing is shown unless a target page is selected below.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <component name="sw-entity-single-select">
+            <name>shippingEnquiryCategoryId</name>
+            <entity>category</entity>
+            <label lang="de-DE">Zielseite mit dem Kontaktformular</label>
+            <label lang="en-GB">Target page carrying the contact form</label>
+            <helpText lang="de-DE">Die Seite, auf der Ihr Kontaktformular steht. Solange hier nichts ausgewählt ist, erscheint der Anfrageweg nicht — eine Schaltfläche ins Leere wäre schlimmer als keine.</helpText>
+            <helpText lang="en-GB">The page carrying your contact form. As long as nothing is selected here, the enquiry path is not shown — a button leading nowhere is worse than none.</helpText>
+        </component>
+
+        <component name="sw-entity-multi-id-select">
+            <name>shippingEnquiryNonDeliveryMethodIds</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Versandarten, die keine Lieferung sind</label>
+            <label lang="en-GB">Shipping methods that are not a delivery</label>
+            <helpText lang="de-DE">Zum Beispiel die Selbstabholung. Bleibt für einen Warenkorb nur noch eine davon übrig, erscheint der Anfrageweg zusätzlich — die Abholung bleibt trotzdem wählbar. Leer lassen, wenn der Hinweis nur bei gar keiner Versandart erscheinen soll.</helpText>
+            <helpText lang="en-GB">Self-collection, for example. If only such methods remain for a cart, the enquiry path is shown in addition — collection stays selectable. Leave empty to show the hint only when no shipping method remains at all.</helpText>
+        </component>
+
+        <input-field type="textarea">
+            <name>shippingEnquiryHint</name>
+            <label lang="de-DE">Hinweistext (leer = Standardtext)</label>
+            <label lang="en-GB">Hint text (empty = default text)</label>
+            <helpText lang="de-DE">Steht über der Schaltfläche. Leer lassen für den mitgelieferten Text, der auch übersetzt vorliegt.</helpText>
+            <helpText lang="en-GB">Shown above the button. Leave empty for the shipped text, which is translated as well.</helpText>
+        </input-field>
+
+        <input-field type="textarea">
+            <name>shippingEnquiryIntro</name>
+            <label lang="de-DE">Anschreiben im Kontaktformular (leer = Standardtext)</label>
+            <label lang="en-GB">Covering text in the contact form (empty = default text)</label>
+            <helpText lang="de-DE">Steht im Kommentarfeld über der Warenkorb-Aufstellung. Der Kunde kann ihn vor dem Absenden ändern. Leer lassen für den mitgelieferten Text, der auch übersetzt vorliegt.</helpText>
+            <helpText lang="en-GB">Placed in the comment field above the cart summary. The customer can edit it before sending. Leave empty for the shipped text, which is translated as well.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Hinweis bei Selbstabholung schwerer Ware</title>
+        <title lang="en-GB">Hint for self-collection of heavy goods</title>
+
+        <input-field type="float">
+            <name>pickupHintWeightThreshold</name>
+            <label lang="de-DE">Gewichtsschwelle in kg (leer = aus)</label>
+            <label lang="en-GB">Weight threshold in kg (empty = off)</label>
+            <helpText lang="de-DE">Wählt ein Kunde eine der oben eingetragenen Versandarten „keine Lieferung" und wiegt sein Warenkorb mehr als das hier, erscheint unter der Auswahl ein Hinweis. Leer lassen, wenn das Gewicht keine Rolle spielen soll.</helpText>
+            <helpText lang="en-GB">When a customer selects one of the "not a delivery" shipping methods above and their cart weighs more than this, a hint appears below the selection. Leave empty if weight should not matter.</helpText>
+        </input-field>
+
+        <input-field type="float">
+            <name>pickupHintLengthThreshold</name>
+            <label lang="de-DE">Längenschwelle in mm (leer = aus)</label>
+            <label lang="en-GB">Length threshold in mm (empty = off)</label>
+            <helpText lang="de-DE">Gemessen wird die längste einzelne Position, nicht die Summe — zwanzig Handläufe zu sechs Metern sind nicht 120 Meter lang, sondern zwanzigmal zu lang fürs Auto. Ein Treffer bei Gewicht oder Länge genügt.</helpText>
+            <helpText lang="en-GB">Measured against the longest single item, not the sum — twenty six-metre handrails are not 120 metres long, they are twenty times too long for a car. A match on either weight or length is enough.</helpText>
+        </input-field>
+
+        <input-field type="textarea">
+            <name>pickupHint</name>
+            <label lang="de-DE">Hinweistext (leer = Standardtext)</label>
+            <label lang="en-GB">Hint text (empty = default text)</label>
+            <helpText lang="de-DE">Steht unmittelbar unter der Versandart-Auswahl. Leer lassen für den mitgelieferten Text, der auch übersetzt vorliegt. Platzhalter: {Gewicht} setzt das Gesamtgewicht des Warenkorbs ein (z. B. 4,6 kg), {Länge} die längste einzelne Position (z. B. 2,00 m). Beide wirken auch hier im eigenen Text. Hinweis: Ändert sich der Warenkorb, ändert sich der Satz — dann muss der Kunde erneut bestätigen.</helpText>
+            <helpText lang="en-GB">Shown directly below the shipping method selection. Leave empty for the shipped text, which is translated as well. Placeholders: {weight} inserts the total cart weight (e.g. 4.6 kg), {length} the longest single item (e.g. 2.00 m). Both work in your own text too. Note: if the cart changes, so does the sentence — the customer then has to confirm again.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Speditionshinweis auf der Produktseite</title>
+        <title lang="en-GB">Freight hint on the product page</title>
+
+        <input-field type="bool">
+            <name>freightHintEnabled</name>
+            <label lang="de-DE">Speditionshinweis anzeigen</label>
+            <label lang="en-GB">Show freight hint</label>
+            <defaultValue>false</defaultValue>
+            <helpText lang="de-DE">Geht ein Artikel per Spedition, steht unter „zzgl. Versandkosten" ein Kasten mit der Preisspanne im Heimatland des Verkaufskanals und einem Rechner für die eigene Postleitzahl. Als Grund nennt er Länge oder Gewicht, gemessen an den Schwellen aus der Karte zur Selbstabholung.</helpText>
+            <helpText lang="en-GB">When an item ships by freight, a box below "plus shipping" shows the price range in the sales channel's home country and a calculator for the customer's own postcode. Length or weight is named as the reason, measured against the thresholds from the self-collection card.</helpText>
+        </input-field>
+
+        <component name="sw-entity-multi-id-select">
+            <name>freightShippingMethodIds</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Versandarten, die eine Spedition sind</label>
+            <label lang="en-GB">Shipping methods that are freight</label>
+            <helpText lang="de-DE">Der Hinweis erscheint nur, wenn die günstigste Lieferung für den Artikel eine dieser Versandarten ist. Die Versandarten „keine Lieferung" aus der Karte zum Anfrageweg zählen dabei nicht als Lieferung.</helpText>
+            <helpText lang="en-GB">The hint only appears when the cheapest delivery for the item is one of these methods. The "not a delivery" methods from the enquiry card do not count as a delivery.</helpText>
+        </component>
+
+        <input-field type="text">
+            <name>freightHintZipCodes</name>
+            <label lang="de-DE">Eine Postleitzahl je Zone (für die Preisspanne)</label>
+            <label lang="en-GB">One postcode per zone (for the price range)</label>
+            <placeholder lang="de-DE">z. B. 96215, 34117, 20095</placeholder>
+            <placeholder lang="en-GB">e.g. 96215, 34117, 20095</placeholder>
+            <helpText lang="de-DE">Durch Komma getrennt, höchstens fünf. Für jede wird die günstigste Lieferung berechnet; die Spanne reicht von der niedrigsten bis zur höchsten. Leer = kein Hinweis.</helpText>
+            <helpText lang="en-GB">Comma-separated, at most five. The cheapest delivery is calculated for each; the range spans lowest to highest. Empty = no hint.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">A/B-Test</title>
+        <title lang="en-GB">A/B test</title>
+
+        <input-field type="text">
+            <name>abExperimentKey</name>
+            <label lang="de-DE">Experiment-Schlüssel</label>
+            <label lang="en-GB">Experiment key</label>
+            <helpText lang="de-DE">Technischer Schlüssel eines Experiments aus RcAbTesting. Leer lassen, wenn dieses Plugin an keinem Test teilnimmt — dann ändert sich nichts. Das Feld heißt in jedem teilnehmenden Plugin gleich; RcAbTesting sammelt die Schlüssel darüber ein.</helpText>
+            <helpText lang="en-GB">Technical key of an experiment from RcAbTesting. Leave empty if this plugin does not take part — nothing changes then. The field has the same name in every participating plugin; RcAbTesting collects the keys from it.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>abSuppressVariant</name>
+            <label lang="de-DE">Variante ohne Checkout-Optimierung</label>
+            <label lang="en-GB">Variant without checkout enhancements</label>
+            <helpText lang="de-DE">Besucher dieser Variante bekommen den Standard-Checkout ohne Fortschrittsleiste, Vertrauenssignale und Warenkorb-Leiste — die Vergleichsgruppe. Üblich: \`control\`.</helpText>
+            <helpText lang="en-GB">Visitors in this variant get the plain checkout without progress bar, trust badges and cart sidebar — the control group. Usually: \`control\`.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title lang="de-DE">Zubehör im Warenkorb</title>
+        <title lang="en-GB">Accessories in the cart</title>
+
+        <input-field type="bool">
+            <name>cartAccessoriesEnabled</name>
+            <label lang="de-DE">„Dazu passt" und „Haben Sie an alles gedacht?" im Warenkorb zeigen</label>
+            <label lang="en-GB">Show "Goes well with" and "Did you think of everything?" in the cart</label>
+            <helpText lang="de-DE">„Dazu passt" zeigt Produkte aus der Querverkaufsgruppe „Oft zusammen gekauft" der Artikel im Warenkorb, ohne was schon darin liegt (höchstens vier). „Haben Sie an alles gedacht?" nennt bei Bausätzen die übrigen Querverkaufsgruppen, aus denen noch nichts im Warenkorb liegt (höchstens vier). Auf der Warenkorbseite und in der Warenkorb-Leiste, nicht in der Kasse.</helpText>
+            <helpText lang="en-GB">"Goes well with" shows products from the cross-selling group "Oft zusammen gekauft" of the items in the cart, except what is already in it (at most four). "Did you think of everything?" lists, for kits, the other cross-selling groups with nothing in the cart yet (at most four). On the cart page and in the cart sidebar, not in the checkout.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <component name="sw-entity-multi-id-select">
+            <name>cartAccessoryKitCategoryIds</name>
+            <entity>category</entity>
+            <label lang="de-DE">Kategorien mit Bausätzen (für „Haben Sie an alles gedacht?")</label>
+            <label lang="en-GB">Categories with kits (for "Did you think of everything?")</label>
+            <helpText lang="de-DE">Ein Artikel gilt als Bausatz, wenn er in einer dieser Kategorien oder einer ihrer Unterkategorien liegt. Leer: keine Liste.</helpText>
+            <helpText lang="en-GB">An item counts as a kit when it is in one of these categories or a subcategory. Empty: no list.</helpText>
+        </component>
+    </card>
+
+    <card>
+        <title lang="de-DE">Zahlungsart</title>
+        <title lang="en-GB">Payment method</title>
+
+        <component name="sw-entity-single-select">
+            <name>paymentPlaceholderMethodId</name>
+            <entity>payment_method</entity>
+            <label lang="de-DE">Platzhalter-Zahlart (keine Vorauswahl)</label>
+            <label lang="en-GB">Placeholder payment method (no preselection)</label>
+            <helpText lang="de-DE">Eine Zahlart, die nur als Vorgabe des Verkaufskanals dient (etwa „Bitte Zahlungsart wählen"). Sie steht in keiner Auswahl; solange sie gilt, ist keine Zahlart angehakt, kein Zahlart-Rabatt im Warenkorb, und „Zahlungspflichtig bestellen" verlangt erst eine Wahl. Als Standard-Zahlart des Verkaufskanals eintragen. Leer lassen, wenn Shopware vorauswählen soll.</helpText>
+            <helpText lang="en-GB">A payment method that only serves as the sales channel default (e.g. "Please choose a payment method"). It is never listed; while it applies, nothing is ticked, no payment discount shows in the cart, and placing the order first asks for a choice. Set it as the sales channel's default payment method. Leave empty to let Shopware preselect.</helpText>
+        </component>
+    </card>
+</config>

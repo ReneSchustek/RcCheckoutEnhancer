@@ -1,0 +1,48 @@
+{# „Dazu passt" und „Haben Sie an alles gedacht?" unter den Positionen (CartAccessorySubscriber).
+
+   „Dazu passt" verweist auf die Produktseite statt direkt in den Warenkorb zu legen: Die Empfehlungen sind meist
+   Hauptartikel mit Varianten (Länge, Ausführung), gewählt wird dort. „Haben Sie an alles gedacht?" verweist auf den
+   Zubehörblock der Produktseite des Bausatzes (`#accessories`). #}
+{% set rcAcc = page.extensions.rcCartAccessories %}
+<section class="rc-cart-accessories{{ rcAccCompact|default(false) ? ' rc-cart-accessories--compact' }}" aria-label="{{ 'rc-checkout.cartAccessories.label'|trans }}">
+    {% if rcAcc.suggestions is not empty %}
+        <h2 class="rc-cart-accessories__title">{{ 'rc-checkout.cartAccessories.suggestTitle'|trans }}</h2>
+        <ul class="rc-cart-accessories__list">
+            {% for rcProduct in rcAcc.suggestions %}
+                {% set rcPrice = rcProduct.calculatedPrices|length > 0 ? rcProduct.calculatedPrices.last : rcProduct.calculatedPrice %}
+                {% set rcFrom = rcProduct.childCount > 0 or rcProduct.calculatedPrices|length > 1 %}
+                <li class="rc-cart-accessories__item">
+                    <a class="rc-cart-accessories__link" href="{{ seoUrl('frontend.detail.page', { productId: rcProduct.id }) }}">
+                        <span class="rc-cart-accessories__image">
+                            {% if rcProduct.cover.media %}
+                                {% sw_thumbnails 'rc-cart-accessories-image' with {
+                                    media: rcProduct.cover.media,
+                                    sizes: { default: '80px' },
+                                    attributes: { alt: '', loading: 'lazy' }
+                                } %}
+                            {% endif %}
+                        </span>
+                        <span class="rc-cart-accessories__name">{{ rcProduct.translated.name }}</span>
+                        <span class="rc-cart-accessories__price">
+                            {% set rcAmount = (rcFrom and rcProduct.calculatedCheapestPrice ? rcProduct.calculatedCheapestPrice.unitPrice : rcPrice.unitPrice)|currency %}
+                            {{ rcFrom ? 'rc-checkout.cartAccessories.from'|trans({ '%price%': rcAmount }) : rcAmount }}
+                        </span>
+                        <span class="rc-cart-accessories__more">{{ 'rc-checkout.cartAccessories.toProduct'|trans }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if rcAcc.checklist is not empty %}
+        <h2 class="rc-cart-accessories__title">{{ 'rc-checkout.cartAccessories.checklistTitle'|trans }}</h2>
+        <ul class="rc-cart-accessories__checklist">
+            {% for rcItem in rcAcc.checklist %}
+                <li>
+                    <a href="{{ seoUrl('frontend.detail.page', { productId: rcItem.productId }) }}#accessories">{{ rcItem.name }}</a>
+                    <small>{{ 'rc-checkout.cartAccessories.checklistFor'|trans({ '%product%': rcItem.productName }) }}</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</section>
