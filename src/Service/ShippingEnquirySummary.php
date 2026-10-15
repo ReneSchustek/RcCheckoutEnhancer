@@ -8,6 +8,7 @@ use Ruhrcoder\RcCheckoutEnhancer\Struct\CartMeasurements;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Schreibt den Warenkorb als Text, den der Vertrieb ohne Rückfrage rechnen kann.
@@ -74,8 +75,14 @@ class ShippingEnquirySummary
      */
     private const MAX_VALUE_LENGTH = 200;
 
-    public function __construct(private readonly CartExposedCustomFields $exposedCustomFields)
-    {
+    /**
+     * Die Beschriftungen kommen aus den Textbausteinen: Der Text steht im Kontaktformular vor dem Kunden, in der
+     * Sprache seines Verkaufskanals. Die Zahlen bleiben im deutschen Format; gelesen werden sie vom Vertrieb.
+     */
+    public function __construct(
+        private readonly CartExposedCustomFields $exposedCustomFields,
+        private readonly TranslatorInterface $translator,
+    ) {
     }
 
     public function forCart(Cart $cart, SalesChannelContext $context): string
@@ -219,7 +226,7 @@ class ShippingEnquirySummary
 
         $weight = $delivery->getWeight();
         if ($weight !== null && $weight > 0.0) {
-            $parts[] = \sprintf('%s kg/Stück', $this->number($weight));
+            $parts[] = $this->label('weightPerPiece', $this->number($weight));
         }
 
         $length = $delivery->getLength();
@@ -244,16 +251,16 @@ class ShippingEnquirySummary
      */
     private function totalsOf(Cart $cart, SalesChannelContext $context, string $currency): array
     {
-        $totals = [\sprintf('Warenwert: %s', $this->money($cart->getPrice()->getPositionPrice(), $currency))];
+        $totals = [$this->label('goodsValue', $this->money($cart->getPrice()->getPositionPrice(), $currency))];
 
         $measurements = CartMeasurements::fromCart($cart);
 
         if ($measurements->totalWeight > 0.0) {
-            $totals[] = \sprintf('Gesamtgewicht: %s kg', $this->number($measurements->totalWeight));
+            $totals[] = $this->label('totalWeight', $this->number($measurements->totalWeight));
         }
 
         if ($measurements->longestLength > 0.0) {
-            $totals[] = \sprintf('Längste Position: %s mm', $this->number($measurements->longestLength));
+            $totals[] = $this->label('longestItem', $this->number($measurements->longestLength));
         }
 
         return [...$totals, ...$this->destinationOf($context)];
@@ -280,7 +287,7 @@ class ShippingEnquirySummary
 
         $address = $location->getAddress();
         if ($address === null) {
-            return $country === '' ? [] : [\sprintf('Lieferung nach: %s', $country)];
+            return $country === '' ? [] : [$this->label('deliverToCountry', $country)];
         }
 
         $city = trim(\sprintf('%s %s', $address->getZipcode() ?? '', $address->getCity()));
@@ -296,7 +303,7 @@ class ShippingEnquirySummary
             return [];
         }
 
-        return ['Lieferung nach:', ...array_map(static fn (string $line): string => '    ' . trim($line), $lines)];
+        return [$this->label('deliverTo'), ...array_map(static fn (string $line): string => '    ' . trim($line), $lines)];
     }
 
     /**
@@ -315,6 +322,11 @@ class ShippingEnquirySummary
         }
 
         return \is_int($value) || \is_float($value) ? $this->number((float) $value) : null;
+    }
+
+    private function label(string $key, string $value = ''): string
+    {
+        return $this->translator->trans('rcCheckout.enquirySummary.' . $key, ['%value%' => $value]);
     }
 
     /**

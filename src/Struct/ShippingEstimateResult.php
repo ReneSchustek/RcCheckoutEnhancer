@@ -28,7 +28,17 @@ class ShippingEstimateResult extends Struct
         public readonly array $estimates,
         public readonly string $countryIso,
         public readonly string $zipCode,
+        public readonly int $quantity = 0,
     ) {
+    }
+
+    /**
+     * Dieselbe Auskunft mit der Menge, für die gerechnet wurde. Der Rechner der Produktseite nennt diese Menge im
+     * Text; die eingegebene kann davon abweichen (Mindest- und Höchstabnahme, Staffel). 0 heißt unbekannt.
+     */
+    public function withQuantity(int $quantity): self
+    {
+        return new self($this->state, $this->estimates, $this->countryIso, $this->zipCode, $quantity);
     }
 
     /**
@@ -66,8 +76,8 @@ class ShippingEstimateResult extends Struct
         ));
 
         return $estimates === []
-            ? self::withoutShippingMethod($this->countryIso, $this->zipCode)
-            : self::withShippingMethods($estimates, $this->countryIso, $this->zipCode);
+            ? new self(self::STATE_NO_SHIPPING, [], $this->countryIso, $this->zipCode, $this->quantity)
+            : new self(self::STATE_OK, $estimates, $this->countryIso, $this->zipCode, $this->quantity);
     }
 
     public function isSuccessful(): bool

@@ -407,6 +407,15 @@ undo;14 Tage Widerrufsrecht</defaultValue>
             <helpText lang="de-DE">Ein Artikel gilt als Bausatz, wenn er in einer dieser Kategorien oder einer ihrer Unterkategorien liegt. Leer: keine Liste.</helpText>
             <helpText lang="en-GB">An item counts as a kit when it is in one of these categories or a subcategory. Empty: no list.</helpText>
         </component>
+
+        <input-field type="text">
+            <name>cartAccessoryGroupNames</name>
+            <label lang="de-DE">Querverkaufsgruppen für „Dazu passt"</label>
+            <label lang="en-GB">Cross-selling groups for "Goes well with"</label>
+            <helpText lang="de-DE">Namen der Querverkaufsgruppen, deren Artikel unter „Dazu passt" erscheinen, durch Komma getrennt; Groß- und Kleinschreibung zählt nicht. Je Sprache des Verkaufskanals den Namen eintragen, unter dem die Gruppe dort heißt. Leer: „Oft zusammen gekauft".</helpText>
+            <helpText lang="en-GB">Names of the cross-selling groups whose items appear under "Goes well with", separated by commas; case does not matter. Enter the name the group has in the sales channel's language. Empty: "Oft zusammen gekauft".</helpText>
+            <defaultValue>Oft zusammen gekauft, Frequently bought together</defaultValue>
+        </input-field>
     </card>
 
     <card>

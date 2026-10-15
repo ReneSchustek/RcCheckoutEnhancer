@@ -140,11 +140,22 @@ export default class RcProductShippingPlugin extends Plugin {
             // Gemerkt wird nur, was der Server angenommen hat; eine abgewiesene Postleitzahl bliebe sonst stehen.
             if (!this._output.querySelector('[data-rc-shipping-estimate-error]')) {
                 rememberShippingLocation(this._country.value, zip);
-                this._showFor(zip, quantity);
+                this._showFor(zip, this._calculatedQuantity(quantity));
                 // Das Ergebnis steht außerhalb des Kastens und bleibt nach dem Zuklappen sichtbar.
                 this.el.querySelector('[data-rc-product-shipping-details]').open = false;
             }
         });
+    }
+
+    /**
+     * Die Menge, für die der Server gerechnet hat. Sie weicht von der eingegebenen ab, wenn die Mindest- oder
+     * Höchstabnahme oder die Staffel greift; der Satz „für … Stück" muss zum Preis passen.
+     */
+    _calculatedQuantity(entered) {
+        const result = this._output.querySelector('[data-rc-shipping-estimate-quantity]');
+        const calculated = parseInt(result?.getAttribute('data-rc-shipping-estimate-quantity') ?? '', 10);
+
+        return Number.isNaN(calculated) ? entered : calculated;
     }
 
     _showFor(zip, quantity) {

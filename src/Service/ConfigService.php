@@ -404,6 +404,23 @@ class ConfigService implements ResetInterface
     }
 
     /**
+     * Die Namen der Querverkaufsgruppen für „Dazu passt", kleingeschrieben. Verglichen wird mit dem übersetzten Namen
+     * der Gruppe; ein Verkaufskanal in einer anderen Sprache trägt deshalb seinen eigenen Namen ein. Leer fällt auf
+     * „oft zusammen gekauft" zurück, den Namen, unter dem die Gruppen im Shop angelegt sind.
+     *
+     * @return list<string>
+     */
+    public function getCartAccessoryGroupNames(?string $salesChannelId = null): array
+    {
+        $value = $this->get('.cartAccessoryGroupNames', '', $salesChannelId);
+        $names = \is_string($value)
+            ? array_values(array_filter(array_map(static fn (string $name): string => mb_strtolower(trim($name)), explode(',', $value))))
+            : [];
+
+        return $names !== [] ? $names : ['oft zusammen gekauft'];
+    }
+
+    /**
      * Der Rechner „Versand für dieses Produkt berechnen" auf der Produktseite; Vorgabe aus.
      */
     public function isProductShippingEstimateEnabled(?string $salesChannelId = null): bool

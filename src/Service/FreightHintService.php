@@ -116,12 +116,13 @@ class FreightHintService
     public function estimateForProduct(string $productId, SalesChannelContext $context, string $countryIso, string $zipCode, int $quantity): ShippingEstimateResult
     {
         $product = $this->product($productId, $context);
-        $cart = $product === null ? null : $this->cartFor($product, self::orderableQuantity($product, $quantity), $context);
+        $orderable = $product === null ? 0 : self::orderableQuantity($product, $quantity);
+        $cart = $product === null ? null : $this->cartFor($product, $orderable, $context);
         if ($cart === null) {
             return ShippingEstimateResult::withoutShippingMethod($countryIso, $zipCode);
         }
 
-        return $this->estimateService->estimate($cart, $context, $countryIso, $zipCode);
+        return $this->estimateService->estimate($cart, $context, $countryIso, $zipCode)->withQuantity($orderable);
     }
 
     /**

@@ -18,6 +18,7 @@ use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEnt
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Currency\CurrencyEntity;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Die Zusammenfassung, die der Vertrieb bekommt.
@@ -285,7 +286,21 @@ final class ShippingEnquirySummaryTest extends TestCase
         $exposed = $this->createMock(CartExposedCustomFields::class);
         $exposed->method('names')->willReturn($exposedCustomFields);
 
-        return new ShippingEnquirySummary($exposed);
+        // Übersetzt wie die deutschen Textbausteine, damit die Erwartungen den Text zeigen, den der Kunde sieht.
+        $labels = [
+            'rcCheckout.enquirySummary.goodsValue' => 'Warenwert: %value%',
+            'rcCheckout.enquirySummary.totalWeight' => 'Gesamtgewicht: %value% kg',
+            'rcCheckout.enquirySummary.longestItem' => 'Längste Position: %value% mm',
+            'rcCheckout.enquirySummary.deliverTo' => 'Lieferung nach:',
+            'rcCheckout.enquirySummary.deliverToCountry' => 'Lieferung nach: %value%',
+            'rcCheckout.enquirySummary.weightPerPiece' => '%value% kg/Stück',
+        ];
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id, array $parameters = []): string => strtr($labels[$id] ?? $id, $parameters)
+        );
+
+        return new ShippingEnquirySummary($exposed, $translator);
     }
 
     private function currency(string $symbol): CurrencyEntity

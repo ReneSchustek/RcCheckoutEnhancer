@@ -33,6 +33,7 @@
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquirySummary">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\CartExposedCustomFields"/>
+            <argument type="service" id="translator"/>
         </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore">

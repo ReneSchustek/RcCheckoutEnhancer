@@ -52,6 +52,14 @@
             "expired": "The offer to create a customer account has expired. You can register at any time.",
             "emailTaken": "There is already a customer account for this email address. Please log in there; if you have forgotten the password, use \"Forgot password\".",
             "invalidPassword": "The password is too short or the confirmation does not match. Please use at least %minLength% characters."
+        },
+        "enquirySummary": {
+            "goodsValue": "Value of goods: %value%",
+            "totalWeight": "Total weight: %value% kg",
+            "longestItem": "Longest item: %value% mm",
+            "deliverTo": "Deliver to:",
+            "deliverToCountry": "Deliver to: %value%",
+            "weightPerPiece": "%value% kg/piece"
         }
     },
     "rc-checkout": {

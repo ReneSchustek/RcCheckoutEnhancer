@@ -53,6 +53,23 @@ final class ShippingEstimateResultTest extends TestCase
         self::assertSame([], $result->estimates);
     }
 
+    /**
+     * Die gerechnete Menge (etwa die Mindestabnahme statt der eingegebenen 1) muss das Herausfiltern von Versandarten
+     * überstehen, sonst nennt der Satz unter dem Preis wieder die falsche Stückzahl.
+     */
+    public function testQuantitySurvivesWithout(): void
+    {
+        $pickup = Uuid::randomHex();
+        $parcel = new ShippingEstimate(Uuid::randomHex(), 'Paket', 8.93, 'EUR', null);
+        $result = ShippingEstimateResult::withShippingMethods([$parcel, new ShippingEstimate($pickup, 'Abholung', 0.0, 'EUR', null)], 'DE', '44787')
+            ->withQuantity(5);
+
+        self::assertSame(0, ShippingEstimateResult::failed('DE', '44787')->quantity);
+        self::assertSame(5, $result->quantity);
+        self::assertSame(5, $result->without([$pickup])->quantity);
+        self::assertSame(5, $result->without([$pickup, $parcel->shippingMethodId])->quantity);
+    }
+
     public function testWithoutDropsTheNamedMethods(): void
     {
         $pickup = Uuid::randomHex();

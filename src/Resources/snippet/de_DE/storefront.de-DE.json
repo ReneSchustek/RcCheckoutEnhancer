@@ -52,6 +52,14 @@
             "expired": "Das Angebot, ein Kundenkonto anzulegen, ist abgelaufen. Sie können sich jederzeit neu registrieren.",
             "emailTaken": "Zu dieser Mailadresse gibt es schon ein Kundenkonto. Melden Sie sich dort an; falls Sie das Kennwort nicht mehr wissen, über „Passwort vergessen\".",
             "invalidPassword": "Das Kennwort ist zu kurz oder die Wiederholung stimmt nicht überein. Bitte mindestens %minLength% Zeichen."
+        },
+        "enquirySummary": {
+            "goodsValue": "Warenwert: %value%",
+            "totalWeight": "Gesamtgewicht: %value% kg",
+            "longestItem": "Längste Position: %value% mm",
+            "deliverTo": "Lieferung nach:",
+            "deliverToCountry": "Lieferung nach: %value%",
+            "weightPerPiece": "%value% kg/Stück"
         }
     },
     "rc-checkout": {

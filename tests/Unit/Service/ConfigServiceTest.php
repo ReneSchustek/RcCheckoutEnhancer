@@ -45,6 +45,19 @@ final class ConfigServiceTest extends TestCase
         self::assertFalse($this->configService->isProgressBarEnabled());
     }
 
+    /**
+     * Was: Namen der Querverkaufsgruppen für „Dazu passt" mit Leerzeichen und Großschreibung, dann leer.
+     * Warum: Ein englischer Kanal trägt seinen eigenen Namen ein; leer muss der Name der Gruppen im Shop gelten.
+     */
+    #[Test]
+    public function accessoryGroupNamesAreTrimmedLowercasedAndFallBack(): void
+    {
+        $this->systemConfigService->method('get')->willReturnOnConsecutiveCalls(' Oft zusammen gekauft ,Frequently Bought Together,, ', '');
+
+        self::assertSame(['oft zusammen gekauft', 'frequently bought together'], $this->configService->getCartAccessoryGroupNames('a'));
+        self::assertSame(['oft zusammen gekauft'], $this->configService->getCartAccessoryGroupNames('b'));
+    }
+
     #[Test]
     public function progressBarEnabledReturnsTrueByDefault(): void
     {

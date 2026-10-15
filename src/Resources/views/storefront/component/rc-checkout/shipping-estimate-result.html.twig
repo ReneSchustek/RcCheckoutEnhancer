@@ -3,7 +3,10 @@
    Wird sowohl beim ersten Rendern (leer) als auch als Antwort auf die Anfrage
    ausgeliefert. Der Bereich trägt `aria-live="polite"`: Wer mit Sprachausgabe
    arbeitet, bekommt das Ergebnis vorgelesen, ohne dass der Fokus springt. #}
-<div class="rc-shipping-estimate-result" data-rc-shipping-estimate-result role="status" aria-live="polite">
+{# `data-rc-shipping-estimate-quantity`: die Menge, für die der Server gerechnet hat. Der Rechner der Produktseite nennt
+   sie im Satz darunter, nicht die eingegebene. #}
+<div class="rc-shipping-estimate-result" data-rc-shipping-estimate-result role="status" aria-live="polite"
+     {%- if rcEstimate is defined and rcEstimate and rcEstimate.quantity > 0 %} data-rc-shipping-estimate-quantity="{{ rcEstimate.quantity }}"{% endif %}>
     {% if rcEstimateError is defined and rcEstimateError %}
         <p class="rc-shipping-estimate-error alert alert-warning mb-0" data-rc-shipping-estimate-error>
             {{ rcEstimateError|trans }}

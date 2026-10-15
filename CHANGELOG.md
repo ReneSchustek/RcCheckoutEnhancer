@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.39.0] - 2026-10-15 — Versandrechner nennt die gerechnete Menge, „Dazu passt" je Sprache
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `bin/build-storefront.sh`, `php bin/console cache:clear`.
+
+### Behoben
+
+- Versand für dieses Produkt: Der Satz „für … Stück" nennt die Menge, mit der gerechnet wurde (Mindest- und
+  Höchstabnahme, Staffel), nicht mehr die eingegebene oder „1" ohne Mengenfeld.
+- Versandanfrage: Beschriftungen (Warenwert, Gesamtgewicht, Längste Position, Lieferung nach, kg/Stück) kommen aus den
+  Textbausteinen und stehen im englischen Kanal auf Englisch.
+
+### Neu
+
+- Einstellung „Querverkaufsgruppen für „Dazu passt"": Namen je Sprache, Vorgabe „Oft zusammen gekauft, Frequently
+  bought together". Bisher war der deutsche Name fest hinterlegt, in einem englischen Kanal landete die Gruppe unter
+  „Haben Sie an alles gedacht?".
+
+
 ## [1.38.0] - 2026-10-15 — Bestellprozess mit klarer Überschrift und Knopftexten
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `bin/build-storefront.sh`, `php bin/console cache:clear`.

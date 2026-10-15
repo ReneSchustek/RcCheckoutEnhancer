@@ -31,8 +31,6 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class CartAccessoryService
 {
-    // Verglichen wird kleingeschrieben, damit „Oft zusammen gekauft" in jeder Schreibweise greift.
-    public const ALSO_BOUGHT = 'oft zusammen gekauft';
     // Eine Kachelreihe auf der Warenkorbseite (vier Spalten), am Telefon zwei Zeilen zu zwei.
     private const SUGGESTION_LIMIT = 4;
     // Mehr als vier Erinnerungen liest unter den Positionen niemand mehr.
@@ -76,6 +74,9 @@ class CartAccessoryService
         }
 
         $kitCategories = $this->configService->getCartAccessoryKitCategoryIds($context->getSalesChannelId());
+        // Verglichen wird kleingeschrieben mit dem übersetzten Namen der Gruppe; die Namen je Sprache kommen aus den
+        // Einstellungen, sonst fiele die Gruppe in einem englischen Kanal unter „Haben Sie an alles gedacht?".
+        $alsoBought = $this->configService->getCartAccessoryGroupNames($context->getSalesChannelId());
         $bought = [];
         $checklist = [];
         foreach (\array_slice(array_keys($mains), 0, self::PRODUCT_LIMIT) as $mainId) {
@@ -89,7 +90,7 @@ class CartAccessoryService
 
                 // „Oft zusammen gekauft" speist „Dazu passt"; jede andere Gruppe eines Bausatzes wird zur Erinnerung,
                 // solange aus ihr nichts im Warenkorb liegt.
-                if (mb_strtolower($name) === self::ALSO_BOUGHT) {
+                if (\in_array(mb_strtolower($name), $alsoBought, true)) {
                     $bought[] = $products;
                 } elseif ($isKit && $name !== '' && $products !== [] && !self::anyOwned($products, $owned)) {
                     $checklist[] = ['name' => $name, 'productId' => $mainId, 'productName' => (string) ($mains[$mainId]->getTranslation('name') ?? $mains[$mainId]->getName())];
