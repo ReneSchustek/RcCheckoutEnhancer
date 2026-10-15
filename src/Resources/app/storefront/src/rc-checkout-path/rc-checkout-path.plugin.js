@@ -67,6 +67,20 @@ export default class RcCheckoutPathPlugin extends Plugin {
     }
 
     /**
+     * Setzt den Text des Weiter-Knopfs passend zum Weg: Gast „Weiter zur Übersicht", Neues Konto „Konto anlegen und
+     * weiter". Für die Anmeldung ist der Knopf verborgen; dort gilt der Knopf der Anmeldekarte.
+     *
+     * @param {HTMLElement|null} button
+     * @param {string} path
+     */
+    static applyLabel(button, path) {
+        const label = path === 'register' ? button?.dataset.rcCheckoutPathLabelRegister : button?.dataset.rcCheckoutPathLabelGuest;
+        if (button && label) {
+            button.textContent = label;
+        }
+    }
+
+    /**
      * @param {string} path `guest`, `login` oder `register`
      */
     _select(path) {
@@ -80,6 +94,7 @@ export default class RcCheckoutPathPlugin extends Plugin {
         this._form.hidden = path === 'login';
         if (this._continue) {
             this._continue.hidden = path === 'login';
+            RcCheckoutPathPlugin.applyLabel(this._continue.querySelector('button'), path);
         }
 
         if (!this._accountCheckbox) {

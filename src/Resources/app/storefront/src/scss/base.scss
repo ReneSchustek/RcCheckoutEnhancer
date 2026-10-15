@@ -588,6 +588,29 @@ body.rc-pickup-dialog-open {
 // Untereinander in voller Breite, ab der kleinen Bildschirmbreite drei gleich breite Knöpfe.
 // Nebeneinander auf dem Telefon brächen „Neues Kundenkonto" und „Gastbestellung" in zwei Zeilen
 // um, und die Knöpfe wären unterschiedlich hoch.
+// Kopf des einseitigen Checkouts: Kleinschrift über der H1 „Bestellprozess". Das Theme darf beides übernehmen.
+.rc-checkout-heading {
+    margin-bottom: 1.5rem;
+}
+
+.rc-checkout-heading__eyebrow {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.rc-checkout-heading__title {
+    margin: 0;
+}
+
+.rc-checkout-path__form-title {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
 .rc-checkout-path__legend {
     font-size: 1rem;
     font-weight: 600;

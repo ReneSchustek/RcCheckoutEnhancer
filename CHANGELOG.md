@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.38.0] - 2026-10-15 — Bestellprozess mit klarer Überschrift und Knopftexten
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `bin/build-storefront.sh`, `php bin/console cache:clear`.
+
+### Geändert
+
+- Einseitige Kasse: Oben steht „Bestellprozess" (mit Kleinschrift „Ihre Bestellung") als einzige H1, darunter die drei
+  Wege, darunter „Versandinformationen" als Überschrift des Formulars.
+- Der Weiter-Knopf unten trägt den Text des gewählten Wegs: Gast „Weiter zur Übersicht" statt „Registrieren", Neues
+  Kundenkonto „Konto anlegen und weiter". Für „Bereits Kunde" gilt der Knopf „Anmelden" der Anmeldekarte.
+
+
 ## [1.37.2] - 2026-10-15: Bestellsperren ohne Hinweis im Warenkorb
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `php bin/console cache:clear`.

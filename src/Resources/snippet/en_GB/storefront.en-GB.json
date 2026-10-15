@@ -1,6 +1,10 @@
 {
     "rcCheckout": {
         "onePage": {
+            "processEyebrow": "Your order",
+            "processTitle": "Checkout",
+            "continueGuest": "Continue to review",
+            "continueRegister": "Create account and continue",
             "pathLegend": "How would you like to order?",
             "pathGuest": "Guest order",
             "pathLogin": "Existing customer",

@@ -6,9 +6,12 @@
    eigenen Knopf ab. #}
 {% set rcInitialPath = (data is defined and data.getBoolean('createCustomerAccount')) ? 'register' : 'guest' %}
 
-<h1 class="address-main-header">
-    {{ 'checkout.addressHeader'|trans|sw_sanitize }}
-</h1>
+{# Über allem der Bestellprozess als einzige H1, darunter die drei Wege; „Versandinformationen" ist die Überschrift des
+   Formulars und steht deshalb in dessen Abschnitt. Die Klassen sind neutral, das Theme gibt ihnen seinen Stil. #}
+<header class="rc-checkout-heading">
+    <span class="rc-checkout-heading__eyebrow">{{ 'rcCheckout.onePage.processEyebrow'|trans|sw_sanitize }}</span>
+    <h1 class="rc-checkout-heading__title">{{ 'rcCheckout.onePage.processTitle'|trans|sw_sanitize }}</h1>
+</header>
 
 <div class="rc-checkout-path"
      data-rc-checkout-path="true"
@@ -35,6 +38,9 @@
     </div>
 
     <div class="rc-checkout-path__section" data-rc-checkout-path-section="form">
+        <h2 class="address-main-header rc-checkout-path__form-title">
+            {{ 'checkout.addressHeader'|trans|sw_sanitize }}
+        </h2>
         {% sw_include '@Storefront/storefront/page/checkout/address/register.html.twig' with {
             cardTitle: 'checkout.addressRegisterCardTitle'|trans|sw_sanitize
         } %}
@@ -56,8 +62,13 @@
         {# Das Gitter sitzt eine Ebene tiefer: `d-grid` setzt seine Anzeige mit `!important` und
            schlüge sonst das `hidden` dieser Hülle. #}
         <div class="d-grid col-md-6 offset-md-6">
-            <button type="button" class="btn btn-primary btn-lg">
-                {{ 'account.registerSubmit'|trans|sw_sanitize }}
+            {# Der Text folgt der Wahl oben: Ein Gast registriert sich nicht, er geht weiter zur Übersicht. Ohne Skript
+               bleibt dieser Knopf verborgen. #}
+            <button type="button"
+                    class="btn btn-primary btn-lg"
+                    data-rc-checkout-path-label-guest="{{ 'rcCheckout.onePage.continueGuest'|trans|striptags }}"
+                    data-rc-checkout-path-label-register="{{ 'rcCheckout.onePage.continueRegister'|trans|striptags }}">
+                {{ 'rcCheckout.onePage.continueGuest'|trans|sw_sanitize }}
             </button>
         </div>
     </div>

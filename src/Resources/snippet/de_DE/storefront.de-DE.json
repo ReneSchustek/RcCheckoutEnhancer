@@ -1,6 +1,10 @@
 {
     "rcCheckout": {
         "onePage": {
+            "processEyebrow": "Ihre Bestellung",
+            "processTitle": "Bestellprozess",
+            "continueGuest": "Weiter zur Übersicht",
+            "continueRegister": "Konto anlegen und weiter",
             "pathLegend": "Wie möchten Sie bestellen?",
             "pathGuest": "Gastbestellung",
             "pathLogin": "Bereits Kunde",
