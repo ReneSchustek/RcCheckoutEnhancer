@@ -23,8 +23,8 @@ use Shopware\Core\Framework\Uuid\Uuid;
  *
  * Der alte Wert überschreibt einen vorhandenen neuen. Shopware schreibt die `defaultValue`
  * aus `config.xml` vor dem Lauf der Migrationen in die Datenbank, ein Riegel „nur anlegen,
- * nie überschreiben" fände also immer einen Wert vor und täte nie etwas. An einem echten
- * Shop stand so der eingeschaltete Versandkostenrechner nach dem Update auf „aus".
+ * nie überschreiben" fände also immer einen Wert vor und täte nie etwas. Ein eingeschalteter
+ * Versandkostenrechner stünde dann nach dem Update auf „aus".
  *
  * Wiederholte Läufe sind dennoch unbedenklich: Shopware führt eine Migration genau
  * einmal aus und merkt sich das in der Tabelle `migration`. Wer nach dem Update im

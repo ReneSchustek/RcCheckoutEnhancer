@@ -445,7 +445,7 @@ final class ShippingEstimateServiceTest extends TestCase
      * Was: Die gewählte Versandart ist gesperrt, etwa über dem obersten Gewichtsband, und keine
      *      andere hat einen Preis.
      * Warum: Der Kern behält die Lieferung und meldet nur den Fehler. Die Abkürzung darf das nicht
-     *        als lieferbar durchwinken; es gilt die volle Prüfung wie bisher.
+     *        als lieferbar durchwinken; es gilt die volle Prüfung wie ohne Abkürzung.
      */
     public function testABlockedShippingMethodFallsBackToTheFullCheck(): void
     {

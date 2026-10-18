@@ -24,7 +24,8 @@ final class RcAbTestingFreeShippingSwitchGateTest extends TestCase
 
     /**
      * Was: die Dienstdefinition des Schalters.
-     * Warum: Gebunden war die `final`-Klasse von RcAbTesting statt ihrer Schnittstelle.
+     * Warum: An die `final`-Klasse von RcAbTesting gebunden, ließe sich der Schalter weder
+     *        ersetzen noch im Test doppeln; die Schnittstelle erlaubt beides.
      * Erwartet: Die Schnittstelle, weiterhin optional, dazu der Logger.
      */
     public function testTheServiceBindsTheInterface(): void

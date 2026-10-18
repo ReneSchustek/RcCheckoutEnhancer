@@ -167,8 +167,9 @@ class ShippingEstimateService
      * und Leiste die eigene Rechnung (siehe `benchmarks/ShippingCheckBench.php`).
      *
      * Über dem obersten Gewichtsband behält der Kern die Lieferung, meldet aber
-     * `ShippingMethodBlockedError` („no shipping costs found"). Dann, und ohne Lieferung, wird wie
-     * bisher über alle verfügbaren Versandarten gerechnet; vielleicht hat eine andere einen Preis.
+     * `ShippingMethodBlockedError` („no shipping costs found"). Dann, und ohne Lieferung, greift die
+     * Abkürzung nicht, und es wird über alle verfügbaren Versandarten gerechnet; vielleicht hat eine
+     * andere einen Preis.
      */
     private function cartAlreadyAnswers(Cart $cart): bool
     {

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * PHPStan-Stubs der optionalen RcAbTesting-Integration (RCHK02). RcAbTesting ist keine
+ * PHPStan-Stubs der optionalen RcAbTesting-Integration. RcAbTesting ist keine
  * harte Abhängigkeit (Runtime via services.xml on-invalid="null"); diese Stubs liefern
  * PHPStan nur die Signaturen der referenzierten Symbole, damit die statische Analyse ohne
  * ausgechecktes Nachbar-Plugin (z. B. im CI) durchläuft.

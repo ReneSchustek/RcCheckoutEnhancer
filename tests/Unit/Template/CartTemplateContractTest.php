@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
  * Nagelt die Einhängestellen von Versandkostenfrei-Indikator und Versandkostenrechner fest.
  *
  * Ein `sw_extends`-Block, den es im Ziel-Template nicht gibt, wird von Twig stillschweigend
- * ignoriert — das Markup rendert dann nie. Genau das war der Fehler von 1.1.1:
- * `page_checkout_cart_table` existiert im Core nicht, und der Banner erschien monatelang
- * nirgends, ohne dass irgendwo etwas rot wurde.
+ * ignoriert, das Markup rendert dann nie. `page_checkout_cart_table` etwa klingt passend,
+ * existiert im Core aber nicht; der Banner daran erschiene nirgends, ohne dass irgendwo
+ * etwas rot wird.
  */
 final class CartTemplateContractTest extends TestCase
 {

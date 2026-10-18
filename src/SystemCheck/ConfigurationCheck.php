@@ -19,7 +19,7 @@ use Shopware\Core\Framework\SystemCheck\Check\SystemCheckExecutionContext;
  * Drei Felder verweisen auf Datensätze des jeweiligen Shops und haben deshalb keinen Vorgabewert:
  * die Seite mit dem Kontaktformular, die Versandarten, die keine Lieferung sind, und die
  * versandkostenfreien Versandarten. Fehlt einer der ersten beiden, schweigt der Anfrageweg ganz
- * oder im Fall „nur Abholung"; das ist gewollt, blieb aber bisher unbemerkt. Fehlt der dritte,
+ * oder im Fall „nur Abholung"; das ist gewollt, fiele ohne diese Prüfung aber niemandem auf. Fehlt der dritte,
  * erscheint der Versandkostenfrei-Hinweis überall statt nur dort, wo er gilt; das ist vertretbar,
  * nur ungenau, und bleibt deshalb ein Hinweis ohne Warnung.
  *

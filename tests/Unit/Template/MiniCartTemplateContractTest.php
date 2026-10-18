@@ -51,7 +51,7 @@ final class MiniCartTemplateContractTest extends TestCase
      * Was: `showSubtotal` bleibt an.
      * Warum: Der Positionspreis ist der Block, an dem Preis-Erweiterungen hängen — RcDualPrice
      *        setzt seinen Netto-Zweitpreis dort hinein. Mit `false` rendert der Kern den Block
-     *        gar nicht: gemessen zeigte der Warenkorb den Zweitpreis zweimal, die Confirm-Seite
+     *        gar nicht, und der Warenkorb zeigt den Zweitpreis zweimal, die Confirm-Seite
      *        keinmal. Derselbe Fehler wie bei der Farbe, nur eine Ebene tiefer.
      * Erwartet: `showSubtotal: true`.
      */

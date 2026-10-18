@@ -91,9 +91,9 @@ final class ConfigServiceTest extends TestCase
     }
 
     /**
-     * Die Vorgabe „an" ist keine Geschmacksfrage: Der Indikator lief vor der
-     * Zusammenführung in einem eigenen Plugin und war dort standardmäßig an. Stünde er
-     * hier auf „aus", schaltete ein Update eine laufende Funktion still ab.
+     * Die Vorgabe „an" ist keine Geschmacksfrage: Im eigenständigen Plugin, aus dem der
+     * Indikator kommt, ist er standardmäßig an. Stünde er hier auf „aus", schaltete der
+     * Umstieg eine laufende Funktion still ab.
      */
     #[Test]
     public function freeShippingIndicatorIsEnabledByDefault(): void
