@@ -174,11 +174,10 @@ Daraus folgt eine Zusage an alle Plugins, die an den Positionszeilen hängen:
 > `component/line-item/type/product.html.twig` (`displayMode: 'offcanvas'`) und nicht über eigenes
 > Markup.**
 
-Das ist keine Stilfrage, sondern die Lehre aus einem Fehler. Am 2026-07-28 renderte die Leiste
-eigenes Markup und umging damit den Erweiterungspunkt. Die von `RcColorPicker` gewählte RAL-Farbe
-fehlte danach genau auf der Seite, auf der der Kunde bestätigt. Bei lackierten Teilen ist eine
-falsche Farbe kein Umtausch, sondern Ausschuss. Aufgefallen ist es dem Smoke-Test eines anderen
-Plugins, keinem Review.
+Das ist keine Stilfrage. Rendert die Leiste eigenes Markup, umgeht sie den Erweiterungspunkt, und
+die von `RcColorPicker` gewählte RAL-Farbe fehlt genau auf der Seite, auf der der Kunde bestätigt.
+Bei lackierten Teilen ist eine falsche Farbe kein Umtausch, sondern Ausschuss. Im Review fällt das
+kaum auf; zeigen würde es erst der Smoke-Test eines Plugins, das an den Positionszeilen hängt.
 
 **Wer eine Checkout-Variante baut, die die Produkttabelle ersetzt, muss über das Core-Template
 rendern.** Sonst wiederholt sich das je Variante.

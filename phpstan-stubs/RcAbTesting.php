@@ -8,7 +8,7 @@ declare(strict_types=1);
  * PHPStan nur die Signaturen der referenzierten Symbole, damit die statische Analyse ohne
  * ausgechecktes Nachbar-Plugin (z. B. im CI) durchläuft.
  *
- * Bewusst minimal: hier steht ausschließlich, was RcCheckout-Code und -Tests tatsächlich
+ * Bewusst minimal: hier steht ausschließlich, was Code und Tests dieses Plugins tatsächlich
  * benutzen. Wer eine weitere RcAbTesting-Signatur braucht, ergänzt sie hier — abgeglichen
  * gegen das echte Plugin, nicht geraten.
  */
