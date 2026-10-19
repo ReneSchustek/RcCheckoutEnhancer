@@ -50,7 +50,7 @@ final class CartTemplateContractTest extends TestCase
     }
 
     /**
-     * Die Warenkorb-Seite trägt seit der Zusammenführung beides: die Bausteine des
+     * Die Warenkorb-Seite trägt in einer Datei beides: die Bausteine des
      * Bestellvorgangs am Basis-Block und Indikator plus Rechner an der Positionstabelle.
      * Beim Zusammenlegen zweier Overrides in eine Datei ist genau das die Stelle, an der
      * einer der beiden still verlorengeht.

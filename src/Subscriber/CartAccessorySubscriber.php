@@ -15,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Hängt „Dazu passt" und „Haben Sie an alles gedacht?" an Warenkorbseite und Warenkorb-Leiste (`rcCartAccessories`).
  * Die Kasse bekommt sie nicht: Wer die Adresse eingibt, hat sich entschieden.
  */
-class CartAccessorySubscriber implements EventSubscriberInterface
+final class CartAccessorySubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ConfigService $configService,

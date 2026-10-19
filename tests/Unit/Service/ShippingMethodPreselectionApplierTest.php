@@ -39,17 +39,17 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  */
 final class ShippingMethodPreselectionApplierTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const PAKET = 'sm-paket';
+    private const PARCEL = 'sm-paket';
 
-    private const SPEDITION = 'sm-spedition';
+    private const FREIGHT = 'sm-spedition';
 
-    private const PLATZHALTER = 'sm-platzhalter';
+    private const PLACEHOLDER = 'sm-platzhalter';
 
     private const BAR = 'pm-bar';
 
-    private const VORKASSE = 'pm-vorkasse';
+    private const PREPAYMENT = 'pm-vorkasse';
 
     public function testItSwitchesAndReturnsTheRecalculatedCart(): void
     {
@@ -59,7 +59,7 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         $result = $this->applier($switched, [$recalculated])->apply($this->listed(), $this->context());
 
         self::assertSame($recalculated, $result);
-        self::assertSame([[SalesChannelContextService::SHIPPING_METHOD_ID => self::PAKET]], $switched);
+        self::assertSame([[SalesChannelContextService::SHIPPING_METHOD_ID => self::PARCEL]], $switched);
     }
 
     /**
@@ -79,8 +79,8 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
 
         self::assertSame($final, $result);
         self::assertSame([
-            [SalesChannelContextService::SHIPPING_METHOD_ID => self::PAKET],
-            [SalesChannelContextService::PAYMENT_METHOD_ID => self::VORKASSE],
+            [SalesChannelContextService::SHIPPING_METHOD_ID => self::PARCEL],
+            [SalesChannelContextService::PAYMENT_METHOD_ID => self::PREPAYMENT],
         ], $switched);
     }
 
@@ -93,17 +93,17 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
     public function testABlockedMethodIsSkippedAndThePlaceholderStays(): void
     {
         $blocked = new Cart('token');
-        $blocked->addErrors(new ShippingMethodBlockedError('Spedition', self::SPEDITION, 'no shipping costs found'));
+        $blocked->addErrors(new ShippingMethodBlockedError('Spedition', self::FREIGHT, 'no shipping costs found'));
         $placeholderCart = new Cart('token');
         $switched = [];
 
-        $result = $this->applier($switched, [$blocked, $placeholderCart], placeholder: self::PLATZHALTER)
-            ->apply($this->listed([self::PLATZHALTER => 1, self::SPEDITION => 5, self::ABHOLUNG => 200]), $this->context(self::PLATZHALTER));
+        $result = $this->applier($switched, [$blocked, $placeholderCart], placeholder: self::PLACEHOLDER)
+            ->apply($this->listed([self::PLACEHOLDER => 1, self::FREIGHT => 5, self::PICKUP => 200]), $this->context(self::PLACEHOLDER));
 
         self::assertSame($placeholderCart, $result);
         self::assertSame([
-            [SalesChannelContextService::SHIPPING_METHOD_ID => self::SPEDITION],
-            [SalesChannelContextService::SHIPPING_METHOD_ID => self::PLATZHALTER],
+            [SalesChannelContextService::SHIPPING_METHOD_ID => self::FREIGHT],
+            [SalesChannelContextService::SHIPPING_METHOD_ID => self::PLACEHOLDER],
         ], $switched);
     }
 
@@ -115,15 +115,15 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
     public function testABlockedCurrentMethodIsLeft(): void
     {
         $stored = new Cart('token');
-        $stored->addErrors(new ShippingMethodBlockedError('Spedition', self::SPEDITION, 'no shipping costs found'));
+        $stored->addErrors(new ShippingMethodBlockedError('Spedition', self::FREIGHT, 'no shipping costs found'));
         $paket = new Cart('token');
         $switched = [];
 
         $result = $this->applier($switched, [$paket])
-            ->apply($this->listed([self::SPEDITION => 5, self::PAKET => 10, self::ABHOLUNG => 200]), $this->context(self::SPEDITION), false, $stored);
+            ->apply($this->listed([self::FREIGHT => 5, self::PARCEL => 10, self::PICKUP => 200]), $this->context(self::FREIGHT), false, $stored);
 
         self::assertSame($paket, $result);
-        self::assertSame([[SalesChannelContextService::SHIPPING_METHOD_ID => self::PAKET]], $switched);
+        self::assertSame([[SalesChannelContextService::SHIPPING_METHOD_ID => self::PARCEL]], $switched);
     }
 
     public function testWhenSwitchedOffNothingHappens(): void
@@ -142,7 +142,7 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
     {
         $configService = $this->createMock(ConfigService::class);
         $configService->method('isShippingPreselectEnabled')->willReturn($enabled);
-        $configService->method('getNonDeliveryMethodIds')->willReturn([self::ABHOLUNG]);
+        $configService->method('getNonDeliveryMethodIds')->willReturn([self::PICKUP]);
         $configService->method('getShippingPlaceholderMethodId')->willReturn($placeholder);
 
         $switchRoute = $this->recordingSwitchRoute($switched);
@@ -159,7 +159,7 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         $paymentRoute->method('load')->willReturn(new PaymentMethodRouteResponse(new EntitySearchResult(
             'payment_method',
             1,
-            new PaymentMethodCollection([$this->payment(self::VORKASSE)]),
+            new PaymentMethodCollection([$this->payment(self::PREPAYMENT)]),
             null,
             new Criteria(),
             Context::createDefaultContext(),
@@ -197,7 +197,7 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
     /**
      * @param array<string, int> $positions
      */
-    private function listed(array $positions = [self::PAKET => 10, self::ABHOLUNG => 200]): ShippingMethodCollection
+    private function listed(array $positions = [self::PARCEL => 10, self::PICKUP => 200]): ShippingMethodCollection
     {
         $methods = new ShippingMethodCollection();
         foreach ($positions as $id => $position) {
@@ -221,15 +221,15 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         return $payment;
     }
 
-    private function context(string $currentId = self::ABHOLUNG): SalesChannelContext
+    private function context(string $currentId = self::PICKUP): SalesChannelContext
     {
         $current = new ShippingMethodEntity();
         $current->setId($currentId);
 
         $salesChannel = new SalesChannelEntity();
         $salesChannel->setId('sc-id');
-        $salesChannel->setShippingMethodId(self::PAKET);
-        $salesChannel->setPaymentMethodId(self::VORKASSE);
+        $salesChannel->setShippingMethodId(self::PARCEL);
+        $salesChannel->setPaymentMethodId(self::PREPAYMENT);
 
         $context = $this->createMock(SalesChannelContext::class);
         $context->method('getSalesChannelId')->willReturn('sc-id');

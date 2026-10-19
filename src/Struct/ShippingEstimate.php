@@ -14,7 +14,7 @@ use Shopware\Core\Framework\Struct\Struct;
  * des Verkaufskanals: Bei einem Netto-Kanal steht hier netto, bei einem Brutto-Kanal
  * brutto. Wer ihn anzeigt, darf ihn deshalb nicht nachträglich umrechnen.
  */
-class ShippingEstimate extends Struct
+final class ShippingEstimate extends Struct
 {
     public function __construct(
         public readonly string $shippingMethodId,

@@ -17,6 +17,11 @@ Das Plugin ergänzt den Standard-Checkout von Shopware um eine Fortschrittsanzei
 - **Rabatte ohne Code als Zeile der Zusammenfassung:** Aktionen, die Shopware selbst anwendet, etwa ein Rabatt für Vorkasse, stehen im Warenkorb, in der Leiste und im Checkout unter der Zwischensumme statt als Position. Gutscheine bleiben Positionen; Bestellung und Belege bleiben unverändert
 - **Kundenkonto nach der Bestellung:** Meldet Shopware Gäste nach der Bestellung ab („Gastkunden nach dem Bestellabschluss automatisch ausloggen"), fehlt das Konto-Angebot des Kerns. Die Erweiterung zeigt auf der Abschlussseite trotzdem ein Kennwortfeld; aus dem Gastkonto wird ein Kundenkonto. Die Abmeldung bleibt, das Angebot gilt 30 Minuten, nur in diesem Browser und einmal
 - **Hinweis auf den Belegen:** Bei Abholbestellungen tragen Rechnung, Lieferschein, Storno und Gutschrift den Satz, dass Verladen und Transport beim Käufer liegen, mit Datum, wenn eine Bestätigung vorliegt
+- **Telefonnummer nachfordern:** Fehlt die Telefonnummer, fragt die Bestätigungsseite sie ab, bevor die Bestellung abgeschickt werden kann. Im Warenkorb bleibt die Sperre aus, dort gibt es kein Feld dafür
+- **Speditionshinweis auf der Produktseite:** Geht ein Artikel nur per Spedition, nennt die Produktseite das samt Preisspanne über die eingestellten Zonen, bei langer Ware mit dem Grund
+- **Versandkosten auf der Produktseite:** Ein Rechner unter der Preisangabe nennt die Kosten für Land, Postleitzahl und Menge, ohne den Artikel in den Warenkorb zu legen
+- **Zubehör im Warenkorb:** „Dazu passt" zeigt Artikel aus den gewählten Querverkaufsgruppen, „Haben Sie an alles gedacht?" die Teile eines Bausatzes, die noch fehlen
+- **Keine vorausgewählte Zahlart:** Eine Platzhalter-Zahlart steht vorne, bis der Kunde selbst wählt. Sie erscheint nicht in der Auswahl, und eine Bestellung damit lässt sich nicht abschicken
 - **Alles optional:** Jede Funktion einzeln an-/abschaltbar im Admin
 
 ## Voraussetzungen
@@ -50,11 +55,15 @@ Im Admin unter **Einstellungen > System > Plugins > Checkout-Optimierung**:
 | Mini-Warenkorb | An/Aus |
 | Lieferzeit | An/Aus + Freitext |
 | Versandkostenfrei-Indikator | An/Aus + Rückfall-Schwellenwert + Auswahl der versandkostenfreien Versandarten |
-| Versandkostenrechner | An/Aus (im Auslieferungszustand aus) |
+| Versandkostenrechner | An/Aus im Warenkorb (im Auslieferungszustand aus) + An/Aus auf der Produktseite |
 | Vorauswahl der Versandart | An/Aus + Platzhalter-Versandart ohne Lieferadresse (leer = kein Platzhalter) |
 | Darstellung des Checkouts | Geführt (Vorgabe) / Eine Seite / A/B-Test über RcAbTesting |
 | Anfrageweg bei nicht möglicher Lieferung | An/Aus + **Zielseite mit dem Kontaktformular** + Versandarten, die keine Lieferung sind + eigener Hinweistext + eigenes Anschreiben für das Kommentarfeld |
 | Hinweis bei Selbstabholung schwerer Ware | Gewichtsschwelle in kg + Längenschwelle in mm + eigener Hinweistext (beide Schwellen leer = aus) |
+| Telefonnummer | An/Aus: fehlende Nummer auf der Bestätigungsseite nachfordern |
+| Speditionshinweis auf der Produktseite | An/Aus + Versandarten, die eine Spedition sind + eine Postleitzahl je Zone |
+| Zubehör im Warenkorb | An/Aus + Kategorien mit Bausätzen + Querverkaufsgruppen für „Dazu passt" |
+| Zahlungsart | Platzhalter-Zahlart (leer = Shopware wählt wie gewohnt vor) |
 
 **Ohne ausgewählte Zielseite erscheint der Anfrageweg nicht.** Das ist Absicht. Welche Seite Ihr
 Kontaktformular trägt, weiß nur Ihr Shop, und eine Schaltfläche, die ins Leere führt, ist

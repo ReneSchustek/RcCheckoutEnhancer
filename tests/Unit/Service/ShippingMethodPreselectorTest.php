@@ -18,7 +18,7 @@ use Shopware\Core\Checkout\Shipping\ShippingMethodEntity;
  */
 final class ShippingMethodPreselectorTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
     private const PLACEHOLDER = 'sm-placeholder';
 
@@ -59,16 +59,17 @@ final class ShippingMethodPreselectorTest extends TestCase
     /**
      * Was: Die Abholung liegt vorn, ist aber als „keine Lieferung" eingetragen.
      * Warum: Der wichtigste Test der Klasse. Die Reihenfolge im Verwaltungsbereich kann
-     *        jederzeit jemand umstellen, und dann läge die Abholung als erste verfügbare vorn. Die Liste „keine Lieferung" muss auch dann tragen.
+     *        jederzeit jemand umstellen, und dann läge die Abholung als erste verfügbare vorn. Die Liste „keine
+     *        Lieferung" muss auch dann tragen.
      */
     public function testItNeverPreselectsAMethodThatIsNoDelivery(): void
     {
         $available = $this->collection([
-            ['id' => self::ABHOLUNG, 'position' => 1],
+            ['id' => self::PICKUP, 'position' => 1],
             ['id' => 'sm-freight', 'position' => 2],
         ]);
 
-        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::ABHOLUNG]);
+        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::PICKUP]);
 
         self::assertNotNull($selected);
         self::assertSame('sm-freight', $selected->getId());
@@ -81,9 +82,9 @@ final class ShippingMethodPreselectorTest extends TestCase
      */
     public function testItPreselectsNothingWhenOnlyANonDeliveryRemains(): void
     {
-        $available = $this->collection([['id' => self::ABHOLUNG, 'position' => 1]]);
+        $available = $this->collection([['id' => self::PICKUP, 'position' => 1]]);
 
-        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::ABHOLUNG]);
+        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::PICKUP]);
 
         self::assertNull($selected);
     }
@@ -164,11 +165,11 @@ final class ShippingMethodPreselectorTest extends TestCase
     public function testTheExclusionOutweighsTheDefault(): void
     {
         $available = $this->collection([
-            ['id' => self::ABHOLUNG, 'position' => 1],
+            ['id' => self::PICKUP, 'position' => 1],
             ['id' => 'sm-freight', 'position' => 2],
         ]);
 
-        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::ABHOLUNG], self::ABHOLUNG);
+        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::PICKUP], self::PICKUP);
 
         self::assertNotNull($selected);
         self::assertSame('sm-freight', $selected->getId());
@@ -185,13 +186,13 @@ final class ShippingMethodPreselectorTest extends TestCase
     {
         $available = $this->collection([
             ['id' => 'sm-paket', 'position' => 1],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             false,
         );
@@ -210,13 +211,13 @@ final class ShippingMethodPreselectorTest extends TestCase
     {
         $available = $this->collection([
             ['id' => 'sm-paket', 'position' => 1],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             true,
         );
@@ -234,13 +235,13 @@ final class ShippingMethodPreselectorTest extends TestCase
     public function testItSwitchesNothingWhenOnlyTheUnchosenPickupRemains(): void
     {
         $available = $this->collection([
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             false,
         );
@@ -261,7 +262,7 @@ final class ShippingMethodPreselectorTest extends TestCase
             ['id' => 'sm-freight', 'position' => 2],
         ]);
 
-        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::ABHOLUNG], null, false);
+        $selected = $this->preselector()->preselect($available, 'sm-paket', [self::PICKUP], null, false);
 
         self::assertNull($selected);
     }
@@ -279,7 +280,7 @@ final class ShippingMethodPreselectorTest extends TestCase
         $selected = $this->preselector()->preselect(
             $available,
             self::PLACEHOLDER,
-            [self::ABHOLUNG],
+            [self::PICKUP],
             null,
             false,
             self::PLACEHOLDER,
@@ -300,8 +301,8 @@ final class ShippingMethodPreselectorTest extends TestCase
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             false,
             self::PLACEHOLDER,
@@ -322,8 +323,8 @@ final class ShippingMethodPreselectorTest extends TestCase
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             false,
             self::PLACEHOLDER,
@@ -344,7 +345,7 @@ final class ShippingMethodPreselectorTest extends TestCase
         $selected = $this->preselector()->preselect(
             $available,
             self::PLACEHOLDER,
-            [self::ABHOLUNG],
+            [self::PICKUP],
             null,
             false,
             self::PLACEHOLDER,
@@ -363,8 +364,8 @@ final class ShippingMethodPreselectorTest extends TestCase
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             true,
             self::PLACEHOLDER,
@@ -385,7 +386,7 @@ final class ShippingMethodPreselectorTest extends TestCase
         $selected = $this->preselector()->preselect(
             $available,
             'sm-paket',
-            [self::ABHOLUNG],
+            [self::PICKUP],
             null,
             true,
             self::PLACEHOLDER,
@@ -401,12 +402,12 @@ final class ShippingMethodPreselectorTest extends TestCase
      */
     public function testAnUnavailablePlaceholderIsNeverSelected(): void
     {
-        $available = $this->collection([['id' => self::ABHOLUNG, 'position' => 200]]);
+        $available = $this->collection([['id' => self::PICKUP, 'position' => 200]]);
 
         $selected = $this->preselector()->preselect(
             $available,
-            self::ABHOLUNG,
-            [self::ABHOLUNG],
+            self::PICKUP,
+            [self::PICKUP],
             null,
             false,
             self::PLACEHOLDER,
@@ -453,7 +454,7 @@ final class ShippingMethodPreselectorTest extends TestCase
             $methods[] = ['id' => $id, 'position' => $position];
         }
 
-        $methods[] = ['id' => self::ABHOLUNG, 'position' => 200];
+        $methods[] = ['id' => self::PICKUP, 'position' => 200];
 
         return $this->collection($methods);
     }

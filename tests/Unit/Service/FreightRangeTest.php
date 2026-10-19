@@ -18,17 +18,17 @@ use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
  */
 final class FreightRangeTest extends TestCase
 {
-    private const SPEDITION_ZONE_1 = 'sm-sped-1';
+    private const FREIGHT_ZONE_1 = 'sm-sped-1';
 
-    private const SPEDITION_ZONE_2 = 'sm-sped-2';
+    private const FREIGHT_ZONE_2 = 'sm-sped-2';
 
-    private const PAKET = 'sm-paket';
+    private const PARCEL = 'sm-paket';
 
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const FREIGHT = [self::SPEDITION_ZONE_1, self::SPEDITION_ZONE_2];
+    private const FREIGHT = [self::FREIGHT_ZONE_1, self::FREIGHT_ZONE_2];
 
-    private const NON_DELIVERY = [self::ABHOLUNG];
+    private const NON_DELIVERY = [self::PICKUP];
 
     /**
      * Was: Zwei Zonen, je nur Spedition und Abholung.
@@ -37,8 +37,8 @@ final class FreightRangeTest extends TestCase
     public function testTheRangeSpansTheZones(): void
     {
         $range = FreightRange::of([
-            '96215' => $this->ok([$this->estimate(self::SPEDITION_ZONE_1, 101.15), $this->estimate(self::ABHOLUNG, 0.0)]),
-            '34117' => $this->ok([$this->estimate(self::SPEDITION_ZONE_2, 104.72), $this->estimate(self::ABHOLUNG, 0.0)]),
+            '96215' => $this->ok([$this->estimate(self::FREIGHT_ZONE_1, 101.15), $this->estimate(self::PICKUP, 0.0)]),
+            '34117' => $this->ok([$this->estimate(self::FREIGHT_ZONE_2, 104.72), $this->estimate(self::PICKUP, 0.0)]),
         ], self::FREIGHT, self::NON_DELIVERY);
 
         self::assertSame(['min' => 101.15, 'max' => 104.72, 'currency' => 'EUR'], $range);
@@ -52,7 +52,7 @@ final class FreightRangeTest extends TestCase
     public function testSelfCollectionIsNotADelivery(): void
     {
         $range = FreightRange::of([
-            '96215' => $this->ok([$this->estimate(self::ABHOLUNG, 0.0), $this->estimate(self::SPEDITION_ZONE_1, 101.15)]),
+            '96215' => $this->ok([$this->estimate(self::PICKUP, 0.0), $this->estimate(self::FREIGHT_ZONE_1, 101.15)]),
         ], self::FREIGHT, self::NON_DELIVERY);
 
         self::assertNotNull($range);
@@ -67,7 +67,7 @@ final class FreightRangeTest extends TestCase
     public function testACheaperParcelServiceMeansNoHint(): void
     {
         $range = FreightRange::of([
-            '96215' => $this->ok([$this->estimate(self::PAKET, 8.93), $this->estimate(self::SPEDITION_ZONE_1, 101.15)]),
+            '96215' => $this->ok([$this->estimate(self::PARCEL, 8.93), $this->estimate(self::FREIGHT_ZONE_1, 101.15)]),
         ], self::FREIGHT, self::NON_DELIVERY);
 
         self::assertNull($range);
@@ -80,8 +80,8 @@ final class FreightRangeTest extends TestCase
     public function testAParcelOnlyItemGetsNoHint(): void
     {
         $range = FreightRange::of([
-            '96215' => $this->ok([$this->estimate(self::PAKET, 8.93)]),
-            '34117' => $this->ok([$this->estimate(self::PAKET, 8.93)]),
+            '96215' => $this->ok([$this->estimate(self::PARCEL, 8.93)]),
+            '34117' => $this->ok([$this->estimate(self::PARCEL, 8.93)]),
         ], self::FREIGHT, self::NON_DELIVERY);
 
         self::assertNull($range);
@@ -97,7 +97,7 @@ final class FreightRangeTest extends TestCase
         $range = FreightRange::of([
             '96215' => ShippingEstimateResult::failed('DE', '96215'),
             '34117' => ShippingEstimateResult::withoutShippingMethod('DE', '34117'),
-            '20095' => $this->ok([$this->estimate(self::SPEDITION_ZONE_2, 107.10)]),
+            '20095' => $this->ok([$this->estimate(self::FREIGHT_ZONE_2, 107.10)]),
         ], self::FREIGHT, self::NON_DELIVERY);
 
         self::assertSame(['min' => 107.10, 'max' => 107.10, 'currency' => 'EUR'], $range);
@@ -111,7 +111,7 @@ final class FreightRangeTest extends TestCase
     public function testWithoutConfiguredFreightMethodsThereIsNoHint(): void
     {
         $range = FreightRange::of([
-            '96215' => $this->ok([$this->estimate(self::SPEDITION_ZONE_1, 101.15)]),
+            '96215' => $this->ok([$this->estimate(self::FREIGHT_ZONE_1, 101.15)]),
         ], [], self::NON_DELIVERY);
 
         self::assertNull($range);

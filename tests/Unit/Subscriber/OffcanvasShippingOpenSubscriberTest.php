@@ -30,7 +30,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class OffcanvasShippingOpenSubscriberTest extends TestCase
 {
-    private const SPEDITION = 'spedition-id';
+    private const FREIGHT = 'spedition-id';
     private const PICKUP = 'abholung-id';
 
     /**
@@ -40,7 +40,7 @@ final class OffcanvasShippingOpenSubscriberTest extends TestCase
      */
     public function testAGuestWithoutAddressAndZeroCostsIsOpen(): void
     {
-        self::assertTrue($this->open(self::SPEDITION, 0.0, loggedIn: false));
+        self::assertTrue($this->open(self::FREIGHT, 0.0, loggedIn: false));
     }
 
     /**
@@ -50,7 +50,7 @@ final class OffcanvasShippingOpenSubscriberTest extends TestCase
      */
     public function testACustomerHasKnownCosts(): void
     {
-        self::assertFalse($this->open(self::SPEDITION, 0.0, loggedIn: true));
+        self::assertFalse($this->open(self::FREIGHT, 0.0, loggedIn: true));
     }
 
     /**
@@ -60,7 +60,7 @@ final class OffcanvasShippingOpenSubscriberTest extends TestCase
      */
     public function testAPriceAboveZeroIsShown(): void
     {
-        self::assertFalse($this->open(self::SPEDITION, 4.95, loggedIn: false));
+        self::assertFalse($this->open(self::FREIGHT, 4.95, loggedIn: false));
     }
 
     /**

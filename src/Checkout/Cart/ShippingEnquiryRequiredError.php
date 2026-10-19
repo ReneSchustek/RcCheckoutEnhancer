@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart;
 
-use Shopware\Core\Checkout\Cart\Error\Error;
-
 /**
  * Für diesen Warenkorb gibt es keinen Weg durch die Kasse — nur eine Anfrage.
  *
@@ -17,7 +15,7 @@ use Shopware\Core\Checkout\Cart\Error\Error;
  * besprochen statt bestellt. Der Anfrageweg daneben trägt den Satz und die Schaltfläche zum
  * Kontaktformular; diese Meldung sagt nur, dass es hier nicht weitergeht.
  */
-final class ShippingEnquiryRequiredError extends Error
+final class ShippingEnquiryRequiredError extends BlockingCartError
 {
     private const KEY = 'rc-checkout-shipping-enquiry-required';
 
@@ -26,28 +24,8 @@ final class ShippingEnquiryRequiredError extends Error
         parent::__construct('Für diesen Warenkorb ist keine Bestellung möglich, sondern nur eine Anfrage.');
     }
 
-    public function getId(): string
+    protected function key(): string
     {
         return self::KEY;
-    }
-
-    public function getMessageKey(): string
-    {
-        return self::KEY;
-    }
-
-    public function getLevel(): int
-    {
-        return self::LEVEL_ERROR;
-    }
-
-    public function blockOrder(): bool
-    {
-        return true;
-    }
-
-    public function getParameters(): array
-    {
-        return [];
     }
 }

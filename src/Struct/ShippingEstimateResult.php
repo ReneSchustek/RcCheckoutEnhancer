@@ -14,7 +14,7 @@ use Shopware\Core\Framework\Struct\Struct;
  * aus, verlangen dem Kunden gegenüber aber verschiedene Aussagen. Das eine ist eine
  * Auskunft, das andere eine Entschuldigung.
  */
-class ShippingEstimateResult extends Struct
+final class ShippingEstimateResult extends Struct
 {
     public const STATE_OK = 'ok';
     public const STATE_NO_SHIPPING = 'no_shipping';

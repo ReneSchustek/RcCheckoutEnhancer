@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Endpunkt ein fremdes Gastkonto übernehmen. Das Angebot gilt 30 Minuten und einmal: lang genug für
  * ein Kennwort, kurz genug, dass ein später an denselben Rechner Kommender nichts mehr vorfindet.
  */
-class GuestAccountOffer
+final class GuestAccountOffer
 {
     public const SESSION_KEY = 'rc_checkout_enhancer.guest_account_offer';
 

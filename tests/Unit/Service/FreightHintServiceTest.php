@@ -39,9 +39,9 @@ final class FreightHintServiceTest extends TestCase
 {
     private const PRODUCT = '0189b6b5e5c47dbfa5bb5d0a8a4e2f11';
 
-    private const SPEDITION = 'sm-spedition';
+    private const FREIGHT = 'sm-spedition';
 
-    private const PAKET = 'sm-paket';
+    private const PARCEL = 'sm-paket';
 
     private const DE = 'country-de';
 
@@ -64,7 +64,7 @@ final class FreightHintServiceTest extends TestCase
      */
     public function testParcelGoodsGetNoHint(): void
     {
-        self::assertNull($this->service(cheapest: self::PAKET)->forProduct(self::PRODUCT, $this->context()));
+        self::assertNull($this->service(cheapest: self::PARCEL)->forProduct(self::PRODUCT, $this->context()));
     }
 
     public function testWhenSwitchedOffThereIsNoHint(): void
@@ -114,7 +114,7 @@ final class FreightHintServiceTest extends TestCase
     public function testTheRangeIsComputedOnlyOnce(): void
     {
         $estimates = $this->createMock(ShippingEstimateService::class);
-        $estimates->expects(self::exactly(2))->method('estimate')->willReturnCallback($this->estimate(self::SPEDITION));
+        $estimates->expects(self::exactly(2))->method('estimate')->willReturnCallback($this->estimate(self::FREIGHT));
 
         $service = $this->service(estimates: $estimates);
         $service->forProduct(self::PRODUCT, $this->context());
@@ -130,14 +130,14 @@ final class FreightHintServiceTest extends TestCase
 
     private function service(
         bool $enabled = true,
-        string $cheapest = self::SPEDITION,
+        string $cheapest = self::FREIGHT,
         bool $lineItemFails = false,
         float $length = 0.0,
         ?ShippingEstimateService $estimates = null,
     ): FreightHintService {
         $configService = $this->createMock(ConfigService::class);
         $configService->method('isFreightHintEnabled')->willReturn($enabled);
-        $configService->method('getFreightShippingMethodIds')->willReturn([self::SPEDITION]);
+        $configService->method('getFreightShippingMethodIds')->willReturn([self::FREIGHT]);
         $configService->method('getFreightHintZipCodes')->willReturn(['44787', '80331']);
         $configService->method('getNonDeliveryMethodIds')->willReturn(['sm-abholung']);
         $configService->method('getPickupHintLengthThreshold')->willReturn(2000.0);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Subscriber;
 
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\Amount;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\CheckoutLayout;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingThresholdProvider;
@@ -147,10 +148,9 @@ final class CheckoutSubscriber implements EventSubscriberInterface
             ));
         }
 
-        // Die Schwelle steht in der Standardwährung. Umgerechnet wie im Versandkostenfrei-Hinweis,
-        // sonst nennten Leiste und Hinweis in Franken zwei verschiedene Beträge.
+        // Die Schwelle steht in der Standardwährung; umgerechnet wie im Versandkostenfrei-Hinweis.
         $formatted = $this->currencyFormatter->formatCurrencyByLanguage(
-            round($threshold * $context->getCurrency()->getFactor(), 2),
+            Amount::inCurrency($threshold, $context->getCurrency()),
             $context->getCurrency()->getIsoCode(),
             $context->getLanguageId(),
             $context->getContext(),

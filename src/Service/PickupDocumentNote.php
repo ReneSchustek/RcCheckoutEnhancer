@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
+use Psr\Log\LoggerInterface;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\PickupAcknowledgementOrderSubscriber;
 use Shopware\Core\Checkout\Order\OrderEntity;
 
@@ -37,8 +38,10 @@ final class PickupDocumentNote
      */
     private const TIMEZONE = 'Europe/Berlin';
 
-    public function __construct(private readonly ConfigService $configService)
-    {
+    public function __construct(
+        private readonly ConfigService $configService,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     /**
@@ -80,8 +83,15 @@ final class PickupDocumentNote
             // Die Zone im Aufruf greift nur, wenn die Zeichenkette selbst keine trägt. Ein
             // abgelegter Zeitpunkt trägt sie; fehlt sie in einem alten Datensatz, gilt die Zeit
             // des Shops und nicht die des Servers.
-            $moment = new \DateTimeImmutable($acknowledgement['at'], new \DateTimeZone(self::TIMEZONE));
-        } catch (\Exception) {
+            $moment = new \DateTimeImmutable($acknowledgement['at'], $zone);
+        } catch (\Exception $exception) {
+            // Der Beleg bleibt ohne Datum. Der Nachweis fehlt dann, und das soll jemand sehen.
+            $this->logger->warning('Pickup acknowledgement timestamp is unreadable; the document shows no date.', [
+                'orderNumber' => $order->getOrderNumber(),
+                'value' => $acknowledgement['at'],
+                'exception' => $exception->getMessage(),
+            ]);
+
             return null;
         }
 

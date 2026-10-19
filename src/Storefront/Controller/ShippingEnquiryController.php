@@ -25,7 +25,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * Vorlade-Mechanismus des Browsers abruft, soll das nicht auslösen.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class ShippingEnquiryController extends StorefrontController
+final class ShippingEnquiryController extends StorefrontController
 {
     public function __construct(
         private readonly ConfigService $configService,

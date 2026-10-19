@@ -331,11 +331,16 @@ class ShippingEstimateService
         return $copy;
     }
 
+    /**
+     * Nur Länder des Verkaufskanals. Die Auswahlliste nennt keine anderen, der Endpunkt ist aber öffentlich; ein fremdes
+     * Land ergäbe eine Auskunft für einen Ort, an den der Kanal gar nicht liefert.
+     */
     private function findCountry(string $countryIso, SalesChannelContext $context): ?CountryEntity
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('iso', strtoupper($countryIso)));
         $criteria->addFilter(new EqualsFilter('active', true));
+        $criteria->addFilter(new EqualsFilter('salesChannels.id', $context->getSalesChannelId()));
         $criteria->setLimit(1);
 
         $country = $this->countryRepository->search($criteria, $context->getContext())->getEntities()->first();

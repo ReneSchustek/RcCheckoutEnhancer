@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  */
 final class PickupAcknowledgementStoreTest extends TestCase
 {
-    private const HINWEIS = 'Verladen und Transport liegen bei Ihnen.';
+    private const HINT = 'Verladen und Transport liegen bei Ihnen.';
 
     /**
      * Was: Bestätigen, dann denselben Wortlaut abfragen.
@@ -26,8 +26,8 @@ final class PickupAcknowledgementStoreTest extends TestCase
     {
         $store = $this->storeWithSession();
 
-        self::assertTrue($store->acknowledge(self::HINWEIS, new \DateTimeImmutable()));
-        self::assertTrue($store->isAcknowledged(self::HINWEIS));
+        self::assertTrue($store->acknowledge(self::HINT, new \DateTimeImmutable()));
+        self::assertTrue($store->isAcknowledged(self::HINT));
     }
 
     /**
@@ -39,7 +39,7 @@ final class PickupAcknowledgementStoreTest extends TestCase
     public function testAChangedWordingNeedsANewAcknowledgement(): void
     {
         $store = $this->storeWithSession();
-        $store->acknowledge(self::HINWEIS, new \DateTimeImmutable());
+        $store->acknowledge(self::HINT, new \DateTimeImmutable());
 
         self::assertFalse($store->isAcknowledged('Ein anderer Satz mit anderen Zusagen.'));
     }
@@ -52,12 +52,12 @@ final class PickupAcknowledgementStoreTest extends TestCase
     public function testTheStoredRecordCarriesWordingAndTimestamp(): void
     {
         $store = $this->storeWithSession();
-        $store->acknowledge(self::HINWEIS, new \DateTimeImmutable('2026-08-25T09:30:00+02:00'));
+        $store->acknowledge(self::HINT, new \DateTimeImmutable('2026-08-25T09:30:00+02:00'));
 
         $stored = $store->stored();
 
         self::assertNotNull($stored);
-        self::assertSame(self::HINWEIS, $stored['hint']);
+        self::assertSame(self::HINT, $stored['hint']);
         self::assertSame('2026-08-25T09:30:00+02:00', $stored['at']);
     }
 
@@ -69,9 +69,9 @@ final class PickupAcknowledgementStoreTest extends TestCase
     {
         $store = new PickupAcknowledgementStore(new RequestStack());
 
-        self::assertFalse($store->acknowledge(self::HINWEIS, new \DateTimeImmutable()));
+        self::assertFalse($store->acknowledge(self::HINT, new \DateTimeImmutable()));
         self::assertNull($store->stored());
-        self::assertFalse($store->isAcknowledged(self::HINWEIS));
+        self::assertFalse($store->isAcknowledged(self::HINT));
     }
 
     /**
@@ -82,11 +82,11 @@ final class PickupAcknowledgementStoreTest extends TestCase
     public function testClearingRemovesTheAcknowledgement(): void
     {
         $store = $this->storeWithSession();
-        $store->acknowledge(self::HINWEIS, new \DateTimeImmutable());
+        $store->acknowledge(self::HINT, new \DateTimeImmutable());
 
         $store->clear();
 
-        self::assertFalse($store->isAcknowledged(self::HINWEIS));
+        self::assertFalse($store->isAcknowledged(self::HINT));
     }
 
     private function storeWithSession(): PickupAcknowledgementStore

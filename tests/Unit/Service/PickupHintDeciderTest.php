@@ -22,9 +22,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PickupHintDeciderTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const SPEDITION = 'sm-spedition';
+    private const FREIGHT = 'sm-spedition';
 
     /**
      * Was: Der Betreiber hat den Text nie überschrieben.
@@ -34,7 +34,7 @@ final class PickupHintDeciderTest extends TestCase
      */
     public function testAnEmptyConfigurationFallsBackToTheSnippet(): void
     {
-        $hint = $this->decider(configured: '')->hintFor($this->heavyCart(), $this->context(self::ABHOLUNG));
+        $hint = $this->decider(configured: '')->hintFor($this->heavyCart(), $this->context(self::PICKUP));
 
         self::assertStringStartsWith('Beides:', $hint ?? '');
     }
@@ -45,7 +45,7 @@ final class PickupHintDeciderTest extends TestCase
      */
     public function testTheConfiguredTextBeatsTheSnippet(): void
     {
-        $hint = $this->decider(configured: 'Eigener Satz.')->hintFor($this->heavyCart(), $this->context(self::ABHOLUNG));
+        $hint = $this->decider(configured: 'Eigener Satz.')->hintFor($this->heavyCart(), $this->context(self::PICKUP));
 
         self::assertSame('Eigener Satz.', $hint);
     }
@@ -58,7 +58,7 @@ final class PickupHintDeciderTest extends TestCase
      */
     public function testTheWordingCarriesWeightAndLength(): void
     {
-        $hint = $this->decider()->hintFor($this->heavyCart(), $this->context(self::ABHOLUNG));
+        $hint = $this->decider()->hintFor($this->heavyCart(), $this->context(self::PICKUP));
 
         self::assertStringContainsString('80,0 kg', $hint ?? '');
         self::assertStringContainsString('0,30 m', $hint ?? '');
@@ -73,7 +73,7 @@ final class PickupHintDeciderTest extends TestCase
     {
         $decider = $this->decider(configured: 'Gewicht {Gewicht}, Länge {Länge}.');
 
-        $hint = $decider->hintFor($this->heavyCart(), $this->context(self::ABHOLUNG));
+        $hint = $decider->hintFor($this->heavyCart(), $this->context(self::PICKUP));
 
         self::assertSame('Gewicht 80,0 kg, Länge 0,30 m.', $hint);
     }
@@ -88,7 +88,7 @@ final class PickupHintDeciderTest extends TestCase
     {
         $cart = $this->cart(weight: 80.0, length: 0.0);
 
-        $hint = $this->decider()->hintFor($cart, $this->context(self::ABHOLUNG));
+        $hint = $this->decider()->hintFor($cart, $this->context(self::PICKUP));
 
         self::assertStringStartsWith('Nur Gewicht:', $hint ?? '');
         self::assertStringNotContainsString('0,00 m', $hint ?? '');
@@ -102,7 +102,7 @@ final class PickupHintDeciderTest extends TestCase
     {
         $cart = $this->cart(weight: 0.0, length: 3000.0);
 
-        $hint = $this->decider()->hintFor($cart, $this->context(self::ABHOLUNG));
+        $hint = $this->decider()->hintFor($cart, $this->context(self::PICKUP));
 
         self::assertStringStartsWith('Nur Länge:', $hint ?? '');
         self::assertStringNotContainsString('0,0 kg', $hint ?? '');
@@ -111,16 +111,17 @@ final class PickupHintDeciderTest extends TestCase
     /**
      * Was: Derselbe Warenkorb, dann ein Stück mehr darin.
      * Warum: Eine gewollte Nebenwirkung. Die Bestätigung wird zum Wortlaut gespeichert. Ändert
-     *        sich der Warenkorb, ändert sich der Satz, und die alte Bestätigung passt nicht mehr. Zugestimmt wurde dem Transport *dieser* Ware.
+     *        sich der Warenkorb, ändert sich der Satz, und die alte Bestätigung passt nicht mehr. Zugestimmt wurde dem
+     *        Transport *dieser* Ware.
      */
     public function testAChangedCartProducesADifferentWording(): void
     {
         $decider = $this->decider();
 
-        $vorher = $decider->hintFor($this->cart(weight: 80.0, length: 300.0), $this->context(self::ABHOLUNG));
-        $nachher = $decider->hintFor($this->cart(weight: 95.0, length: 300.0), $this->context(self::ABHOLUNG));
+        $before = $decider->hintFor($this->cart(weight: 80.0, length: 300.0), $this->context(self::PICKUP));
+        $after = $decider->hintFor($this->cart(weight: 95.0, length: 300.0), $this->context(self::PICKUP));
 
-        self::assertNotSame($vorher, $nachher);
+        self::assertNotSame($before, $after);
     }
 
     /**
@@ -129,7 +130,7 @@ final class PickupHintDeciderTest extends TestCase
      */
     public function testNoHintWhenADeliveryMethodIsSelected(): void
     {
-        self::assertNull($this->decider()->hintFor($this->heavyCart(), $this->context(self::SPEDITION)));
+        self::assertNull($this->decider()->hintFor($this->heavyCart(), $this->context(self::FREIGHT)));
     }
 
     /**
@@ -140,7 +141,7 @@ final class PickupHintDeciderTest extends TestCase
     {
         $cart = $this->cart(weight: 1.0, length: 100.0);
 
-        self::assertNull($this->decider()->hintFor($cart, $this->context(self::ABHOLUNG)));
+        self::assertNull($this->decider()->hintFor($cart, $this->context(self::PICKUP)));
     }
 
     /**
@@ -151,7 +152,7 @@ final class PickupHintDeciderTest extends TestCase
     {
         $decider = $this->decider(weightThreshold: null, lengthThreshold: null);
 
-        self::assertNull($decider->hintFor($this->heavyCart(), $this->context(self::ABHOLUNG)));
+        self::assertNull($decider->hintFor($this->heavyCart(), $this->context(self::PICKUP)));
     }
 
     private function decider(
@@ -162,7 +163,7 @@ final class PickupHintDeciderTest extends TestCase
         $configService = $this->createMock(ConfigService::class);
         $configService->method('getPickupHintWeightThreshold')->willReturn($weightThreshold);
         $configService->method('getPickupHintLengthThreshold')->willReturn($lengthThreshold);
-        $configService->method('getNonDeliveryMethodIds')->willReturn([self::ABHOLUNG]);
+        $configService->method('getNonDeliveryMethodIds')->willReturn([self::PICKUP]);
         $configService->method('getPickupHintText')->willReturn($configured);
 
         // Die Bausteine tragen dieselben Platzhalter wie die ausgelieferten. Nur so läuft der

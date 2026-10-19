@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
 use Ruhrcoder\RcCheckoutEnhancer\Struct\LastShippingEstimate;
-use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimate;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -44,22 +43,11 @@ class LastShippingEstimateStore
         // und „die Berechnung ist gescheitert" gehören nicht in die Leiste: Das eine
         // wäre eine Absage ohne Zusammenhang, das andere eine Entschuldigung an einer
         // Stelle, an der niemand danach gefragt hat.
-        $deliveries = array_values(array_filter(
-            $result->estimates,
-            static fn (ShippingEstimate $estimate): bool => !\in_array($estimate->shippingMethodId, $excludedMethodIds, true),
-        ));
-
-        if (!$result->isSuccessful() || $deliveries === []) {
+        $cheapest = FreightRange::cheapestDelivery($result->estimates, $excludedMethodIds);
+        if (!$result->isSuccessful() || $cheapest === null) {
             $session->remove(self::SESSION_KEY);
 
             return;
-        }
-
-        $cheapest = $deliveries[0];
-        foreach ($deliveries as $estimate) {
-            if ($estimate->price < $cheapest->price) {
-                $cheapest = $estimate;
-            }
         }
 
         $session->set(self::SESSION_KEY, (new LastShippingEstimate(

@@ -91,9 +91,9 @@ final class PickupHintTemplateContractTest extends TestCase
     /**
      * Abbrechen stellt die Versandart zurück, statt den Dialog nur zuzuklappen.
      *
-     * Wer schließt, will nicht abholen, und dann gehört die Versandart zurückgestellt. Danach trifft die Bedingung nicht mehr zu, der Hinweis
-     * verschwindet, und der Warenkorb ist wieder gültig. Damit gibt es die Sackgasse gar nicht,
-     * und Escape muss trotzdem keine Zustimmung sein.
+     * Wer schließt, will nicht abholen, und dann gehört die Versandart zurückgestellt. Danach trifft die Bedingung
+     * nicht mehr zu, der Hinweis verschwindet, und der Warenkorb ist wieder gültig. Damit gibt es die Sackgasse gar
+     * nicht, und Escape muss trotzdem keine Zustimmung sein.
      *
      * Über Shopwares eigenen Umschaltweg als Formular; so wirkt der Abbruch auch ohne
      * JavaScript, und die Umschaltung läuft durch dieselbe Prüfung wie jede andere Wahl.

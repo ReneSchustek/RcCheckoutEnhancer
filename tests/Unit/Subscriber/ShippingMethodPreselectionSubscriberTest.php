@@ -43,11 +43,11 @@ use Symfony\Component\Validator\ConstraintViolationList;
  */
 final class ShippingMethodPreselectionSubscriberTest extends TestCase
 {
-    private const PAKET = 'sm-paket';
+    private const PARCEL = 'sm-paket';
 
-    private const SPEDITION = 'sm-spedition';
+    private const FREIGHT = 'sm-spedition';
 
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
     private const PLACEHOLDER = 'sm-placeholder';
 
@@ -57,7 +57,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItSwitchesTheContextAndRecalculatesTheCart(): void
     {
-        $context = $this->context(self::PAKET);
+        $context = $this->context(self::PARCEL);
         $event = $this->confirmEvent($context);
         $neuerWarenkorb = new Cart('token-neu');
 
@@ -68,7 +68,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
             ->method('assign')
             ->with(self::callback(
                 static fn (array $daten): bool => ($daten['shippingMethod'] ?? null) instanceof ShippingMethodEntity
-                    && $daten['shippingMethod']->getId() === self::SPEDITION
+                    && $daten['shippingMethod']->getId() === self::FREIGHT
             ));
 
         $cartService = $this->createMock(CartService::class);
@@ -89,7 +89,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testTheAddressErrorOfTheConfirmPageSurvivesTheSwitch(): void
     {
-        $event = $this->confirmEvent($this->context(self::PAKET));
+        $event = $this->confirmEvent($this->context(self::PARCEL));
         $addressError = new AddressValidationError(true, new ConstraintViolationList(), 'address-id');
         $event->getPage()->getCart()->addErrors($addressError);
 
@@ -108,7 +108,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItLeavesAnAvailableShippingMethodAlone(): void
     {
-        $context = $this->context(self::SPEDITION);
+        $context = $this->context(self::FREIGHT);
         $event = $this->confirmEvent($context);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
@@ -129,7 +129,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItDoesNothingWhenTheSettingIsOff(): void
     {
-        $context = $this->context(self::PAKET);
+        $context = $this->context(self::PARCEL);
         $event = $this->confirmEvent($context);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
@@ -147,7 +147,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItPreselectsNothingWhenOnlyAPickupRemains(): void
     {
-        $context = $this->context(self::PAKET);
+        $context = $this->context(self::PARCEL);
         $event = $this->confirmEvent($context, [['id' => 'sm-abholung', 'position' => 200]]);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
@@ -185,10 +185,10 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItPreselectsOnTheCartPage(): void
     {
-        $context = $this->context(self::ABHOLUNG);
+        $context = $this->context(self::PICKUP);
         $page = $this->page(new CheckoutCartPage(), [
-            ['id' => self::SPEDITION, 'position' => 20],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::FREIGHT, 'position' => 20],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
         $newCart = new Cart('token-new');
 
@@ -198,7 +198,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
         $cartService = $this->createMock(CartService::class);
         $cartService->method('getCart')->with('token', $context, false, false)->willReturn($newCart);
 
-        $this->subscriber(nonDelivery: [self::ABHOLUNG], switchRoute: $switchRoute, cartService: $cartService)
+        $this->subscriber(nonDelivery: [self::PICKUP], switchRoute: $switchRoute, cartService: $cartService)
             ->onCartPage(new CheckoutCartPageLoadedEvent($page, $context, new Request()));
 
         self::assertSame($newCart, $page->getCart());
@@ -211,16 +211,16 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItPreselectsInTheOffcanvasCart(): void
     {
-        $context = $this->context(self::ABHOLUNG);
+        $context = $this->context(self::PICKUP);
         $page = $this->page(new OffcanvasCartPage(), [
-            ['id' => self::SPEDITION, 'position' => 20],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::FREIGHT, 'position' => 20],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
         $switchRoute->expects(self::once())->method('switchContext');
 
-        $this->subscriber(nonDelivery: [self::ABHOLUNG], switchRoute: $switchRoute)
+        $this->subscriber(nonDelivery: [self::PICKUP], switchRoute: $switchRoute)
             ->onOffcanvasCartPage(new OffcanvasCartPageLoadedEvent($page, $context, new Request()));
     }
 
@@ -233,10 +233,10 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testAMethodTheCartPageAppendedDespiteItsRuleIsNotAvailable(): void
     {
-        $context = $this->context(self::PAKET);
+        $context = $this->context(self::PARCEL);
         $page = $this->page(new CheckoutCartPage(), [
-            ['id' => self::SPEDITION, 'position' => 20],
-            ['id' => self::PAKET, 'position' => 1, 'availabilityRuleId' => 'rule-up-to-5-kg'],
+            ['id' => self::FREIGHT, 'position' => 20],
+            ['id' => self::PARCEL, 'position' => 1, 'availabilityRuleId' => 'rule-up-to-5-kg'],
         ]);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
@@ -246,7 +246,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
             ->method('assign')
             ->with(self::callback(
                 static fn (array $data): bool => ($data['shippingMethod'] ?? null) instanceof ShippingMethodEntity
-                    && $data['shippingMethod']->getId() === self::SPEDITION
+                    && $data['shippingMethod']->getId() === self::FREIGHT
             ));
 
         $this->subscriber(switchRoute: $switchRoute)
@@ -260,10 +260,10 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testAMethodWhoseRuleMatchesStaysAvailable(): void
     {
-        $context = $this->context(self::PAKET, ['rule-up-to-5-kg']);
+        $context = $this->context(self::PARCEL, ['rule-up-to-5-kg']);
         $page = $this->page(new CheckoutCartPage(), [
-            ['id' => self::SPEDITION, 'position' => 20],
-            ['id' => self::PAKET, 'position' => 1, 'availabilityRuleId' => 'rule-up-to-5-kg'],
+            ['id' => self::FREIGHT, 'position' => 20],
+            ['id' => self::PARCEL, 'position' => 1, 'availabilityRuleId' => 'rule-up-to-5-kg'],
         ]);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
@@ -280,10 +280,10 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItSwitchesToThePlaceholderWhenNoDeliveryRemains(): void
     {
-        $context = $this->context(self::ABHOLUNG);
+        $context = $this->context(self::PICKUP);
         $page = $this->page(new CheckoutCartPage(), [
             ['id' => self::PLACEHOLDER, 'position' => 0],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $context->expects(self::once())
@@ -293,7 +293,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
                     && $data['shippingMethod']->getId() === self::PLACEHOLDER
             ));
 
-        $this->subscriber(nonDelivery: [self::ABHOLUNG], placeholder: self::PLACEHOLDER)
+        $this->subscriber(nonDelivery: [self::PICKUP], placeholder: self::PLACEHOLDER)
             ->onCartPage(new CheckoutCartPageLoadedEvent($page, $context, new Request()));
     }
 
@@ -307,10 +307,10 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItRunsBeforeThePickupHint(): void
     {
-        $vorauswahl = ShippingMethodPreselectionSubscriber::getSubscribedEvents()[CheckoutConfirmPageLoadedEvent::class][1];
-        $hinweis = PickupHintSubscriber::getSubscribedEvents()[CheckoutConfirmPageLoadedEvent::class][1];
+        $preselection = ShippingMethodPreselectionSubscriber::getSubscribedEvents()[CheckoutConfirmPageLoadedEvent::class][1];
+        $hint = PickupHintSubscriber::getSubscribedEvents()[CheckoutConfirmPageLoadedEvent::class][1];
 
-        self::assertGreaterThan($hinweis, $vorauswahl, 'Die Vorauswahl muss vor dem Abhol-Hinweis entscheiden.');
+        self::assertGreaterThan($hint, $preselection, 'Die Vorauswahl muss vor dem Abhol-Hinweis entscheiden.');
     }
 
     /**
@@ -322,17 +322,17 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItSwitchesAwayFromAPickupTheCustomerNeverChose(): void
     {
-        $context = $this->context(self::ABHOLUNG);
+        $context = $this->context(self::PICKUP);
         $event = $this->confirmEvent($context, [
-            ['id' => self::SPEDITION, 'position' => 20],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::FREIGHT, 'position' => 20],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
         $switchRoute->expects(self::once())->method('switchContext');
 
         $this->subscriber(
-            nonDelivery: [self::ABHOLUNG],
+            nonDelivery: [self::PICKUP],
             switchRoute: $switchRoute,
         )->onConfirmPage($event);
 
@@ -349,19 +349,19 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     public function testItKeepsAPickupTheCustomerChose(): void
     {
-        $context = $this->context(self::ABHOLUNG);
+        $context = $this->context(self::PICKUP);
         $event = $this->confirmEvent($context, [
-            ['id' => self::SPEDITION, 'position' => 20],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::FREIGHT, 'position' => 20],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
         $switchRoute->expects(self::never())->method('switchContext');
 
         $this->subscriber(
-            nonDelivery: [self::ABHOLUNG],
+            nonDelivery: [self::PICKUP],
             switchRoute: $switchRoute,
-            chosenByCustomer: self::ABHOLUNG,
+            chosenByCustomer: self::PICKUP,
         )->onConfirmPage($event);
 
         self::assertFalse($event->getPage()->hasExtension('rcPickupHint'));
@@ -376,14 +376,14 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
     {
         $page = $this->page(new CheckoutCartPage(), [
             ['id' => self::PLACEHOLDER, 'position' => 0],
-            ['id' => self::PAKET, 'position' => 1],
-            ['id' => self::ABHOLUNG, 'position' => 200],
+            ['id' => self::PARCEL, 'position' => 1],
+            ['id' => self::PICKUP, 'position' => 200],
         ]);
 
-        $this->subscriber(nonDelivery: [self::ABHOLUNG], placeholder: self::PLACEHOLDER)
-            ->onCartPage(new CheckoutCartPageLoadedEvent($page, $this->context(self::PAKET), new Request()));
+        $this->subscriber(nonDelivery: [self::PICKUP], placeholder: self::PLACEHOLDER)
+            ->onCartPage(new CheckoutCartPageLoadedEvent($page, $this->context(self::PARCEL), new Request()));
 
-        self::assertSame([self::PAKET, self::ABHOLUNG], array_values($page->getShippingMethods()->getIds()));
+        self::assertSame([self::PARCEL, self::PICKUP], array_values($page->getShippingMethods()->getIds()));
     }
 
     /**
@@ -440,7 +440,7 @@ final class ShippingMethodPreselectionSubscriberTest extends TestCase
      */
     private function confirmEvent(SalesChannelContext $context, ?array $methods = null): CheckoutConfirmPageLoadedEvent
     {
-        $methods ??= [['id' => self::SPEDITION, 'position' => 20]];
+        $methods ??= [['id' => self::FREIGHT, 'position' => 20]];
 
         $entities = [];
         foreach ($methods as $data) {

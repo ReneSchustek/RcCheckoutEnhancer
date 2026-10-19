@@ -26,9 +26,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  */
 final class ShippingChoiceSubscriberTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const KLICK_ROUTE = 'frontend.checkout.configure';
+    private const CLICK_ROUTE = 'frontend.checkout.configure';
 
     private RequestStack $stack;
 
@@ -43,15 +43,15 @@ final class ShippingChoiceSubscriberTest extends TestCase
      */
     public function testAShippingSwitchIsRemembered(): void
     {
-        $store = $this->store($this->request(self::KLICK_ROUTE, [
-            SalesChannelContextService::SHIPPING_METHOD_ID => self::ABHOLUNG,
+        $store = $this->store($this->request(self::CLICK_ROUTE, [
+            SalesChannelContextService::SHIPPING_METHOD_ID => self::PICKUP,
         ]));
 
         $this->subscriber($store)->onContextSwitch($this->event([
-            SalesChannelContextService::SHIPPING_METHOD_ID => self::ABHOLUNG,
+            SalesChannelContextService::SHIPPING_METHOD_ID => self::PICKUP,
         ]));
 
-        self::assertTrue($store->wasChosen(self::ABHOLUNG));
+        self::assertTrue($store->wasChosen(self::PICKUP));
     }
 
     /**
@@ -66,10 +66,10 @@ final class ShippingChoiceSubscriberTest extends TestCase
         $store = $this->store($this->request('frontend.checkout.confirm.page'));
 
         $this->subscriber($store)->onContextSwitch($this->event([
-            SalesChannelContextService::SHIPPING_METHOD_ID => self::ABHOLUNG,
+            SalesChannelContextService::SHIPPING_METHOD_ID => self::PICKUP,
         ]));
 
-        self::assertFalse($store->wasChosen(self::ABHOLUNG));
+        self::assertFalse($store->wasChosen(self::PICKUP));
     }
 
     /**
@@ -80,15 +80,15 @@ final class ShippingChoiceSubscriberTest extends TestCase
      */
     public function testOnlyTheSubmittedMethodCounts(): void
     {
-        $store = $this->store($this->request(self::KLICK_ROUTE, [
+        $store = $this->store($this->request(self::CLICK_ROUTE, [
             SalesChannelContextService::SHIPPING_METHOD_ID => 'sm-paketdienst',
         ]));
 
         $this->subscriber($store)->onContextSwitch($this->event([
-            SalesChannelContextService::SHIPPING_METHOD_ID => self::ABHOLUNG,
+            SalesChannelContextService::SHIPPING_METHOD_ID => self::PICKUP,
         ]));
 
-        self::assertFalse($store->wasChosen(self::ABHOLUNG));
+        self::assertFalse($store->wasChosen(self::PICKUP));
     }
 
     /**
@@ -102,14 +102,14 @@ final class ShippingChoiceSubscriberTest extends TestCase
      */
     public function testWithoutARequestNothingIsRemembered(): void
     {
-        $request = $this->request(self::KLICK_ROUTE, [
-            SalesChannelContextService::SHIPPING_METHOD_ID => self::ABHOLUNG,
+        $request = $this->request(self::CLICK_ROUTE, [
+            SalesChannelContextService::SHIPPING_METHOD_ID => self::PICKUP,
         ]);
         $store = $this->store($request);
         $this->stack->pop();
 
         $this->subscriber($store)->onContextSwitch($this->event([
-            SalesChannelContextService::SHIPPING_METHOD_ID => self::ABHOLUNG,
+            SalesChannelContextService::SHIPPING_METHOD_ID => self::PICKUP,
         ]));
 
         self::assertNull($request->getSession()->get(ShippingChoiceStore::SESSION_KEY));
@@ -123,16 +123,16 @@ final class ShippingChoiceSubscriberTest extends TestCase
      */
     public function testAPaymentSwitchLeavesTheChoiceAlone(): void
     {
-        $store = $this->store($this->request(self::KLICK_ROUTE, [
+        $store = $this->store($this->request(self::CLICK_ROUTE, [
             SalesChannelContextService::PAYMENT_METHOD_ID => 'pm-rechnung',
         ]));
-        $store->remember(self::ABHOLUNG);
+        $store->remember(self::PICKUP);
 
         $this->subscriber($store)->onContextSwitch($this->event([
             SalesChannelContextService::PAYMENT_METHOD_ID => 'pm-rechnung',
         ]));
 
-        self::assertTrue($store->wasChosen(self::ABHOLUNG));
+        self::assertTrue($store->wasChosen(self::PICKUP));
     }
 
     /**
@@ -142,16 +142,16 @@ final class ShippingChoiceSubscriberTest extends TestCase
      */
     public function testAnEmptyValueIsIgnored(): void
     {
-        $store = $this->store($this->request(self::KLICK_ROUTE, [
+        $store = $this->store($this->request(self::CLICK_ROUTE, [
             SalesChannelContextService::SHIPPING_METHOD_ID => '',
         ]));
-        $store->remember(self::ABHOLUNG);
+        $store->remember(self::PICKUP);
 
         $this->subscriber($store)->onContextSwitch($this->event([
             SalesChannelContextService::SHIPPING_METHOD_ID => '',
         ]));
 
-        self::assertTrue($store->wasChosen(self::ABHOLUNG));
+        self::assertTrue($store->wasChosen(self::PICKUP));
     }
 
     /**

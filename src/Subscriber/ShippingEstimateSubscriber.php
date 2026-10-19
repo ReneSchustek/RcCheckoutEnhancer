@@ -18,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Subscriber vereint müsste jeder Aufruf beide Konfigurationen lesen, auch wenn nur eines
  * von beiden aktiv ist.
  */
-class ShippingEstimateSubscriber implements EventSubscriberInterface
+final class ShippingEstimateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ConfigService $configService,

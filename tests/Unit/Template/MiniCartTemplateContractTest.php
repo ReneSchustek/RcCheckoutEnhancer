@@ -120,9 +120,9 @@ final class MiniCartTemplateContractTest extends TestCase
 
         $coreTemplate = '';
         $dateien = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($coreDir));
-        foreach ($dateien as $datei) {
-            if ($datei instanceof \SplFileInfo && $datei->getExtension() === 'twig') {
-                $coreTemplate .= (string) file_get_contents($datei->getPathname());
+        foreach ($dateien as $file) {
+            if ($file instanceof \SplFileInfo && $file->getExtension() === 'twig') {
+                $coreTemplate .= (string) file_get_contents($file->getPathname());
             }
         }
 
@@ -140,20 +140,20 @@ final class MiniCartTemplateContractTest extends TestCase
         // Erklärung als Fehler, die den Fehler beschreibt.
         $sidebar = (string) preg_replace('#//[^\n]*#', '', $sidebar);
 
-        preg_match_all('/\.(line-item-[a-z0-9-]+)/', $sidebar, $treffer);
-        $verwendet = array_unique($treffer[1]);
+        preg_match_all('/\.(line-item-[a-z0-9-]+)/', $sidebar, $matches);
+        $used = array_unique($matches[1]);
 
-        self::assertNotEmpty($verwendet, 'Keine Core-Klassen im Abschnitt — dann prüft dieser Test nichts.');
+        self::assertNotEmpty($used, 'Keine Core-Klassen im Abschnitt — dann prüft dieser Test nichts.');
 
-        foreach ($verwendet as $klasse) {
+        foreach ($used as $className) {
             // Ganzer Name, nicht Teilzeichenfolge. Eine Prüfung auf Enthaltensein ließe
             // `.line-item-quantity-select` durchgehen, weil der Core ein
             // `line-item-quantity-select-wrapper` rendert. Ein CSS-Klassenselektor greift auf
             // ganze Namen, eine Teilzeichenfolge sagt darüber nichts.
             self::assertMatchesRegularExpression(
-                '/\b' . preg_quote($klasse, '/') . '(?![\w-])/',
+                '/\b' . preg_quote($className, '/') . '(?![\w-])/',
                 $coreTemplate,
-                \sprintf('Das Stilblatt zielt auf ".%s" — diese Klasse rendert der Core nirgends.', $klasse),
+                \sprintf('Das Stilblatt zielt auf ".%s" — diese Klasse rendert der Core nirgends.', $className),
             );
         }
     }

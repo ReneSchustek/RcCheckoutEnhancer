@@ -124,8 +124,10 @@ final class Migration1786406400MigrateRcCheckoutConfigTest extends TestCase
      * Ein Doppel der Datenbank-Verbindung, das nur die drei Aufrufe kennt, die die
      * Migration macht — und mitschreibt, was sie geschrieben hätte.
      *
+     * `$alreadySet` nennt, was schon in der Tabelle steht: Schlüssel und Kanal, verbunden mit `|`.
+     *
      * @param array<string, list<array{configuration_value: string, sales_channel_id: string|null}>> $existingOld
-     * @param list<string>                                                                          $alreadySet  Schlüssel und Kanal, verbunden mit `|` — was schon in der Tabelle steht
+     * @param list<string>                                                                          $alreadySet
      * @param list<array<string, mixed>>                                                            $inserted
      * @param list<array<string, mixed>>                                                            $updates
      */

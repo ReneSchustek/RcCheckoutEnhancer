@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart;
 
-use Shopware\Core\Checkout\Cart\Error\Error;
-
 /**
  * Die Bestellung ist gesperrt, solange keine Telefonnummer an der Rechnungsadresse steht.
  *
@@ -13,7 +11,7 @@ use Shopware\Core\Checkout\Cart\Error\Error;
  * Adressformular, der Weg über den PayPal-Express-Knopf zeigt dieses Formular aber nie, und eine
  * Pflicht, die nur an einer von mehreren Türen hängt, ist keine.
  */
-final class PhoneNumberRequiredError extends Error
+final class PhoneNumberRequiredError extends BlockingCartError
 {
     private const KEY = 'rc-checkout-phone-number-required';
 
@@ -22,37 +20,8 @@ final class PhoneNumberRequiredError extends Error
         parent::__construct('Für diese Bestellung fehlt eine Telefonnummer.');
     }
 
-    public function getId(): string
+    protected function key(): string
     {
         return self::KEY;
-    }
-
-    public function getMessageKey(): string
-    {
-        return self::KEY;
-    }
-
-    public function getLevel(): int
-    {
-        return self::LEVEL_ERROR;
-    }
-
-    public function blockOrder(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Nicht dauerhaft: Die Sperre entsteht bei jeder Berechnung neu. Ein dauerhafter Fehler wanderte in die nächste
-     * Berechnung und als Hinweis auf die nächste Seite, etwa nach dem Hinzufügen eines Artikels in den Warenkorb.
-     */
-    public function isPersistent(): bool
-    {
-        return false;
-    }
-
-    public function getParameters(): array
-    {
-        return [];
     }
 }

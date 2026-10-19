@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\Amount;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
@@ -26,7 +27,7 @@ class FreeShippingService
 
         // Schwelle in die aktive Kontext-Währung umrechnen (Standardwährung: Faktor 1,0),
         // sonst vergleicht ein Fremdwährungs-Warenkorb gegen einen Wert der Standardwährung.
-        $thresholdInContext = round($threshold * $context->getCurrency()->getFactor(), 2);
+        $thresholdInContext = Amount::inCurrency($threshold, $context->getCurrency());
         $remaining = round(max(0.0, $thresholdInContext - $cartPositionPrice), 2);
         $achieved = $cartPositionPrice >= $thresholdInContext;
 

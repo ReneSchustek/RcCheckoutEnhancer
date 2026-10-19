@@ -23,8 +23,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Die Zusammenfassung, die der Vertrieb bekommt.
  *
- * Der Maßstab ist nicht „sieht hübsch aus", sondern: **Kann jemand danach ein Frachtangebot
- * rechnen, ohne beim Kunden nachzufragen?** Danach sind die Tests geschnitten.
+ * Der Maßstab ist nicht „sieht hübsch aus", sondern: Kann jemand danach ein Frachtangebot
+ * rechnen, ohne beim Kunden nachzufragen? Danach sind die Tests geschnitten.
  */
 final class ShippingEnquirySummaryTest extends TestCase
 {

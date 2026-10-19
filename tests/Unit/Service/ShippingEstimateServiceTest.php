@@ -37,6 +37,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\Country\CountryCollection;
 use Shopware\Core\System\Country\CountryEntity;
@@ -145,6 +146,37 @@ final class ShippingEstimateServiceTest extends TestCase
         self::assertCount(1, $askedWith);
         self::assertSame($country->getId(), $askedWith[0]->getShippingLocation()->getCountry()->getId());
         self::assertSame('1010', $askedWith[0]->getShippingLocation()->getAddress()?->getZipcode());
+    }
+
+    /**
+     * Was: Die Suche nach dem Zielland.
+     * Warum: Der Endpunkt ist öffentlich; ein Land außerhalb des Kanals ergäbe eine Auskunft für einen Ort, an den der
+     *        Kanal nicht liefert.
+     * Erwartet: Gesucht wird nur unter den Ländern des Verkaufskanals.
+     */
+    public function testOnlyCountriesOfTheSalesChannelAreAccepted(): void
+    {
+        $context = SalesChannelContextBuilder::build();
+        $countries = $this->createMock(EntityRepository::class);
+        $countries->expects(self::once())->method('search')->with(self::callback(static function (Criteria $criteria) use ($context): bool {
+            foreach ($criteria->getFilters() as $filter) {
+                if ($filter instanceof EqualsFilter && $filter->getField() === 'salesChannels.id') {
+                    return $filter->getValue() === $context->getSalesChannelId();
+                }
+            }
+
+            return false;
+        }))->willReturnCallback(static fn (Criteria $criteria, \Shopware\Core\Framework\Context $c): EntitySearchResult => new EntitySearchResult('country', 0, new CountryCollection(), null, $criteria, $c));
+
+        $service = new ShippingEstimateService(
+            $this->shippingMethodRoute([$this->shippingMethod('Standard')]),
+            $countries,
+            new EstimateContextFactory(),
+            $this->cartRuleLoader(),
+            new NullLogger(),
+        );
+
+        self::assertSame(ShippingEstimateResult::STATE_NO_SHIPPING, $service->estimate($this->cart(), $context, 'FR', '75001')->state);
     }
 
     public function testNoAvailableShippingMethodYieldsNoShipping(): void

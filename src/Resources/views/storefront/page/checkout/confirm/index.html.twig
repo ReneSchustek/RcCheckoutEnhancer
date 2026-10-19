@@ -33,7 +33,7 @@
    Hauptbereich; eine zweite Übersicht in der Leiste wiederholte sie nur. #}
 {% block page_checkout_confirm %}
     {% set rc = page.extensions.rcCheckoutEnhancer %}
-    {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
+    {% set rcSuppressed = include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed-check.html.twig')|trim == '1' %}
     {% set rcSidebar = not rcSuppressed and rc.miniCartEnabled %}
     <div class="rc-checkout-confirm-layout{% if rcSidebar %} rc-checkout-confirm-layout--with-sidebar{% endif %}">
         <div class="rc-checkout-confirm-layout__main">
@@ -58,8 +58,9 @@
 {% block page_checkout_confirm_product_table %}
     {# Hält sich die Leiste zurück, muss die Tabelle zurückkommen; sonst sähe die
        Vergleichsgruppe des A/B-Tests auf der Bestätigungsseite gar keinen Warenkorb. #}
+    {# Gerendert innerhalb von `page_checkout_confirm`, das `rcSuppressed` schon gesetzt hat. #}
     {% set rc = page.extensions.rcCheckoutEnhancer %}
-    {% set rcSuppressed = rc and rc.abActive ? include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig')|trim == '1' : false %}
+    {% set rcSuppressed = rcSuppressed ?? (include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed-check.html.twig')|trim == '1') %}
     {% if rcSuppressed or not rc.miniCartEnabled %}
         {{ parent() }}
     {% endif %}

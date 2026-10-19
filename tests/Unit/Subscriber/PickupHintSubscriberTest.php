@@ -37,9 +37,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PickupHintSubscriberTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const SPEDITION = 'sm-spedition';
+    private const FREIGHT = 'sm-spedition';
 
     /**
      * Was: Abholung gewählt, Warenkorb über der Gewichtsschwelle.
@@ -47,7 +47,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testTheHintAppearsForAHeavyCartWithCollectionSelected(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 60.0, length: 400.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 60.0, length: 400.0);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -61,7 +61,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testThePlaceholderIsNeverTheRevertTarget(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 60.0, length: 400.0, available: ['sm-adresse-fehlt', 'sm-paket', self::ABHOLUNG]);
+        $event = $this->confirmEvent(self::PICKUP, weight: 60.0, length: 400.0, available: ['sm-adresse-fehlt', 'sm-paket', self::PICKUP]);
 
         $this->subscriber(placeholder: 'sm-adresse-fehlt')->onConfirmPage($event);
 
@@ -78,7 +78,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testTheHintAppearsForLongGoodsBelowTheWeightThreshold(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 3.0, length: 6000.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 3.0, length: 6000.0);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -93,7 +93,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testNothingAppearsWhenOnlyCollectionIsLeft(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 60.0, length: 400.0, available: [self::ABHOLUNG]);
+        $event = $this->confirmEvent(self::PICKUP, weight: 60.0, length: 400.0, available: [self::PICKUP]);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -107,7 +107,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testNothingAppearsWithoutAnyShippingMethod(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 60.0, length: 400.0, available: []);
+        $event = $this->confirmEvent(self::PICKUP, weight: 60.0, length: 400.0, available: []);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -119,7 +119,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testNothingAppearsWhileADeliveryIsSelected(): void
     {
-        $event = $this->confirmEvent(self::SPEDITION, weight: 300.0, length: 6000.0);
+        $event = $this->confirmEvent(self::FREIGHT, weight: 300.0, length: 6000.0);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -132,7 +132,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testNothingAppearsForALightAndShortCart(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 3.0, length: 400.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 3.0, length: 400.0);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -146,7 +146,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testWithoutThresholdsTheHintIsCompletelyOff(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 300.0, length: 6000.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 300.0, length: 6000.0);
 
         $this->subscriber(weightThreshold: null, lengthThreshold: null)->onConfirmPage($event);
 
@@ -160,8 +160,8 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testASingleThresholdWorksOnItsOwn(): void
     {
-        $schwerUndKurz = $this->confirmEvent(self::ABHOLUNG, weight: 300.0, length: 400.0);
-        $leichtUndLang = $this->confirmEvent(self::ABHOLUNG, weight: 3.0, length: 6000.0);
+        $schwerUndKurz = $this->confirmEvent(self::PICKUP, weight: 300.0, length: 400.0);
+        $leichtUndLang = $this->confirmEvent(self::PICKUP, weight: 3.0, length: 6000.0);
 
         $subscriber = $this->subscriber(weightThreshold: null);
         $subscriber->onConfirmPage($schwerUndKurz);
@@ -178,7 +178,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testWithoutTheNonDeliveryListNothingAppears(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 300.0, length: 6000.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 300.0, length: 6000.0);
 
         $this->subscriber(nonDelivery: [])->onConfirmPage($event);
 
@@ -190,7 +190,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testTheConfiguredHintIsHandedToTheTemplate(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 60.0, length: 400.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 60.0, length: 400.0);
 
         $this->subscriber(hint: 'Bitte bringen Sie einen Anhänger mit.')->onConfirmPage($event);
 
@@ -208,7 +208,7 @@ final class PickupHintSubscriberTest extends TestCase
      */
     public function testWithoutAConfiguredTextTheSnippetDecides(): void
     {
-        $event = $this->confirmEvent(self::ABHOLUNG, weight: 60.0, length: 400.0);
+        $event = $this->confirmEvent(self::PICKUP, weight: 60.0, length: 400.0);
 
         $this->subscriber()->onConfirmPage($event);
 
@@ -231,7 +231,7 @@ final class PickupHintSubscriberTest extends TestCase
     private function subscriber(
         ?float $weightThreshold = 50.0,
         ?float $lengthThreshold = 2000.0,
-        array $nonDelivery = [self::ABHOLUNG],
+        array $nonDelivery = [self::PICKUP],
         string $hint = '',
         ?string $placeholder = null,
     ): PickupHintSubscriber {
@@ -267,7 +267,7 @@ final class PickupHintSubscriberTest extends TestCase
         string $selectedShippingMethodId,
         float $weight,
         float $length,
-        array $available = [self::SPEDITION, self::ABHOLUNG],
+        array $available = [self::FREIGHT, self::PICKUP],
     ): CheckoutConfirmPageLoadedEvent {
         $lineItem = new LineItem('li-1', LineItem::PRODUCT_LINE_ITEM_TYPE, 'ref-1', 1);
         $lineItem->setGood(true);
@@ -305,7 +305,7 @@ final class PickupHintSubscriberTest extends TestCase
         $salesChannel = new SalesChannelEntity();
         $salesChannel->setId('sc-1');
         $salesChannel->setUniqueIdentifier('sc-1');
-        $salesChannel->setShippingMethodId(self::SPEDITION);
+        $salesChannel->setShippingMethodId(self::FREIGHT);
 
         $context = $this->createMock(SalesChannelContext::class);
         $context->method('getSalesChannel')->willReturn($salesChannel);

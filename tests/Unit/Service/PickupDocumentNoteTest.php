@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\PickupDocumentNote;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\PickupAcknowledgementOrderSubscriber;
@@ -21,19 +22,19 @@ use Shopware\Core\Checkout\Order\OrderEntity;
  */
 final class PickupDocumentNoteTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const PAKETDIENST = 'sm-paketdienst';
+    private const PARCEL_SERVICE = 'sm-paketdienst';
 
-    private const KANAL = 'sales-channel-1';
+    private const CHANNEL = 'sales-channel-1';
 
     /**
      * Was: Abholbestellung, deren Kunde den Dialog bestätigt hat.
-     * Warum: Der Regelfall seit dem Dialog — Satz und Datum gehören auf den Beleg.
+     * Warum: Der Regelfall: Satz und Datum gehören auf den Beleg.
      */
     public function testAPickupOrderWithAcknowledgementCarriesTheDate(): void
     {
-        $note = $this->note()->forOrder($this->order(self::ABHOLUNG, [
+        $note = $this->note()->forOrder($this->order(self::PICKUP, [
             PickupAcknowledgementOrderSubscriber::CUSTOM_FIELD => [
                 'hint' => 'Sie haben Selbstabholung gewählt.',
                 'at' => '2026-08-26T09:15:00+02:00',
@@ -50,7 +51,7 @@ final class PickupDocumentNoteTest extends TestCase
      */
     public function testAPickupOrderWithoutAcknowledgementCarriesNoDate(): void
     {
-        $note = $this->note()->forOrder($this->order(self::ABHOLUNG, null));
+        $note = $this->note()->forOrder($this->order(self::PICKUP, null));
 
         self::assertSame(['confirmedAt' => null], $note);
     }
@@ -62,7 +63,7 @@ final class PickupDocumentNoteTest extends TestCase
      */
     public function testADeliveryOrderGetsNothing(): void
     {
-        self::assertNull($this->note()->forOrder($this->order(self::PAKETDIENST, null)));
+        self::assertNull($this->note()->forOrder($this->order(self::PARCEL_SERVICE, null)));
     }
 
     /**
@@ -73,7 +74,7 @@ final class PickupDocumentNoteTest extends TestCase
     public function testAnOrderWithoutDeliveryGetsNothing(): void
     {
         $order = new OrderEntity();
-        $order->setSalesChannelId(self::KANAL);
+        $order->setSalesChannelId(self::CHANNEL);
 
         self::assertNull($this->note()->forOrder($order));
     }
@@ -86,7 +87,7 @@ final class PickupDocumentNoteTest extends TestCase
      */
     public function testAnUnreadableDateIsDropped(): void
     {
-        $note = $this->note()->forOrder($this->order(self::ABHOLUNG, [
+        $note = $this->note()->forOrder($this->order(self::PICKUP, [
             PickupAcknowledgementOrderSubscriber::CUSTOM_FIELD => ['hint' => 'x', 'at' => 'gestern'],
         ]));
 
@@ -101,7 +102,7 @@ final class PickupDocumentNoteTest extends TestCase
      */
     public function testTheDateFollowsTheShopsDayNotUtc(): void
     {
-        $note = $this->note()->forOrder($this->order(self::ABHOLUNG, [
+        $note = $this->note()->forOrder($this->order(self::PICKUP, [
             PickupAcknowledgementOrderSubscriber::CUSTOM_FIELD => [
                 'hint' => 'x',
                 'at' => '2026-08-26T00:30:00+02:00',
@@ -121,7 +122,7 @@ final class PickupDocumentNoteTest extends TestCase
         $config = $this->createMock(ConfigService::class);
         $config->method('getNonDeliveryMethodIds')->willReturn([]);
 
-        $note = (new PickupDocumentNote($config))->forOrder($this->order(self::ABHOLUNG, null));
+        $note = (new PickupDocumentNote($config, new NullLogger()))->forOrder($this->order(self::PICKUP, null));
 
         self::assertNull($note);
     }
@@ -130,10 +131,10 @@ final class PickupDocumentNoteTest extends TestCase
     {
         $config = $this->createMock(ConfigService::class);
         $config->method('getNonDeliveryMethodIds')
-            ->with(self::KANAL)
-            ->willReturn([self::ABHOLUNG]);
+            ->with(self::CHANNEL)
+            ->willReturn([self::PICKUP]);
 
-        return new PickupDocumentNote($config);
+        return new PickupDocumentNote($config, new NullLogger());
     }
 
     /**
@@ -146,7 +147,7 @@ final class PickupDocumentNoteTest extends TestCase
         $delivery->setShippingMethodId($shippingMethodId);
 
         $order = new OrderEntity();
-        $order->setSalesChannelId(self::KANAL);
+        $order->setSalesChannelId(self::CHANNEL);
         $order->setDeliveries(new OrderDeliveryCollection([$delivery]));
         $order->setCustomFields($customFields);
 

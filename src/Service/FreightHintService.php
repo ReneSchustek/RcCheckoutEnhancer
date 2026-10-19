@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
 use Psr\Log\LoggerInterface;
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\PurchaseQuantity;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\FreightHint;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
 use Shopware\Core\Checkout\Cart\Cart;
@@ -18,7 +19,6 @@ use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
-use Symfony\Contracts\Translation\LocaleAwareInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -38,6 +38,8 @@ use Throwable;
  * Die Zonen kommen als Postleitzahlen aus der Einstellung, je Zone eine. Der Hinweis gilt
  * deshalb nur im Heimatland des Verkaufskanals; für ein anderes Land wären es die falschen
  * Postleitzahlen.
+ *
+ * Nicht `final`, weil Tests sie als Test-Double ersetzen.
  */
 class FreightHintService
 {
@@ -116,28 +118,13 @@ class FreightHintService
     public function estimateForProduct(string $productId, SalesChannelContext $context, string $countryIso, string $zipCode, int $quantity): ShippingEstimateResult
     {
         $product = $this->product($productId, $context);
-        $orderable = $product === null ? 0 : self::orderableQuantity($product, $quantity);
+        $orderable = $product === null ? 0 : PurchaseQuantity::orderable($product, $quantity);
         $cart = $product === null ? null : $this->cartFor($product, $orderable, $context);
         if ($cart === null) {
             return ShippingEstimateResult::withoutShippingMethod($countryIso, $zipCode);
         }
 
         return $this->estimateService->estimate($cart, $context, $countryIso, $zipCode)->withQuantity($orderable);
-    }
-
-    /**
-     * Die bestellbare Menge: nicht unter der Mindestabnahme, nicht über der Höchstabnahme, auf die Staffel abgerundet.
-     */
-    public static function orderableQuantity(SalesChannelProductEntity $product, int $quantity): int
-    {
-        $min = max(1, $product->getMinPurchase() ?? 1);
-        $step = max(1, $product->getPurchaseSteps() ?? 1);
-        $max = max($min, $product->getCalculatedMaxPurchase());
-
-        $quantity = min(max($quantity, $min), $max);
-
-        // Abgerundet, weil Aufrunden über die Höchstabnahme hinausführen kann.
-        return $min + intdiv($quantity - $min, $step) * $step;
     }
 
     /**
@@ -305,28 +292,15 @@ class FreightHintService
         $lengthThreshold = $this->configService->getPickupHintLengthThreshold($salesChannelId);
         $length = (float) ($product->getLength() ?? 0.0);
         if ($lengthThreshold !== null && $length > $lengthThreshold) {
-            return [FreightHint::REASON_LENGTH, $this->number($length / 1000, 2) . ' m'];
+            return [FreightHint::REASON_LENGTH, LocalNumber::format($length / 1000, 2, $this->translator) . ' m'];
         }
 
         $weightThreshold = $this->configService->getPickupHintWeightThreshold($salesChannelId);
         $weight = (float) ($product->getWeight() ?? 0.0) * $quantity;
         if ($weightThreshold !== null && $weight > $weightThreshold) {
-            return [FreightHint::REASON_WEIGHT, $this->number($weight, 1) . ' kg'];
+            return [FreightHint::REASON_WEIGHT, LocalNumber::format($weight, 1, $this->translator) . ' kg'];
         }
 
         return [null, null];
-    }
-
-    /**
-     * Dieselbe Schreibweise wie beim Abhol-Hinweis, ohne `intl`; siehe {@see PickupHintDecider}.
-     */
-    private function number(float $value, int $decimals): string
-    {
-        $german = !($this->translator instanceof LocaleAwareInterface)
-            || !str_starts_with($this->translator->getLocale(), 'en');
-
-        return $german
-            ? number_format($value, $decimals, ',', '.')
-            : number_format($value, $decimals, '.', ',');
     }
 }

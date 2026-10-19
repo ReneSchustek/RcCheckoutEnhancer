@@ -14,7 +14,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Hängt die Länderliste für „Versand für dieses Produkt berechnen" an die Produktseite. Die Postleitzahl setzt das
  * Skript aus dem, was der Browser sich gemerkt hat.
  */
-class ProductShippingEstimateSubscriber implements EventSubscriberInterface
+final class ProductShippingEstimateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ConfigService $configService,

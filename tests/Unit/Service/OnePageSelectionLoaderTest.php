@@ -8,6 +8,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\OnePageSelectionLoader;
+use Ruhrcoder\RcCheckoutEnhancer\Service\PaymentPlaceholderFilter;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingChoiceStore;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselectionApplier;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselector;
@@ -39,9 +40,9 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  */
 final class OnePageSelectionLoaderTest extends TestCase
 {
-    private const PAKET = 'sm-paket';
+    private const PARCEL = 'sm-paket';
 
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
     /**
      * Was: Nichts ist umzuschalten.
@@ -51,13 +52,13 @@ final class OnePageSelectionLoaderTest extends TestCase
     public function testItReturnsTheGatewayMethodsAndTheGivenCart(): void
     {
         $cart = new Cart('token');
-        $gateway = $this->gateway([[self::PAKET, 1]], ['pm-vorkasse']);
+        $gateway = $this->gateway([[self::PARCEL, 1]], ['pm-vorkasse']);
         $gateway->expects(self::once())->method('load');
 
-        $selection = $this->loader($gateway)->load(new Request(), $this->context(self::PAKET), $cart);
+        $selection = $this->loader($gateway)->load(new Request(), $this->context(self::PARCEL), $cart);
 
         self::assertSame($cart, $selection->getCart());
-        self::assertSame([self::PAKET], array_values($selection->getShippingMethods()->getIds()));
+        self::assertSame([self::PARCEL], array_values($selection->getShippingMethods()->getIds()));
         self::assertSame(['pm-vorkasse'], array_values($selection->getPaymentMethods()->getIds()));
     }
 
@@ -71,8 +72,8 @@ final class OnePageSelectionLoaderTest extends TestCase
         $cartService = $this->createMock(CartService::class);
         $cartService->expects(self::once())->method('getCart')->with('token')->willReturn($cart);
 
-        $selection = $this->loader($this->gateway([[self::PAKET, 1]], []), $cartService)
-            ->load(new Request(), $this->context(self::PAKET));
+        $selection = $this->loader($this->gateway([[self::PARCEL, 1]], []), $cartService)
+            ->load(new Request(), $this->context(self::PARCEL));
 
         self::assertSame($cart, $selection->getCart());
     }
@@ -89,14 +90,14 @@ final class OnePageSelectionLoaderTest extends TestCase
         $cartService = $this->createMock(CartService::class);
         $cartService->method('getCart')->willReturn($recalculated);
 
-        $gateway = $this->gateway([[self::PAKET, 1], [self::ABHOLUNG, 200]], []);
+        $gateway = $this->gateway([[self::PARCEL, 1], [self::PICKUP, 200]], []);
         $gateway->expects(self::exactly(2))->method('load');
 
         $switchRoute = $this->createMock(AbstractContextSwitchRoute::class);
         $switchRoute->expects(self::once())->method('switchContext');
 
-        $selection = $this->loader($gateway, $cartService, $switchRoute, [self::ABHOLUNG])
-            ->load(new Request(), $this->context(self::ABHOLUNG), new Cart('token'));
+        $selection = $this->loader($gateway, $cartService, $switchRoute, [self::PICKUP])
+            ->load(new Request(), $this->context(self::PICKUP), new Cart('token'));
 
         self::assertSame($recalculated, $selection->getCart());
     }
@@ -108,12 +109,12 @@ final class OnePageSelectionLoaderTest extends TestCase
      */
     public function testItAsksTheGatewayForAvailableMethodsOnly(): void
     {
-        $gateway = $this->gateway([[self::PAKET, 1]], []);
+        $gateway = $this->gateway([[self::PARCEL, 1]], []);
         $gateway->expects(self::once())
             ->method('load')
             ->with(self::callback(static fn (Request $request): bool => $request->query->getBoolean('onlyAvailable')));
 
-        $this->loader($gateway)->load(new Request(), $this->context(self::PAKET), new Cart('token'));
+        $this->loader($gateway)->load(new Request(), $this->context(self::PARCEL), new Cart('token'));
     }
 
     /**
@@ -122,10 +123,10 @@ final class OnePageSelectionLoaderTest extends TestCase
      */
     public function testThePlaceholderIsNotOfferedNextToADeliveryMethod(): void
     {
-        $selection = $this->loader($this->gateway([['sm-placeholder', 0], [self::PAKET, 1]], []), placeholder: 'sm-placeholder')
-            ->load(new Request(), $this->context(self::PAKET), new Cart('token'));
+        $selection = $this->loader($this->gateway([['sm-placeholder', 0], [self::PARCEL, 1]], []), placeholder: 'sm-placeholder')
+            ->load(new Request(), $this->context(self::PARCEL), new Cart('token'));
 
-        self::assertSame([self::PAKET], array_values($selection->getShippingMethods()->getIds()));
+        self::assertSame([self::PARCEL], array_values($selection->getShippingMethods()->getIds()));
     }
 
     /**
@@ -159,7 +160,7 @@ final class OnePageSelectionLoaderTest extends TestCase
             $this->createMock(AbstractPaymentMethodRoute::class),
         );
 
-        return new OnePageSelectionLoader($cartService, $gateway, $applier, new ShippingPlaceholderFilter($configService));
+        return new OnePageSelectionLoader($cartService, $gateway, $applier, new ShippingPlaceholderFilter($configService), new PaymentPlaceholderFilter($configService));
     }
 
     /**

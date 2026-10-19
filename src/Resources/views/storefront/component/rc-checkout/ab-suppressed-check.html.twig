@@ -1,0 +1,8 @@
+{# Gibt `1` aus, wenn ein Baustein dieses Plugins für diesen Besucher zurücktritt (Vergleichsgruppe eines laufenden
+   A/B-Tests), sonst nichts. Gedacht für `{% set rcSuppressed = include(...)|trim == '1' %}`.
+
+   Die Prüfung `abActive` steht hier und nicht in `ab-suppressed.html.twig`: Jene Datei ruft die Funktion von RcAbTesting, die es nur
+   mit RcAbTesting gibt, und Twig übersetzt sie erst, wenn sie eingebunden wird. Ohne laufendes Experiment geschieht
+   das nie. #}
+{%- set cp = page.extensions.rcCheckoutEnhancer ?? null -%}
+{%- if cp and cp.abActive -%}{{ include('@RcCheckoutEnhancer/storefront/component/rc-checkout/ab-suppressed.html.twig') }}{%- endif -%}

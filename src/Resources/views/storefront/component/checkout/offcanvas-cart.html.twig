@@ -13,23 +13,8 @@
 
 {% block component_offcanvas_cart_actions %}
     {% if page.extensions.rcFreeShipping is defined %}
-        {% set rcFs = page.extensions.rcFreeShipping %}
         {% block component_offcanvas_cart_rc_free_shipping %}
-            <div class="rc-free-shipping rc-free-shipping--offcanvas alert {{ rcFs.achieved ? 'alert-success' : 'alert-info' }} mb-2" role="status" aria-live="polite">
-                {% if rcFs.achieved %}
-                    {{ "rc-checkout.freeShipping.achieved"|trans }}
-                {% elseif page.extensions.rcFreeShippingReach is defined and page.extensions.rcFreeShippingReach.qualify %}
-                    {# Für Gäste steht die Bedingung im Text: Solange niemand eine Adresse
-                       gewählt hat, ist jede Aussage eine Annahme. Mit der Bedingung bleibt
-                       der Hinweis wirksam, ohne etwas zu versprechen, das nicht gilt. #}
-                    {{ "rc-checkout.freeShipping.remainingWithin"|trans({
-                        '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode),
-                        '%countries%': page.extensions.rcFreeShippingReach.countryNames|join(', '),
-                    }) }}
-                {% else %}
-                    {{ "rc-checkout.freeShipping.remaining"|trans({ '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode) }) }}
-                {% endif %}
-            </div>
+            {% sw_include '@RcCheckoutEnhancer/storefront/component/rc-checkout/free-shipping-hint.html.twig' with { rcFsOffcanvas: true } %}
         {% endblock %}
     {% endif %}
 
@@ -43,7 +28,7 @@
                die Schaltfläche klebt am unteren Rand der Leiste (`base.scss`). Aufgeklappt
                schöbe er sie bei 800 px Fensterhöhe aus dem sichtbaren Bereich. #}
             <div class="rc-offcanvas-shipping mb-2" data-rc-offcanvas-shipping>
-                {% if rcShip.state == 'valid' %}
+                {% if rcShip.state == constant('Ruhrcoder\\RcCheckoutEnhancer\\Subscriber\\OffcanvasShippingEstimateSubscriber::STATE_VALID') %}
                     <p class="rc-offcanvas-shipping__known alert alert-light mb-0" role="status">
                         {{ "rc-checkout.offcanvasShipping.known"|trans({
                             '%country%': rcShip.estimate.countryIso,
@@ -52,7 +37,7 @@
                         }) }}
                         <small class="rc-offcanvas-shipping__method d-block">{{ rcShip.estimate.shippingMethodName }}</small>
                     </p>
-                {% elseif rcShip.state == 'stale' %}
+                {% elseif rcShip.state == constant('Ruhrcoder\\RcCheckoutEnhancer\\Subscriber\\OffcanvasShippingEstimateSubscriber::STATE_STALE') %}
                     {# Ohne Preis: Der gespeicherte gilt für einen anderen Warenkorb, und ein
                        veralteter Versandpreis ist eine Zusage, die der Shop nicht hält. Neu
                        rechnen lässt sich mit dem Rechner darunter. #}

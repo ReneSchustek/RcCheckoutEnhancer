@@ -42,7 +42,7 @@
                        id="{{ rcId }}-zip"
                        data-rc-product-shipping-zip
                        required="required"
-                       maxlength="12"
+                       maxlength="{{ constant('Ruhrcoder\\RcCheckoutEnhancer\\Service\\EstimateInputValidator::ZIP_MAX_LENGTH') }}"
                        autocomplete="postal-code">
             </div>
 

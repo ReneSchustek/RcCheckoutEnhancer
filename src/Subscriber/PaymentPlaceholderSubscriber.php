@@ -12,7 +12,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Nimmt die Platzhalter-Zahlart aus der Auswahl der Bestellseite und der Seite „Bestellung bearbeiten".
  */
-class PaymentPlaceholderSubscriber implements EventSubscriberInterface
+final class PaymentPlaceholderSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly PaymentPlaceholderFilter $placeholderFilter,

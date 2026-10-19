@@ -1,0 +1,18 @@
+{# Der Versandkostenfrei-Hinweis für Warenkorbseite und Leiste. `rcFsOffcanvas` wählt die schmale Fassung der Leiste.
+   Erscheint nur, wenn der Subscriber seine Angaben angehängt hat. #}
+{% set rcFs = page.extensions.rcFreeShipping %}
+{% set rcFsReach = page.extensions.rcFreeShippingReach ?? null %}
+<div class="rc-free-shipping{{ rcFsOffcanvas ?? false ? ' rc-free-shipping--offcanvas' }} alert {{ rcFs.achieved ? 'alert-success' : 'alert-info' }} {{ rcFsOffcanvas ?? false ? 'mb-2' : 'mb-3' }}" role="status" aria-live="polite">
+    {% if rcFs.achieved %}
+        {{ "rc-checkout.freeShipping.achieved"|trans }}
+    {% elseif rcFsReach and rcFsReach.qualify %}
+        {# Für Gäste steht die Bedingung im Text: Solange niemand eine Adresse gewählt hat, ist jede Aussage eine Annahme.
+           Mit der Bedingung bleibt der Hinweis wirksam, ohne etwas zu versprechen, das nicht gilt. #}
+        {{ "rc-checkout.freeShipping.remainingWithin"|trans({
+            '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode),
+            '%countries%': rcFsReach.countryNames|join(', '),
+        }) }}
+    {% else %}
+        {{ "rc-checkout.freeShipping.remaining"|trans({ '%amount%': rcFs.remaining|currency(rcFs.currencyIsoCode) }) }}
+    {% endif %}
+</div>

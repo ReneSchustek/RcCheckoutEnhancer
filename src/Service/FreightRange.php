@@ -22,9 +22,11 @@ use Ruhrcoder\RcCheckoutEnhancer\Struct\ShippingEstimateResult;
 final class FreightRange
 {
     /**
-     * @param array<array-key, ShippingEstimateResult> $resultsByZip Schlüssel ist die Postleitzahl; PHP macht aus „96215" eine Ganzzahl
-     * @param list<string>                          $freightMethodIds
-     * @param list<string>                          $nonDeliveryMethodIds
+     * Schlüssel von `$resultsByZip` ist die Postleitzahl; PHP macht aus „96215" eine Ganzzahl.
+     *
+     * @param array<array-key, ShippingEstimateResult> $resultsByZip
+     * @param list<string>                             $freightMethodIds
+     * @param list<string>                             $nonDeliveryMethodIds
      *
      * @return array{min: float, max: float, currency: string}|null
      */

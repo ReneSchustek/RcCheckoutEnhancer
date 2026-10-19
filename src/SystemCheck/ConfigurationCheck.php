@@ -27,7 +27,7 @@ use Shopware\Core\Framework\SystemCheck\Check\SystemCheckExecutionContext;
  * und vor einem Rollout (Kontext `pre_rollout`). Geprüft wird je aktivem Storefront-Kanal, weil
  * jede Einstellung je Kanal überschreibbar ist.
  */
-class ConfigurationCheck extends BaseCheck
+final class ConfigurationCheck extends BaseCheck
 {
     public const NAME = 'RcCheckoutEnhancerConfiguration';
 
@@ -87,6 +87,9 @@ class ConfigurationCheck extends BaseCheck
 
     /**
      * @return array<string, string> Kennung => Name der aktiven Storefront-Kanäle
+     *
+     * Rohes SQL statt DAL: Der Name steht in der Standardsprache des jeweiligen Kanals. Das DAL übersetzte in die Sprache
+     * des Kontexts, und die Systemprüfung läuft ohne Kanal-Kontext, auch auf der Konsole.
      */
     private function storefrontSalesChannels(): array
     {

@@ -160,7 +160,7 @@
 .is-active-route-frontend-checkout-confirm-page,
 .is-act-confirmpage {
     .checkout .checkout-main:has(.rc-checkout-confirm-layout--with-sidebar) {
-        @media (min-width: 992px) {
+        @include media-breakpoint-up(lg) {
             width: 100%;
             max-width: 100%;
             margin-left: 0;
@@ -183,7 +183,7 @@
     // Nur mit Leiste: Ohne sie bleibt die Bestätigungsseite einspaltig, und das Raster des
     // Kerns ist dafür richtig.
     .checkout .checkout-container:has(.rc-checkout-confirm-layout--with-sidebar) {
-        @media (min-width: 992px) {
+        @include media-breakpoint-up(lg) {
             .checkout-additional {
                 flex: 0 0 auto;
                 width: calc(66.6667% - (2 * var(--bs-gutter-x) / 3));
@@ -209,7 +209,7 @@
     // Ab der Breite, ab der die Leiste neben dem Hauptbereich steht, übernimmt sie den
     // Zwischenraum des Rasters. Nur so decken sich die Kanten mit der unteren Reihe. Darunter
     // stehen die Blöcke untereinander, und der Abstand des Kerns bleibt.
-    @media (min-width: 992px) {
+    @include media-breakpoint-up(lg) {
         gap: var(--bs-gutter-x, 1.5rem);
     }
 }
@@ -380,7 +380,7 @@
         padding: 0;
         list-style: none;
 
-        @media (min-width: 768px) {
+        @include media-breakpoint-up(md) {
             grid-template-columns: repeat(4, minmax(0, 1fr));
         }
     }
@@ -547,7 +547,8 @@
 .rc-pickup-dialog {
     position: fixed;
     inset: 0;
-    z-index: 1050;
+    // Auf der Höhe von Bootstraps Modal: über Kopf und Leiste, gleichauf mit anderen Dialogen.
+    z-index: $zindex-modal;
     display: flex;
     align-items: center;
     justify-content: center;

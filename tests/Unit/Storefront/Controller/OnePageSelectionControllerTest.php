@@ -9,6 +9,7 @@ use Psr\Container\ContainerInterface;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\CheckoutLayout;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\OnePageSelectionLoader;
+use Ruhrcoder\RcCheckoutEnhancer\Service\PaymentPlaceholderFilter;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingChoiceStore;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselectionApplier;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselector;
@@ -113,7 +114,7 @@ final class OnePageSelectionControllerTest extends TestCase
         );
 
         $controller = new OnePageSelectionController(
-            new OnePageSelectionLoader($cartService, $gateway, $applier, new ShippingPlaceholderFilter($configService)),
+            new OnePageSelectionLoader($cartService, $gateway, $applier, new ShippingPlaceholderFilter($configService), new PaymentPlaceholderFilter($configService)),
             $configService,
         );
         $controller->setContainer($this->container());

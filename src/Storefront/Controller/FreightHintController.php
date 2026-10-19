@@ -28,16 +28,8 @@ use Symfony\Component\Routing\Attribute\Route;
  * Produktaufruf, der Rechner nur auf Klick.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class FreightHintController extends StorefrontController
+final class FreightHintController extends StorefrontController
 {
-    private const RATE_LIMIT_HINT = 'rc_checkout_freight_hint';
-
-    /**
-     * Derselbe Name wie beim Rechner im Warenkorb: Beide rechnen dasselbe und zählen gegen eine
-     * gemeinsame Grenze, sonst verdoppelte der zweite Endpunkt das Kontingent.
-     */
-    private const RATE_LIMIT_ESTIMATE = 'rc_checkout_shipping_estimate';
-
     public function __construct(
         private readonly FreightHintService $freightHintService,
         private readonly EstimateInputValidator $inputValidator,
@@ -56,7 +48,7 @@ class FreightHintController extends StorefrontController
     public function hint(string $productId, Request $request, SalesChannelContext $context): Response
     {
         $this->ensureEnabled($context);
-        $this->rateLimiter->ensureAccepted(self::RATE_LIMIT_HINT, (string) $request->getClientIp());
+        $this->rateLimiter->ensureAccepted(EstimateEndpoints::LIMIT_PAGE_LOAD, (string) $request->getClientIp());
 
         $hint = $this->freightHintService->forProduct($productId, $context);
 
@@ -67,7 +59,12 @@ class FreightHintController extends StorefrontController
 
         return $this->renderStorefront(
             '@Storefront/storefront/component/rc-checkout/freight-hint.html.twig',
-            ['rcFreightHint' => $hint, 'rcFreightProductId' => $productId],
+            [
+                'rcFreightHint' => $hint,
+                'rcFreightProductId' => $productId,
+                // Ist der Rechner der Produktseite aktiv, entfällt der zweite im Kasten.
+                'rcProductCalculatorActive' => $this->configService->isProductShippingEstimateEnabled($context->getSalesChannelId()),
+            ],
         );
     }
 
@@ -81,7 +78,7 @@ class FreightHintController extends StorefrontController
     public function estimate(string $productId, Request $request, SalesChannelContext $context): Response
     {
         $this->ensureEnabled($context);
-        $this->rateLimiter->ensureAccepted(self::RATE_LIMIT_ESTIMATE, (string) $request->getClientIp());
+        $this->rateLimiter->ensureAccepted(EstimateEndpoints::LIMIT_ESTIMATE, (string) $request->getClientIp());
 
         $countryIso = (string) $context->getShippingLocation()->getCountry()->getIso();
         $zipCode = trim((string) $request->request->get('zipCode', ''));
@@ -89,13 +86,13 @@ class FreightHintController extends StorefrontController
         $error = $this->inputValidator->validate($countryIso, $zipCode);
         if ($error !== null) {
             return $this->renderStorefront(
-                '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
+                EstimateEndpoints::RESULT_TEMPLATE,
                 ['rcEstimateError' => $error],
             );
         }
 
         return $this->renderStorefront(
-            '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
+            EstimateEndpoints::RESULT_TEMPLATE,
             ['rcEstimate' => $this->freightHintService->estimateForZip($productId, $context, $zipCode)],
         );
     }

@@ -15,6 +15,8 @@ use Symfony\Contracts\Service\ResetInterface;
  * stehen sie noch darin. Die Anfrage an den Vertrieb übernimmt deshalb nur die freigegebenen; sonst
  * landeten interne Felder mit technischem Schlüssel im vorbelegten Kontaktformular, das der Kunde
  * sieht.
+ *
+ * Nicht `final`, weil Tests sie als Test-Double ersetzen.
  */
 class CartExposedCustomFields implements ResetInterface
 {
@@ -42,6 +44,8 @@ class CartExposedCustomFields implements ResetInterface
     public function names(): array
     {
         if ($this->names === null) {
+            // Rohes SQL statt DAL: gebraucht wird eine Spalte, unabhängig von Sprache und Kanal. Das DAL lüde dafür ganze
+            // Feld-Entitäten samt Übersetzungen und verlangte einen Kontext, den es an dieser Stelle nicht braucht.
             /** @var list<string> $names */
             $names = $this->connection->fetchFirstColumn('SELECT `name` FROM `custom_field` WHERE `allow_cart_expose` = 1');
             $this->names = $names;

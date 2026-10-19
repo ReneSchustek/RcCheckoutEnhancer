@@ -15,15 +15,22 @@ export function readShippingLocation() {
         }
     } catch (e) {
         // kein Speicher, keine Vorbelegung
+        return null;
     }
 
     return null;
 }
 
+/**
+ * @returns {boolean} ob der Browser die Angabe gespeichert hat
+ */
 export function rememberShippingLocation(countryIso, zipCode) {
     try {
         window.localStorage.setItem(KEY, JSON.stringify({ countryIso, zipCode }));
     } catch (e) {
         // kein Speicher, nichts zu merken
+        return false;
     }
+
+    return true;
 }

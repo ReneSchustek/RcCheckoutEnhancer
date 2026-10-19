@@ -54,16 +54,24 @@ export default class RcCheckoutPathPlugin extends Plugin {
             formSubmit.hidden = true;
             // `requestSubmit` statt `submit`: Nur so prüft der Browser die Pflichtfelder und die
             // Formularprüfung des Kerns sieht das Absenden.
-            this._continue.querySelector('button')?.addEventListener('click', () => registerForm.requestSubmit());
+            this._continueButton = this._continue.querySelector('button');
+            this._onContinue = () => registerForm.requestSubmit();
+            this._continueButton?.addEventListener('click', this._onContinue);
         } else {
             this._continue = null;
         }
 
-        this._choices.forEach((button) => {
-            button.addEventListener('click', () => this._select(button.dataset.rcCheckoutPathChoice));
-        });
+        this._onChoice = (event) => this._select(event.currentTarget.dataset.rcCheckoutPathChoice);
+        this._choices.forEach((button) => button.addEventListener('click', this._onChoice));
 
         this._select(this.options.initial);
+    }
+
+    destroy() {
+        this._continueButton?.removeEventListener('click', this._onContinue);
+        if (this._onChoice) {
+            this._choices.forEach((button) => button.removeEventListener('click', this._onChoice));
+        }
     }
 
     /**

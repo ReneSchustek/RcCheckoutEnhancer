@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Session\Storage\MockArraySessionStorage;
  */
 final class ShippingChoiceStoreTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
     /**
      * Was: Nichts vermerkt, dann nach der Abholung fragen.
@@ -25,7 +25,7 @@ final class ShippingChoiceStoreTest extends TestCase
      */
     public function testNothingWasChosenWithoutASwitch(): void
     {
-        self::assertFalse($this->storeWithSession()->wasChosen(self::ABHOLUNG));
+        self::assertFalse($this->storeWithSession()->wasChosen(self::PICKUP));
     }
 
     /**
@@ -35,9 +35,9 @@ final class ShippingChoiceStoreTest extends TestCase
     public function testAChosenMethodIsRecognised(): void
     {
         $store = $this->storeWithSession();
-        $store->remember(self::ABHOLUNG);
+        $store->remember(self::PICKUP);
 
-        self::assertTrue($store->wasChosen(self::ABHOLUNG));
+        self::assertTrue($store->wasChosen(self::PICKUP));
     }
 
     /**
@@ -48,11 +48,11 @@ final class ShippingChoiceStoreTest extends TestCase
     public function testSwitchingAwayClearsTheEarlierChoice(): void
     {
         $store = $this->storeWithSession();
-        $store->remember(self::ABHOLUNG);
+        $store->remember(self::PICKUP);
 
         $store->remember('sm-paket');
 
-        self::assertFalse($store->wasChosen(self::ABHOLUNG));
+        self::assertFalse($store->wasChosen(self::PICKUP));
         self::assertTrue($store->wasChosen('sm-paket'));
     }
 
@@ -66,7 +66,7 @@ final class ShippingChoiceStoreTest extends TestCase
     {
         $store = new ShippingChoiceStore(new RequestStack());
 
-        self::assertTrue($store->wasChosen(self::ABHOLUNG));
+        self::assertTrue($store->wasChosen(self::PICKUP));
     }
 
     private function storeWithSession(): ShippingChoiceStore

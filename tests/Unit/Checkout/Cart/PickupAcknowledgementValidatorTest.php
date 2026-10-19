@@ -34,7 +34,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PickupAcknowledgementValidatorTest extends TestCase
 {
-    private const HINWEIS = 'Verladen und Transport liegen bei Ihnen.';
+    private const HINT = 'Verladen und Transport liegen bei Ihnen.';
 
     /**
      * Was: Hinweis fällig, nichts bestätigt.
@@ -44,7 +44,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
     {
         $errors = new ErrorCollection();
 
-        $this->validator(hint: self::HINWEIS, acknowledged: false, sessionAvailable: true)
+        $this->validator(hint: self::HINT, acknowledged: false, sessionAvailable: true)
             ->validate($this->heavyCart(), $errors, $this->pickupContext());
 
         self::assertCount(1, $errors);
@@ -62,7 +62,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
     {
         $errors = new ErrorCollection();
 
-        $this->validator(hint: self::HINWEIS, acknowledged: true, sessionAvailable: true)
+        $this->validator(hint: self::HINT, acknowledged: true, sessionAvailable: true)
             ->validate($this->heavyCart(), $errors, $this->pickupContext());
 
         self::assertCount(0, $errors);
@@ -93,7 +93,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
     {
         $errors = new ErrorCollection();
 
-        $this->validator(hint: self::HINWEIS, acknowledged: false, sessionAvailable: false)
+        $this->validator(hint: self::HINT, acknowledged: false, sessionAvailable: false)
             ->validate($this->heavyCart(), $errors, $this->pickupContext());
 
         self::assertCount(0, $errors);
@@ -110,7 +110,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
     {
         $errors = new ErrorCollection();
 
-        $this->validator(hint: self::HINWEIS, acknowledged: false, sessionAvailable: true, route: $route)
+        $this->validator(hint: self::HINT, acknowledged: false, sessionAvailable: true, route: $route)
             ->validate($this->heavyCart(), $errors, $this->pickupContext());
 
         self::assertCount(0, $errors, $route);
@@ -139,7 +139,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
         $errors = new ErrorCollection();
 
         $this->validator(
-            hint: self::HINWEIS,
+            hint: self::HINT,
             acknowledged: false,
             sessionAvailable: true,
             route: 'frontend.checkout.confirm.page',
@@ -159,7 +159,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
         $errors = new ErrorCollection();
 
         $this->validator(
-            hint: self::HINWEIS,
+            hint: self::HINT,
             acknowledged: false,
             sessionAvailable: true,
             route: 'frontend.checkout.something.new',
@@ -178,7 +178,7 @@ final class PickupAcknowledgementValidatorTest extends TestCase
         foreach (['store-api', 'api'] as $scope) {
             $errors = new ErrorCollection();
 
-            $this->validator(hint: self::HINWEIS, acknowledged: false, sessionAvailable: true, scope: $scope)
+            $this->validator(hint: self::HINT, acknowledged: false, sessionAvailable: true, scope: $scope)
                 ->validate($this->heavyCart(), $errors, $this->pickupContext());
 
             self::assertCount(0, $errors, $scope);

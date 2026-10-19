@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\CheckoutLayout;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\OnePageSelectionLoader;
+use Ruhrcoder\RcCheckoutEnhancer\Service\PaymentPlaceholderFilter;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingChoiceStore;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselectionApplier;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingMethodPreselector;
@@ -128,7 +129,7 @@ final class OnePageCheckoutSubscriberTest extends TestCase
 
         return new OnePageCheckoutSubscriber(
             $configService,
-            new OnePageSelectionLoader($cartService, $gateway, $applier, new ShippingPlaceholderFilter($configService)),
+            new OnePageSelectionLoader($cartService, $gateway, $applier, new ShippingPlaceholderFilter($configService), new PaymentPlaceholderFilter($configService)),
         );
     }
 

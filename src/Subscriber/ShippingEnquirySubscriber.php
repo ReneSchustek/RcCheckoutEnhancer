@@ -8,16 +8,14 @@ use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\PickupAcknowledgementRequiredErro
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\ShippingEnquiryRequiredError;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
-use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Framework\Struct\ArrayStruct;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
-use Shopware\Storefront\Page\Navigation\NavigationPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Bietet den Anfrageweg an, wenn der Bestellvorgang keine Versandart mehr hergibt.
+ * Bietet den Anfrageweg an, wenn der Bestellvorgang keine Versandart mehr hergibt. Die übernommene Zusammenfassung
+ * auf der Kontaktseite legt {@see ShippingEnquiryContactSubscriber} an.
  *
  * Er sitzt auf der Bestätigungsseite und nicht im Warenkorb, weil die Speditionstarife an
  * Postleitzahl-Zonen hängen. Vor der Anschrift weiß der Shop nicht, ob eine Versandart übrig
@@ -34,7 +32,6 @@ final class ShippingEnquirySubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ConfigService $configService,
-        private readonly ShippingEnquiryStore $enquiryStore,
         private readonly ShippingEnquiryRule $enquiryRule,
     ) {
     }
@@ -46,7 +43,6 @@ final class ShippingEnquirySubscriber implements EventSubscriberInterface
     {
         return [
             CheckoutConfirmPageLoadedEvent::class => 'onConfirmPage',
-            NavigationPageLoadedEvent::class => 'onNavigationPage',
         ];
     }
 
@@ -99,61 +95,5 @@ final class ShippingEnquirySubscriber implements EventSubscriberInterface
         }
 
         $errors->add(new ShippingEnquiryRequiredError());
-    }
-
-
-    /**
-     * Legt die übernommene Zusammenfassung an die Seite mit dem Kontaktformular.
-     *
-     * Beim Lesen wird sie vergessen: Sie gilt für genau einen Weg vom Bestellvorgang zum
-     * Formular. Bliebe sie stehen, fände der Kunde sie beim nächsten Besuch der
-     * Kontaktseite wieder vor — mit einem Warenkorb, den es womöglich nicht mehr gibt.
-     */
-    public function onNavigationPage(NavigationPageLoadedEvent $event): void
-    {
-        $summary = $this->enquiryStore->take();
-        if ($summary === null) {
-            return;
-        }
-
-        $context = $event->getSalesChannelContext();
-
-        $event->getPage()->addExtension('rcShippingEnquiry', new ArrayStruct([
-            'summary' => $summary,
-            'intro' => $this->configService->getShippingEnquiryIntro($context->getSalesChannelId()),
-            'customer' => $this->customerOf($context),
-        ]));
-    }
-
-    /**
-     * Die Daten des Kunden, mit denen das Kontaktformular vorbelegt wird.
-     *
-     * Der Kern füllt die Felder aus der abgesendeten Formulareingabe, nicht aus dem Konto; ein
-     * angemeldeter Kunde bekäme ein leeres Formular und tippte seine Daten ausgerechnet dort neu,
-     * wo er ohnehin schon aufgehalten wurde. Was er tippt, muss nicht sein Konto sein: eine
-     * andere Mailadresse oder ein Zahlendreher in der Telefonnummer, und die Antwort geht ins
-     * Leere. Auf der Bestätigungsseite, wo der Anfrageweg beginnt, ist der Kunde bekannt.
-     *
-     * Was nicht bekannt ist, bleibt leer. Geraten wird nichts, und niemand wird angemeldet, der
-     * es nicht ist.
-     *
-     * @return array<string, string>
-     */
-    private function customerOf(SalesChannelContext $context): array
-    {
-        $customer = $context->getCustomer();
-        if ($customer === null) {
-            return [];
-        }
-
-        $address = $customer->getActiveBillingAddress() ?? $customer->getDefaultBillingAddress();
-
-        return array_filter([
-            'salutationId' => $customer->getSalutationId(),
-            'firstName' => $customer->getFirstName(),
-            'lastName' => $customer->getLastName(),
-            'email' => $customer->getEmail(),
-            'phone' => $address?->getPhoneNumber(),
-        ], static fn (?string $value): bool => $value !== null && trim($value) !== '');
     }
 }

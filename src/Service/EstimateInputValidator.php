@@ -12,14 +12,14 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
  * lückenlos getestet, und ein `StorefrontController` lässt sich dafür nur mit
  * halbem Framework hochziehen.
  */
-class EstimateInputValidator
+final class EstimateInputValidator
 {
     /**
      * Die längsten Postleitzahlen kommen mit Trennzeichen auf elf Zeichen (Iran, ‚12345-67890');
      * 12 schneidet keine echte ab. Ohne Grenze landete eine beliebig lange Zeichenkette in der
      * Regelauswertung und im Log.
      */
-    private const ZIP_MAX_LENGTH = 12;
+    public const ZIP_MAX_LENGTH = 12;
 
     private const ERROR_COUNTRY = 'rc-checkout.shippingEstimate.errorCountry';
     private const ERROR_ZIP_REQUIRED = 'rc-checkout.shippingEstimate.errorZipRequired';

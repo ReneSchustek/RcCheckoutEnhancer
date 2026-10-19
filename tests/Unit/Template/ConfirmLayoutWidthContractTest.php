@@ -69,13 +69,13 @@ final class ConfirmLayoutWidthContractTest extends TestCase
     {
         $section = $this->confirmLayoutSection();
 
-        foreach (['width: calc(66.6667%', 'width: calc(33.3333%', 'width: 100%'] as $regel) {
-            $position = strpos($section, $regel);
-            self::assertIsInt($position, sprintf('Regel "%s" steht nicht im Abschnitt.', $regel));
+        foreach (['width: calc(66.6667%', 'width: calc(33.3333%', 'width: 100%'] as $rule) {
+            $position = strpos($section, $rule);
+            self::assertIsInt($position, sprintf('Regel "%s" steht nicht im Abschnitt.', $rule));
 
             $preceding = substr($section, 0, $position);
-            $letzteAbfrage = strrpos($preceding, '@media (min-width: 992px)');
-            self::assertIsInt($letzteAbfrage, sprintf('Regel "%s" steht außerhalb einer Breitenabfrage.', $regel));
+            $lastQuery = strrpos($preceding, '@include media-breakpoint-up(lg)');
+            self::assertIsInt($lastQuery, sprintf('Regel "%s" steht außerhalb einer Breitenabfrage.', $rule));
         }
     }
 
@@ -93,7 +93,7 @@ final class ConfirmLayoutWidthContractTest extends TestCase
 
         $preceding = substr($section, 0, $position);
         self::assertIsInt(
-            strrpos($preceding, '@media (min-width: 992px)'),
+            strrpos($preceding, '@include media-breakpoint-up(lg)'),
             'Der Zwischenraum des Rasters gilt auch unter 992 Pixeln.'
         );
     }

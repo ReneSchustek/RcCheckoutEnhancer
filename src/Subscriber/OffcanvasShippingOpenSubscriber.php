@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Subscriber;
 
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\Amount;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Framework\Struct\ArrayStruct;
@@ -23,10 +24,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Versandkostenfreiheit prüft die Vorlage über `rcFreeShipping`, damit die Schwelle nur an
  * einer Stelle gerechnet wird.
  */
-class OffcanvasShippingOpenSubscriber implements EventSubscriberInterface
+final class OffcanvasShippingOpenSubscriber implements EventSubscriberInterface
 {
     // Wie im Versandkostenfrei-Hinweis: Rundungsreste zählen nicht als Preis.
-    private const CENT_TOLERANCE = 0.005;
 
     public function __construct(private readonly ConfigService $configService)
     {
@@ -61,7 +61,7 @@ class OffcanvasShippingOpenSubscriber implements EventSubscriberInterface
             return false;
         }
 
-        if ($cart->getDeliveries()->getShippingCosts()->sum()->getTotalPrice() > self::CENT_TOLERANCE) {
+        if (Amount::isPositive($cart->getDeliveries()->getShippingCosts()->sum()->getTotalPrice())) {
             return false;
         }
 

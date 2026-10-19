@@ -7,7 +7,6 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 use Ruhrcoder\RcCheckoutEnhancer\Struct\CartMeasurements;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
-use Symfony\Contracts\Translation\LocaleAwareInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -124,8 +123,8 @@ final class PickupHintDecider
      */
     private function replacements(CartMeasurements $measurements): array
     {
-        $weight = $this->number($measurements->totalWeight, 1) . ' kg';
-        $length = $this->number($measurements->longestLength / 1000, 2) . ' m';
+        $weight = LocalNumber::format($measurements->totalWeight, 1, $this->translator) . ' kg';
+        $length = LocalNumber::format($measurements->longestLength / 1000, 2, $this->translator) . ' m';
 
         $map = [];
         foreach (self::WEIGHT_TOKENS as $token) {
@@ -136,22 +135,5 @@ final class PickupHintDecider
         }
 
         return $map;
-    }
-
-    /**
-     * Zahl in der Schreibweise der Oberfläche.
-     *
-     * Ohne `intl`, weil es nur um Komma oder Punkt geht. Eine Erweiterung vorauszusetzen, die
-     * auf manchen Servern fehlt, riskierte einen Ausfall für einen Satz Text. Eine englische
-     * Oberfläche bekommt die getauschten Trennzeichen, jede andere die deutschen.
-     */
-    private function number(float $value, int $decimals): string
-    {
-        $german = !($this->translator instanceof LocaleAwareInterface)
-            || !str_starts_with($this->translator->getLocale(), 'en');
-
-        return $german
-            ? number_format($value, $decimals, ',', '.')
-            : number_format($value, $decimals, '.', ',');
     }
 }

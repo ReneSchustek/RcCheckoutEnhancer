@@ -134,11 +134,11 @@ final class OffcanvasShippingEstimateSubscriberTest extends TestCase
         $country->setId('country-de');
         $country->setUniqueIdentifier('country-de');
 
-        $antwort = $this->createMock(CountryRouteResponse::class);
-        $antwort->method('getCountries')->willReturn(new CountryCollection([$country]));
+        $response = $this->createMock(CountryRouteResponse::class);
+        $response->method('getCountries')->willReturn(new CountryCollection([$country]));
 
         $route = $this->createMock(AbstractCountryRoute::class);
-        $route->method('load')->willReturn($antwort);
+        $route->method('load')->willReturn($response);
 
         return new OffcanvasShippingEstimateSubscriber($config, $store, new CartFingerprint(), new EstimateFormData($route));
     }

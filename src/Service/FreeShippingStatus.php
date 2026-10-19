@@ -10,7 +10,7 @@ use Shopware\Core\Framework\Struct\Struct;
  * Stand des Warenkorbs gegenüber der Versandkostenfrei-Schwelle, beide Beträge schon in der
  * Währung des Besuchers. Hängt als Erweiterung an der Seite und wird von der Vorlage gelesen.
  */
-class FreeShippingStatus extends Struct
+final class FreeShippingStatus extends Struct
 {
     public function __construct(
         public readonly float $threshold,

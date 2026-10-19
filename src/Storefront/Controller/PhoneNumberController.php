@@ -26,7 +26,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * sich damit die Adresse eines fremden Kunden beschreiben.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class PhoneNumberController extends StorefrontController
+final class PhoneNumberController extends StorefrontController
 {
     /**
      * @param EntityRepository<CustomerAddressCollection> $customerAddressRepository

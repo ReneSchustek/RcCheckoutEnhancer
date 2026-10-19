@@ -37,7 +37,7 @@ final class PaymentPlaceholderFilter
      * Ohne den Platzhalter; bliebe nichts übrig, die Liste unverändert (dann fehlt eine echte Zahlart, und eine leere
      * Liste verbärge den Fehler).
      */
-    public static function without(PaymentMethodCollection $listed, ?string $placeholderId): PaymentMethodCollection
+    private static function without(PaymentMethodCollection $listed, ?string $placeholderId): PaymentMethodCollection
     {
         if ($placeholderId === null || !$listed->has($placeholderId)) {
             return $listed;

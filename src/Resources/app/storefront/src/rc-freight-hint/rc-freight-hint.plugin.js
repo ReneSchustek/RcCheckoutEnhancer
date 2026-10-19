@@ -1,5 +1,6 @@
 import Plugin from 'src/plugin-system/plugin.class';
-import HttpClient from 'src/service/http-client.service';
+import fetchHtml from '../rc-checkout-common/fetch-html';
+import { requiredZip, showEstimateError } from '../rc-shipping-estimate/estimate-form';
 
 /**
  * Lädt den Speditionshinweis der Produktseite nach und bedient den Rechner darin.
@@ -22,7 +23,6 @@ export default class RcFreightHintPlugin extends Plugin {
             return;
         }
 
-        this._client = new HttpClient();
         this._onClick = this._onClick.bind(this);
         this._onKeydown = this._onKeydown.bind(this);
 
@@ -31,8 +31,8 @@ export default class RcFreightHintPlugin extends Plugin {
 
         // Bei einer Fehlerantwort bleibt der Platz leer: Der Hinweis ist eine Zugabe, eine Fehlerseite
         // im Kaufbereich wäre schlimmer als gar keiner.
-        this._client.get(this.options.url, (response, request) => {
-            if (!request || request.status >= 400 || !response || response.trim() === '') {
+        fetchHtml(this.options.url).then((response) => {
+            if (response === null || response.trim() === '') {
                 return;
             }
 
@@ -75,30 +75,23 @@ export default class RcFreightHintPlugin extends Plugin {
             return;
         }
 
-        if (zip.value.trim() === '') {
-            zip.setAttribute('aria-invalid', 'true');
-            zip.focus();
-            zip.reportValidity();
-
+        const zipCode = requiredZip(zip);
+        if (zipCode === null) {
             return;
         }
 
-        zip.removeAttribute('aria-invalid');
         button.disabled = true;
         button.setAttribute('aria-busy', 'true');
 
         const data = new FormData();
-        data.append('zipCode', zip.value.trim());
+        data.append('zipCode', zipCode);
 
-        this._client.post(this.options.estimateUrl, data, (response, request) => {
+        fetchHtml(this.options.estimateUrl, { method: 'POST', body: data }).then((response) => {
             button.disabled = false;
             button.setAttribute('aria-busy', 'false');
 
-            if (!request || request.status >= 400 || request.status === 0) {
-                const message = document.createElement('p');
-                message.className = 'rc-shipping-estimate-failed alert alert-warning mb-0';
-                message.textContent = this.options.errorText;
-                output.replaceChildren(message);
+            if (response === null) {
+                showEstimateError(output, this.options.errorText);
 
                 return;
             }

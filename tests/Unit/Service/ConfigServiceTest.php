@@ -617,4 +617,20 @@ final class ConfigServiceTest extends TestCase
             $this->configService->getFreightHintZipCodes(),
         );
     }
+
+    /**
+     * Was: Abholarten und Platzhalter, der Platzhalter zugleich als Abholart eingetragen.
+     * Warum: Beide Versandauskünfte blenden dieselben Arten aus; eine Liste an einer Stelle.
+     * Erwartet: Abholarten und Platzhalter, ohne Doppelte; ohne Platzhalter nur die Abholarten.
+     */
+    #[Test]
+    public function notShippingMethodsAreNonDeliveryAndThePlaceholder(): void
+    {
+        $values = ['.shippingEnquiryNonDeliveryMethodIds' => ['abholung', 'platzhalter'], '.shippingPlaceholderMethodId' => 'platzhalter'];
+        $this->systemConfigService->method('get')->willReturnCallback(
+            static fn (string $key): mixed => $values[substr($key, (int) strrpos($key, '.'))] ?? null,
+        );
+
+        self::assertSame(['abholung', 'platzhalter'], $this->configService->getNotShippingMethodIds('a'));
+    }
 }

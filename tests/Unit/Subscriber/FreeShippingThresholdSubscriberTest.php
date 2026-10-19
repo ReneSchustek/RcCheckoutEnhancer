@@ -6,6 +6,7 @@ namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Subscriber;
 
 use PHPUnit\Framework\TestCase;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
+use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingHint;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReach;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReachability;
 use Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingService;
@@ -53,12 +54,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->expects($this->never())->method('calculate');
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(enabled: false),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -71,12 +72,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->expects($this->never())->method('calculate');
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(threshold: 0.0),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -97,12 +98,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->expects($this->never())->method('calculate');
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(false),
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -123,12 +124,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
             ->with($this->isInstanceOf(Cart::class), $this->isInstanceOf(SalesChannelContext::class), 50.0)
             ->willReturn($expectedStatus);
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -145,13 +146,13 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $gate = $this->createMock(FreeShippingSwitchGate::class);
         $gate->method('isIndicatorSuppressed')->willReturn(true);
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
             $gate,
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -167,13 +168,13 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $gate = $this->createMock(FreeShippingSwitchGate::class);
         $gate->method('isIndicatorSuppressed')->willReturn(false);
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
             $gate,
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -191,12 +192,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->expects($this->never())->method('calculate');
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(threshold: null),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -218,12 +219,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->method('calculate')->willReturn(new FreeShippingStatus(357.0, 0.0, true, 'EUR'));
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent(shippingCosts: 8.93);
 
         $subscriber->onCartPageLoaded($event);
@@ -244,12 +245,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->method('calculate')->willReturn(new FreeShippingStatus(357.0, 0.0, true, 'EUR'));
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent(shippingCosts: 0.0);
 
         $subscriber->onCartPageLoaded($event);
@@ -267,12 +268,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->method('calculate')->willReturn(new FreeShippingStatus(357.0, 338.20, false, 'EUR'));
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent(shippingCosts: 8.93);
 
         $subscriber->onCartPageLoaded($event);
@@ -285,12 +286,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->expects($this->never())->method('calculate');
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createCartEvent(withLineItem: false);
 
         $subscriber->onCartPageLoaded($event);
@@ -303,12 +304,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $service = $this->createMock(FreeShippingService::class);
         $service->method('calculate')->willReturn(new FreeShippingStatus(50.0, 30.0, false, 'EUR'));
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $this->reachability(),
             $this->estimateService(),
-        );
+        ));
         $event = $this->createOffcanvasEvent();
 
         $subscriber->onCartPageLoaded($event);
@@ -352,12 +353,12 @@ final class FreeShippingThresholdSubscriberTest extends TestCase
         $reachability = $this->createMock(FreeShippingReachability::class);
         $reachability->method('reachableFrom')->willReturn(FreeShippingReach::outOfReach());
 
-        $subscriber = new FreeShippingThresholdSubscriber(
+        $subscriber = new FreeShippingThresholdSubscriber(new FreeShippingHint(
             $this->configService(),
             $service,
             $reachability,
             $this->estimateService(true),
-        );
+        ));
         $event = $this->createCartEvent();
 
         $subscriber->onCartPageLoaded($event);

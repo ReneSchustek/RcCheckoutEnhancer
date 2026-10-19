@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Struct;
 
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\Amount;
 use Shopware\Core\Framework\Struct\Struct;
 
 /**
@@ -19,7 +20,7 @@ use Shopware\Core\Framework\Struct\Struct;
  * man dem Kunden nicht erklären kann. Findet sich kein Maß über den Schwellen, steht kein
  * Grund da, statt eines erfundenen.
  */
-class FreightHint extends Struct
+final class FreightHint extends Struct
 {
     public const REASON_LENGTH = 'length';
 
@@ -41,7 +42,7 @@ class FreightHint extends Struct
      */
     public function isRange(): bool
     {
-        return abs($this->maxPrice - $this->minPrice) >= 0.005;
+        return abs($this->maxPrice - $this->minPrice) >= Amount::CENT_TOLERANCE;
     }
 
     public function getApiAlias(): string

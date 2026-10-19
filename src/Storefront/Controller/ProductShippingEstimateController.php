@@ -23,11 +23,8 @@ use Symfony\Component\Routing\Attribute\Route;
  * großzügigere Staffel des Speditionshinweises, der ebenfalls bei jedem Produktaufruf mitläuft.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class ProductShippingEstimateController extends StorefrontController
+final class ProductShippingEstimateController extends StorefrontController
 {
-    private const RATE_LIMIT_CLICK = 'rc_checkout_shipping_estimate';
-    private const RATE_LIMIT_AUTO = 'rc_checkout_freight_hint';
-
     public function __construct(
         private readonly FreightHintService $freightHintService,
         private readonly EstimateInputValidator $inputValidator,
@@ -50,7 +47,7 @@ class ProductShippingEstimateController extends StorefrontController
         }
 
         $this->rateLimiter->ensureAccepted(
-            $request->request->getBoolean('auto') ? self::RATE_LIMIT_AUTO : self::RATE_LIMIT_CLICK,
+            $request->request->getBoolean('auto') ? EstimateEndpoints::LIMIT_PAGE_LOAD : EstimateEndpoints::LIMIT_ESTIMATE,
             (string) $request->getClientIp(),
         );
 
@@ -61,22 +58,14 @@ class ProductShippingEstimateController extends StorefrontController
         $error = $this->inputValidator->validate($countryIso, $zipCode);
         if ($error !== null) {
             return $this->renderStorefront(
-                '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
+                EstimateEndpoints::RESULT_TEMPLATE,
                 ['rcEstimateError' => $error],
             );
         }
 
-        // Abholung und Platzhalter sind kein Versand; unter „Versand nach …" stünden sie mit 0,00 € als Zusage, die
-        // keine Lieferung ist.
-        $salesChannelId = $context->getSalesChannelId();
-        $notShipping = array_values(array_filter([
-            ...$this->configService->getNonDeliveryMethodIds($salesChannelId),
-            $this->configService->getShippingPlaceholderMethodId($salesChannelId),
-        ]));
-
         return $this->renderStorefront(
-            '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
-            ['rcEstimate' => $this->freightHintService->estimateForProduct($productId, $context, $countryIso, $zipCode, $quantity)->without($notShipping)],
+            EstimateEndpoints::RESULT_TEMPLATE,
+            ['rcEstimate' => $this->freightHintService->estimateForProduct($productId, $context, $countryIso, $zipCode, $quantity)->without($this->configService->getNotShippingMethodIds($context->getSalesChannelId()))],
         );
     }
 }

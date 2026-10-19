@@ -21,13 +21,13 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 /**
  * Der Weg vom Bestellvorgang zum Kontaktformular.
  *
- * Der Kunde steht auf diesem Weg vor einer Sackgasse: Er hat eine Ware im Korb, die der Shop nicht versenden kann. Landet er auf einer
- * Seite ohne Formular oder ohne seinen Warenkorb, hat er zweimal umsonst getippt. Deshalb sind
+ * Der Kunde steht auf diesem Weg vor einer Sackgasse: Er hat eine Ware im Korb, die der Shop nicht versenden kann.
+ * Landet er auf einer Seite ohne Formular oder ohne seinen Warenkorb, hat er zweimal umsonst getippt. Deshalb sind
  * die beiden Abbruchfälle hier genauso festgehalten wie der Normalfall.
  */
 final class ShippingEnquiryControllerTest extends TestCase
 {
-    private const KATEGORIE = 'kategorie-kontakt';
+    private const CATEGORY = 'kategorie-kontakt';
 
     /**
      * Was: Der Anfrageweg ist abgeschaltet.
@@ -67,10 +67,10 @@ final class ShippingEnquiryControllerTest extends TestCase
         $store = $this->createMock(ShippingEnquiryStore::class);
         $store->expects(self::once())->method('remember')->with('2 × Handlauf');
 
-        $antwort = $this->controller(summary: '2 × Handlauf', store: $store)->handOver($this->context());
+        $response = $this->controller(summary: '2 × Handlauf', store: $store)->handOver($this->context());
 
-        self::assertInstanceOf(RedirectResponse::class, $antwort);
-        self::assertSame('/kontakt', $antwort->getTargetUrl());
+        self::assertInstanceOf(RedirectResponse::class, $response);
+        self::assertSame('/kontakt', $response->getTargetUrl());
     }
 
     /**
@@ -83,14 +83,14 @@ final class ShippingEnquiryControllerTest extends TestCase
         $store = $this->createMock(ShippingEnquiryStore::class);
         $store->expects(self::never())->method('remember');
 
-        $antwort = $this->controller(summary: '', store: $store)->handOver($this->context());
+        $response = $this->controller(summary: '', store: $store)->handOver($this->context());
 
-        self::assertInstanceOf(RedirectResponse::class, $antwort);
+        self::assertInstanceOf(RedirectResponse::class, $response);
     }
 
     private function controller(
         bool $enabled = true,
-        ?string $categoryId = self::KATEGORIE,
+        ?string $categoryId = self::CATEGORY,
         string $summary = 'Warenkorb',
         ?ShippingEnquiryStore $store = null,
     ): ShippingEnquiryController {

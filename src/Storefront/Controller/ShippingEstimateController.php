@@ -28,10 +28,8 @@ use Symfony\Component\Routing\Attribute\Route;
  * Längengrenze auf der Postleitzahl.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class ShippingEstimateController extends StorefrontController
+final class ShippingEstimateController extends StorefrontController
 {
-    private const RATE_LIMIT_ROUTE = 'rc_checkout_shipping_estimate';
-
     public function __construct(
         private readonly ShippingEstimateService $estimateService,
         private readonly EstimateInputValidator $inputValidator,
@@ -58,7 +56,7 @@ class ShippingEstimateController extends StorefrontController
         // Schlüssel ist die aufrufende Adresse: die Begrenzung soll den einzelnen
         // Absender bremsen, nicht alle Besucher gemeinsam.
         $this->rateLimiter->ensureAccepted(
-            self::RATE_LIMIT_ROUTE,
+            EstimateEndpoints::LIMIT_ESTIMATE,
             (string) $request->getClientIp(),
         );
 
@@ -68,7 +66,7 @@ class ShippingEstimateController extends StorefrontController
         $error = $this->inputValidator->validate($countryIso, $zipCode);
         if ($error !== null) {
             return $this->renderStorefront(
-                '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
+                EstimateEndpoints::RESULT_TEMPLATE,
                 ['rcEstimateError' => $error],
             );
         }
@@ -79,28 +77,13 @@ class ShippingEstimateController extends StorefrontController
         // Zusammen mit dem Fingerabdruck des Warenkorbs, für den sie gilt. Die
         // Seitenleiste zeigt die Auskunft nur, solange er stimmt; sonst stünde dort
         // nach der nächsten Mengenänderung eine Zahl, die der Shop nicht hält.
-        $this->lastEstimateStore->remember($result, $this->cartFingerprint->of($cart), $this->notShipping($context));
+        $this->lastEstimateStore->remember($result, $this->cartFingerprint->of($cart), $this->configService->getNotShippingMethodIds($context->getSalesChannelId()));
 
         // Abholung und Platzhalter sind kein Versand und gehören nicht in „Versandkosten berechnen"; mit 0,00 € stünden
         // sie dort als günstigste Lieferung.
         return $this->renderStorefront(
-            '@Storefront/storefront/component/rc-checkout/shipping-estimate-result.html.twig',
-            ['rcEstimate' => $result->without($this->notShipping($context))],
+            EstimateEndpoints::RESULT_TEMPLATE,
+            ['rcEstimate' => $result->without($this->configService->getNotShippingMethodIds($context->getSalesChannelId()))],
         );
-    }
-
-    /**
-     * Versandarten, die keine Lieferung sind: Abholung und Platzhalter. Die Leiste nennt sie nicht.
-     *
-     * @return list<string>
-     */
-    private function notShipping(SalesChannelContext $context): array
-    {
-        $salesChannelId = $context->getSalesChannelId();
-
-        return array_values(array_filter([
-            ...$this->configService->getNonDeliveryMethodIds($salesChannelId),
-            $this->configService->getShippingPlaceholderMethodId($salesChannelId),
-        ]));
     }
 }

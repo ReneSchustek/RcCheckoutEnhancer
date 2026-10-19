@@ -46,11 +46,11 @@ final class PhoneNumberControllerTest extends TestCase
             ->method('update')
             ->with([['id' => $address->getId(), 'phoneNumber' => '09568 8039770']]);
 
-        $antwort = $this->controller($address, $repository)
+        $response = $this->controller($address, $repository)
             ->save($this->request('09568 8039770'), $this->context());
 
-        self::assertInstanceOf(RedirectResponse::class, $antwort);
-        self::assertSame('/checkout/confirm', $antwort->getTargetUrl());
+        self::assertInstanceOf(RedirectResponse::class, $response);
+        self::assertSame('/checkout/confirm', $response->getTargetUrl());
     }
 
     /**
@@ -78,10 +78,10 @@ final class PhoneNumberControllerTest extends TestCase
         $repository = $this->createMock(EntityRepository::class);
         $repository->expects(self::never())->method('update');
 
-        $antwort = $this->controller($this->address(), $repository)
+        $response = $this->controller($this->address(), $repository)
             ->save($this->request('bitte per Mail'), $this->context());
 
-        self::assertInstanceOf(RedirectResponse::class, $antwort);
+        self::assertInstanceOf(RedirectResponse::class, $response);
     }
 
     /**
@@ -94,10 +94,10 @@ final class PhoneNumberControllerTest extends TestCase
         $repository = $this->createMock(EntityRepository::class);
         $repository->expects(self::never())->method('update');
 
-        $antwort = $this->controller(null, $repository)
+        $response = $this->controller(null, $repository)
             ->save($this->request('09568 8039770'), $this->context());
 
-        self::assertInstanceOf(RedirectResponse::class, $antwort);
+        self::assertInstanceOf(RedirectResponse::class, $response);
     }
 
     /**
@@ -109,10 +109,10 @@ final class PhoneNumberControllerTest extends TestCase
         $repository = $this->createMock(EntityRepository::class);
         $repository->expects(self::never())->method('update');
 
-        $antwort = $this->controller($this->address(), $repository, switchOn: false)
+        $response = $this->controller($this->address(), $repository, switchOn: false)
             ->save($this->request('09568 8039770'), $this->context());
 
-        self::assertInstanceOf(RedirectResponse::class, $antwort);
+        self::assertInstanceOf(RedirectResponse::class, $response);
     }
 
     /**

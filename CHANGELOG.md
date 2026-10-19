@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.40.0] - 2026-10-19 — Aufräumen nach der Regelprüfung
+
+> **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `bin/build-storefront.sh`, `theme:compile`,
+> `cache:clear`.
+
+### Geändert
+
+- **Storefront-Skripte** laden über `fetch()` statt über den veralteten `HttpClient` des Kerns. Fehlersatz und
+  Pflichtprüfung der Postleitzahl stehen an einer Stelle; alle Skripte nehmen ihre Zuhörer beim Abbau wieder ab.
+- **Zubehör im Warenkorb:** Die Querverkaufsgruppen je Hauptartikel werden zwischengespeichert (je Kanal, Sprache,
+  Währung und Regeln, höchstens eine Stunde). Ändert jemand Querverkauf oder Produkt, verwirft der Kern den Eintrag.
+  Die Leiste fragt damit nicht mehr bei jedem Öffnen den Querverkauf jedes Artikels ab.
+- **Versandkostenrechner:** Er nimmt nur noch Länder des Verkaufskanals an, auch beim direkten Aufruf des Endpunkts.
+- **Abholbestätigung:** Sie wird protokolliert, wenn ihr Zeitstempel unlesbar ist; der Beleg bleibt dann
+  ohne Datum.
+- Der Versandkostenfrei-Hinweis wird in einem eigenen Dienst entschieden (`FreeShippingHint`), Umrechnung und
+  Cent-Toleranz stehen an einer Stelle (`Checkout\Amount`).
+- Der Anfrageweg ist auf zwei Subscriber verteilt: Hinweis auf der Bestätigungsseite, Vorbelegung des Kontaktformulars.
+- Vorlagen: Versandkostenfrei-Kasten als ein Baustein für Warenkorb und Leiste; Grenzen und Zustände kommen als
+  Konstanten aus PHP statt als feste Zahlen; Breakpoints über die Bootstrap-Mixins, `z-index` des Abhol-Dialogs über
+  `$zindex-modal`.
+- Klassen ohne Test-Double sind `final`; reine Rechnungen stehen in eigenen Klassen (`AccessoryChoice`,
+  `PurchaseQuantity`, `LocalNumber`).
+
+### Tests
+
+- Neu: Abhol-Nachweis an der Bestellung (Erfolg, Fehlschlag, ohne Bestätigung), Zubehör-Auswahl samt
+  Zwischenspeicher, bestellbare Menge, drei Seiten-Subscriber, Rechner der Produktseite, Länder des Kanals.
+- Skripte: gemeinsame Testhilfe; neu für Produktseiten-Rechner, Abhol-Dialog und die gemerkte Anschrift.
+
+
 ## [1.39.1] - 2026-10-19 — Vorauswahl überspringt Versandarten ohne Preis, Zahlart-Hinweis erst beim Bestellen
 
 > **Deployment:** `php bin/console cache:clear`.
@@ -174,16 +205,13 @@
 - **Der Versandkostenfrei-Hinweis rechnet den Warenkorb nicht mehr eigens nach.** Ob sich der
   Warenkorb an den Lieferort schicken lässt, steht nach der Vorauswahl schon im Warenkorb der Seite:
   eine Lieferung ohne Fehler zur Versandart. Neu gerechnet wird nur noch, wenn die gewählte
-  Versandart gesperrt ist, etwa über ihrem obersten Gewichtsband. Die Prüfung dauert damit im
-  Normalfall 0,001 ms statt 48,8 ms (PHPBench, Testinstanz); die Aussage des Hinweises bleibt gleich,
-  an 22 Fällen gegen die volle Prüfung verglichen.
+  Versandart gesperrt ist, etwa über ihrem obersten Gewichtsband. Die Prüfung kostet damit im
+  Normalfall nahezu nichts mehr; die Aussage des Hinweises bleibt gleich.
 
 ### Intern
 
-- **Messprojekt `benchmarks/`** mit PHPBench und einer Seitenmessung über HTTP, Ablage der Werte je
-  Lauf in `benchmarks/results.csv`; kommt in kein Ausrollpaket. Ausgangswerte vom 05.10. auf
-  der Testinstanz: Lieferbarkeits-Prüfung des Versandkostenfrei-Hinweises 47 ms je Aufruf von Warenkorb
-  und Leiste, eine Neuberechnung 8 ms, Speditionshinweis 368 ms ohne und 6 ms mit Zwischenspeicher.
+- **Messprojekt `benchmarks/`** mit PHPBench und einer Seitenmessung über HTTP; kommt in kein
+  Ausrollpaket.
 - Wächter im Testlauf: Mit bepreister Lieferung rechnet die Lieferbarkeits-Prüfung gar nicht, sonst
   bei bepreister erster Versandart genau zweimal.
 - PHPStan und PHP CS Fixer prüfen auch `benchmarks/`.
@@ -341,8 +369,7 @@
 ## [1.26.0] - 2026-09-23: Die Produktseite sagt, wenn ein Artikel per Spedition kommt
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, **`bin/build-storefront.sh`**
-> (neues Storefront-Skript, in einer ddev-Umgebung als `ddev exec "bin/build-storefront.sh"`),
-> `php bin/console cache:clear`. Danach im Verwaltungsbereich die Karte „Speditionshinweis auf
+> (neues Storefront-Skript), `php bin/console cache:clear`. Danach im Verwaltungsbereich die Karte „Speditionshinweis auf
 > der Produktseite" einstellen. Ohne Einstellung bleibt alles wie bisher.
 
 ### Neu
@@ -386,9 +413,7 @@
 
   **Warum es diesen Teil gibt:** Shopware verlangt die Nummer nur im **Adressformular**. Der
   PayPal-Express-Knopf zeigt dieses Formular nie: PayPal liefert die Anschrift, der Shop legt die
-  Adresse damit an, ohne Nummer, wenn PayPal keine mitschickt. Gemessen auf Live über die
-  letzten 500 Bestellungen: **5 von 46 Express-Bestellungen ohne Nummer (11 %)**, auf allen
-  anderen Wegen zusammen 2 von 452.
+  Adresse damit an, ohne Nummer, wenn PayPal keine mitschickt.
 
   **Der Verstärker, der die Zahl wachsen ließ:** Shopware prüft das Pflichtfeld nur beim Anlegen
   und Bearbeiten einer Adresse, **nicht beim Verwenden einer gespeicherten**. Eine einmal ohne
@@ -455,8 +480,8 @@ an.** Kommt sie eines Tages, greift die Sperre einfach seltener.
   Verweis auf die Warenkorbseite. Der Moment, in dem jemand etwas hineinlegt, ist der Moment, in
   dem er nach den Versandkosten fragt.
 - **Der Rechner steht unter der Schaltfläche zur Kasse**, nicht darüber: Der Weg zur Kasse darf
-  nicht nach unten rutschen, nur weil jemand rechnen möchte. Bei 375 px nachgemessen: Die
-  Schaltfläche liegt unverändert dort, wo sie vorher lag.
+  nicht nach unten rutschen, nur weil jemand rechnen möchte. Auch am Telefon bleibt die
+  Schaltfläche dort, wo sie ohne Rechner läge.
 - **Es ist derselbe Baustein wie auf der Warenkorbseite.** Dieselbe Berechnung, dasselbe Skript,
   kein zweiter Rechenweg. Die Länderliste kommt aus einem gemeinsamen Dienst, damit nicht die eine
   Stelle ein Land anbietet, das die andere nicht kennt.
@@ -478,9 +503,6 @@ an.** Kommt sie eines Tages, greift die Sperre einfach seltener.
   Beide Zuhörer hängen am selben Ereignis; ihre Reihenfolge ergab sich aus der Stelle in der
   Dienstliste. Der Hinweis kam zuerst, las die Abholung aus dem Kontext und hängte den Dialog an,
   Zehntel einer Millisekunde, bevor die Vorauswahl umschaltete.
-- **Auf Live gemessen, nicht an einer Nachbildung.** Dort war der Fehler nicht zu sehen: Die
-  Umschaltung hatte schon eine Anfrage früher stattgefunden, und die sichtbare Seite war bereits
-  die zweite. Zwei Fassungen sind deshalb ausgerollt worden, ohne dass sich etwas änderte.
 - **Die Reihenfolge ist jetzt festgelegt** (Vorauswahl auf Rang 100, Hinweis auf Rang −100),
   und ein Test hält den Abstand fest, damit er beim nächsten Umsortieren nicht kippt.
 
@@ -516,17 +538,15 @@ an.** Kommt sie eines Tages, greift die Sperre einfach seltener.
 - Schwellen, Wortlaut des Abhol-Hinweises und die Sperre bei bewusst gewählter Abholung sind nicht
   angefasst.
 
-### Wo das gemessen ist
-
-An einer Nachbildung des Live-Standes, mit den Versandarten und Regeln des Shops:
+### Beispiele
 
 | Warenkorb | Ergebnis |
 |---|---|
 | 5,5-m-Handlauf, 12,4 kg, Anschrift im Speditionsgebiet | **Spedition vorausgewählt**, kein Dialog, Bestellung frei |
 | 960 kg, keine Lieferart verfügbar | kein Dialog, Anfrageweg mit „Kontakt aufnehmen", Bestellung gesperrt |
 
-**Nicht gemessen ist der Livebetrieb selbst.** Welche Versandarten dort für einen bestimmten
-Warenkorb übrig bleiben, hängt an Regeln und Anschrift und kann von der Nachbildung abweichen.
+Welche Versandarten für einen bestimmten Warenkorb übrig bleiben, hängt an den Regeln des Shops und
+an der Anschrift.
 
 ## [1.18.0] - 2026-08-26: Die Belege nennen, dass der Transport Sache des Käufers ist
 
@@ -563,7 +583,7 @@ Warenkorb übrig bleiben, hängt an Regeln und Anschrift und kann von der Nachbi
 
 - **Der Befund aus 1.17.0 war nicht behoben.** Auf der Bestätigungsseite stand die Selbstabholung
   weiterhin angehakt, ohne dass jemand sie angeklickt hatte, und der Dialog sprang beim Betreten
-  der Seite auf. Nachgemessen am 2026-08-26 an einer Nachbildung des Live-Standes.
+  der Seite auf.
 - **Die Annahme, auf der 1.17.0 beruhte, stimmt nicht.** Sie ging davon aus, dass nur ein Klick des
   Kunden das Umschalt-Ereignis auslöst und Shopwares eigener Rückfall nicht. Tatsächlich ruft der
   Rückfall denselben Umschaltweg auf. Er trug sich damit selbst als eigene Wahl des Kunden ein,
@@ -589,7 +609,7 @@ Warenkorb übrig bleiben, hängt an Regeln und Anschrift und kann von der Nachbi
 ### Behoben
 
 - **Auf der Bestätigungsseite stand die Selbstabholung angehakt, ohne dass jemand sie angeklickt
-  hatte** (auf Live gemessen, 2026-08-25). Weil sie angehakt war, sprang auch der
+  hatte**. Weil sie angehakt war, sprang auch der
   Bestätigungsdialog schon beim Betreten der Seite auf.
 - **Die Ursache liegt nicht in einer Fehleinstellung.** Die Standard-Versandart des Kanals ist der
   Paketdienst. Der greift für einen 2-m-Handlauf nicht, und die Abholung ist die Einzige, die nie
@@ -647,7 +667,7 @@ Warenkorb übrig bleiben, hängt an Regeln und Anschrift und kann von der Nachbi
 ### Behoben
 
 - **Die rote Sperrmeldung stand auf der Warenkorbseite**, wo es weder Versandartenauswahl noch
-  Dialog gibt (auf Live gemessen, 2026-08-25). Der Kunde konnte sie dort nicht auflösen, und er
+  Dialog gibt. Der Kunde konnte sie dort nicht auflösen, und er
   hatte die Abholung oft gar nicht selbst gewählt, sie war bei langen oder schweren Warenkörben
   schlicht die einzige verbliebene Versandart. Getroffen hat es damit ausgerechnet den Kunden mit
   dem größten Warenkorb, auf der ersten Seite des Bestellvorgangs.
@@ -709,7 +729,7 @@ Warenkorb übrig bleiben, hängt an Regeln und Anschrift und kann von der Nachbi
   der Bestellung festgehalten; käme sie durch Wegklicken zustande, wäre der Nachweis nicht schwach,
   sondern falsch: Er behauptete etwas, das nicht stattgefunden hat.
 
-## [1.14.1] - 2026-08-25: Zwei Mängel, die erst die Sichtprüfung auf Staging gezeigt hat
+## [1.14.1] - 2026-08-25: Zwei Mängel in der Darstellung
 
 > **Deployment:** `bin/build-storefront.sh`, dann
 > `php bin/console plugin:update RcCheckoutEnhancer && php bin/console cache:clear`.

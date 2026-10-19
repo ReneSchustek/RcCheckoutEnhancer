@@ -44,7 +44,8 @@ final class RcAbTestingFreeShippingSwitchGate implements FreeShippingSwitchGate
             return $this->resolver->resolve(self::SWITCH_KEY) === self::VALUE_OFF;
         } catch (Throwable $e) {
             // Ein Fehler im Fremd-Plugin darf Warenkorbseite und Leiste nicht mit einem 500 abbrechen; der Indikator
-            // ist ein Zusatz und wird im Zweifel gezeigt. Protokolliert, damit ein dauerhaft defekter A/B-Test auffällt.
+            // ist ein Zusatz und wird im Zweifel gezeigt. Protokolliert, damit ein dauerhaft defekter A/B-Test
+            // auffällt.
             $this->logger->warning('A/B-Schalter für den Versandkostenfrei-Hinweis nicht lesbar', [
                 'switch' => self::SWITCH_KEY,
                 'exception' => $e::class,

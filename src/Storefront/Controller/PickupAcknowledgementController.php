@@ -32,7 +32,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * soll die Abholung nicht bestätigen und damit am Anfrageweg vorbei bestellen können.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class PickupAcknowledgementController extends StorefrontController
+final class PickupAcknowledgementController extends StorefrontController
 {
     public function __construct(
         private readonly PickupHintDecider $decider,

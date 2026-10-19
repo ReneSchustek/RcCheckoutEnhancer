@@ -10,6 +10,7 @@ use Ruhrcoder\RcCheckoutEnhancer\Checkout\Cart\ShippingEnquiryRequiredError;
 use Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore;
+use Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquiryContactSubscriber;
 use Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquirySubscriber;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Customer\Aggregate\CustomerAddress\CustomerAddressEntity;
@@ -33,7 +34,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 final class ShippingEnquirySubscriberTest extends TestCase
 {
-    private const KATEGORIE = 'kategorie-kontakt';
+    private const CATEGORY = 'kategorie-kontakt';
 
     /**
      * Was: Keine Versandart übrig.
@@ -229,7 +230,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
 
         $event = $this->navigationEvent();
-        $this->subscriber(store: $store)->onNavigationPage($event);
+        $this->contactSubscriber(store: $store)->onNavigationPage($event);
 
         $extension = $event->getPage()->getExtension('rcShippingEnquiry');
         self::assertInstanceOf(ArrayStruct::class, $extension);
@@ -246,7 +247,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         $store->method('take')->willReturn(null);
 
         $event = $this->navigationEvent();
-        $this->subscriber(store: $store)->onNavigationPage($event);
+        $this->contactSubscriber(store: $store)->onNavigationPage($event);
 
         self::assertFalse($event->getPage()->hasExtension('rcShippingEnquiry'));
     }
@@ -262,7 +263,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
 
         $event = $this->navigationEvent();
-        $this->subscriber(store: $store, intro: 'Sehr geehrte Damen und Herren,')->onNavigationPage($event);
+        $this->contactSubscriber(store: $store, intro: 'Sehr geehrte Damen und Herren,')->onNavigationPage($event);
 
         $extension = $event->getPage()->getExtension('rcShippingEnquiry');
         self::assertInstanceOf(ArrayStruct::class, $extension);
@@ -282,7 +283,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
 
         $event = $this->navigationEvent($this->customer());
-        $this->subscriber(store: $store)->onNavigationPage($event);
+        $this->contactSubscriber(store: $store)->onNavigationPage($event);
 
         $extension = $event->getPage()->getExtension('rcShippingEnquiry');
         self::assertInstanceOf(ArrayStruct::class, $extension);
@@ -305,7 +306,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         $store->method('take')->willReturn('10 × GVS-1 — Vordachsystem');
 
         $event = $this->navigationEvent();
-        $this->subscriber(store: $store)->onNavigationPage($event);
+        $this->contactSubscriber(store: $store)->onNavigationPage($event);
 
         $extension = $event->getPage()->getExtension('rcShippingEnquiry');
         self::assertInstanceOf(ArrayStruct::class, $extension);
@@ -325,7 +326,7 @@ final class ShippingEnquirySubscriberTest extends TestCase
         $customer->getDefaultBillingAddress()?->setPhoneNumber('   ');
 
         $event = $this->navigationEvent($customer);
-        $this->subscriber(store: $store)->onNavigationPage($event);
+        $this->contactSubscriber(store: $store)->onNavigationPage($event);
 
         $extension = $event->getPage()->getExtension('rcShippingEnquiry');
         self::assertInstanceOf(ArrayStruct::class, $extension);
@@ -337,24 +338,25 @@ final class ShippingEnquirySubscriberTest extends TestCase
      */
     private function subscriber(
         bool $enabled = true,
-        ?string $categoryId = self::KATEGORIE,
+        ?string $categoryId = self::CATEGORY,
         string $hint = '',
-        ?ShippingEnquiryStore $store = null,
         array $nonDelivery = [],
-        string $intro = '',
     ): ShippingEnquirySubscriber {
         $configService = $this->createMock(ConfigService::class);
         $configService->method('isShippingEnquiryEnabled')->willReturn($enabled);
         $configService->method('getShippingEnquiryCategoryId')->willReturn($categoryId);
         $configService->method('getShippingEnquiryHint')->willReturn($hint);
-        $configService->method('getShippingEnquiryIntro')->willReturn($intro);
         $configService->method('getNonDeliveryMethodIds')->willReturn($nonDelivery);
 
-        return new ShippingEnquirySubscriber(
-            $configService,
-            $store ?? $this->createMock(ShippingEnquiryStore::class),
-            new ShippingEnquiryRule($configService),
-        );
+        return new ShippingEnquirySubscriber($configService, new ShippingEnquiryRule($configService));
+    }
+
+    private function contactSubscriber(ShippingEnquiryStore $store, string $intro = ''): ShippingEnquiryContactSubscriber
+    {
+        $configService = $this->createStub(ConfigService::class);
+        $configService->method('getShippingEnquiryIntro')->willReturn($intro);
+
+        return new ShippingEnquiryContactSubscriber($configService, $store);
     }
 
     private function customer(): CustomerEntity
@@ -405,13 +407,8 @@ final class ShippingEnquirySubscriberTest extends TestCase
      */
     public function testItListensToBothPages(): void
     {
-        self::assertSame(
-            [
-                CheckoutConfirmPageLoadedEvent::class => 'onConfirmPage',
-                NavigationPageLoadedEvent::class => 'onNavigationPage',
-            ],
-            ShippingEnquirySubscriber::getSubscribedEvents()
-        );
+        self::assertSame([CheckoutConfirmPageLoadedEvent::class => 'onConfirmPage'], ShippingEnquirySubscriber::getSubscribedEvents());
+        self::assertSame([NavigationPageLoadedEvent::class => 'onNavigationPage'], ShippingEnquiryContactSubscriber::getSubscribedEvents());
     }
 
     private function context(?CustomerEntity $customer = null): SalesChannelContext

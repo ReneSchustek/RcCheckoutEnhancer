@@ -33,7 +33,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
  * Beim Ausrollen erst dieses Plugin aktualisieren, dann RcCheckout deinstallieren.
  * Andersherum sind die Quellwerte weg, bevor sie jemand liest.
  */
-class Migration1786406400MigrateRcCheckoutConfig extends MigrationStep
+final class Migration1786406400MigrateRcCheckoutConfig extends MigrationStep
 {
     /**
      * Alter Schlüssel => neuer Schlüssel.

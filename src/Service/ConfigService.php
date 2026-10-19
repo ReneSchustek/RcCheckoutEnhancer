@@ -12,6 +12,9 @@ use Symfony\Contracts\Service\ResetInterface;
  * Liest die Plugin-Einstellungen je Verkaufskanal und legt Vorgabewerte und Bereinigung an
  * eine Stelle, damit kein Aufrufer mit Leerzeichen, Nullen oder fremden Typen rechnen muss.
  *
+ * Je Einstellung eine Methode, deshalb die vielen öffentlichen Methoden. Sie enthalten keine Fachlogik außer
+ * Vorgabewert und Bereinigung; eine Aufteilung nach Funktion trennte kein Verhalten, sondern nur Lesezugriffe.
+ *
  * Nicht `final`, weil die Subscriber-Tests ihn als Test-Double ersetzen.
  */
 class ConfigService implements ResetInterface
@@ -112,6 +115,20 @@ class ConfigService implements ResetInterface
     }
 
     /**
+     * Versandarten, die keine Lieferung sind: die eingetragenen Abholarten und der Platzhalter. Versandauskünfte nennen
+     * sie nicht, sonst stünde dort eine Abholung mit 0,00 € als Zusage, die keine Lieferung ist.
+     *
+     * @return list<string>
+     */
+    public function getNotShippingMethodIds(?string $salesChannelId = null): array
+    {
+        return array_values(array_unique(array_filter([
+            ...$this->getNonDeliveryMethodIds($salesChannelId),
+            $this->getShippingPlaceholderMethodId($salesChannelId),
+        ])));
+    }
+
+    /**
      * Die Versandart, die ohne Lieferadresse an die Stelle einer nie gewählten Abholung tritt.
      *
      * Leer heißt: Es gibt keinen Platzhalter, und eine nicht angeklickte Abholung bleibt stehen,
@@ -153,13 +170,7 @@ class ConfigService implements ResetInterface
      */
     public function getNonDeliveryMethodIds(?string $salesChannelId = null): array
     {
-        $value = $this->get('.shippingEnquiryNonDeliveryMethodIds', [], $salesChannelId);
-
-        if (!\is_array($value)) {
-            return [];
-        }
-
-        return array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== ''));
+        return $this->idList('.shippingEnquiryNonDeliveryMethodIds', $salesChannelId);
     }
 
     /**
@@ -266,15 +277,8 @@ class ConfigService implements ResetInterface
      */
     public function getFreeShippingMethodIds(?string $salesChannelId = null): array
     {
-        $value = $this->get('.freeShippingMethodIds', [], $salesChannelId);
-
-        if (!\is_array($value)) {
-            return [];
-        }
-
-        return array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== ''));
+        return $this->idList('.freeShippingMethodIds', $salesChannelId);
     }
-
 
     public function isDeliveryTimeEnabled(?string $salesChannelId = null): bool
     {
@@ -364,7 +368,8 @@ class ConfigService implements ResetInterface
      * Wird eine fehlende Telefonnummer auf der Bestätigungsseite nachgefordert?
      *
      * Vorgabe aus. Der Schalter greift in den Bestellweg ein und sperrt im Zweifel eine
-     * Bestellung; das schaltet kein Update nebenbei ein, nur der Betreiber. Wer die Nummer nicht braucht, merkt von diesem Plugin-Teil nichts.
+     * Bestellung; das schaltet kein Update nebenbei ein, nur der Betreiber. Wer die Nummer nicht braucht, merkt von
+     * diesem Plugin-Teil nichts.
      */
     public function isPhoneNumberRequired(?string $salesChannelId = null): bool
     {
@@ -398,9 +403,7 @@ class ConfigService implements ResetInterface
      */
     public function getCartAccessoryKitCategoryIds(?string $salesChannelId = null): array
     {
-        $value = $this->get('.cartAccessoryKitCategoryIds', [], $salesChannelId);
-
-        return \is_array($value) ? array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== '')) : [];
+        return $this->idList('.cartAccessoryKitCategoryIds', $salesChannelId);
     }
 
     /**
@@ -445,13 +448,7 @@ class ConfigService implements ResetInterface
      */
     public function getFreightShippingMethodIds(?string $salesChannelId = null): array
     {
-        $value = $this->get('.freightShippingMethodIds', [], $salesChannelId);
-
-        if (!\is_array($value)) {
-            return [];
-        }
-
-        return array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== ''));
+        return $this->idList('.freightShippingMethodIds', $salesChannelId);
     }
 
     /**
@@ -470,7 +467,9 @@ class ConfigService implements ResetInterface
 
         $zipCodes = [];
         foreach ($parts as $part) {
-            if (preg_match('/^[A-Za-z0-9-]{2,12}$/', $part) === 1 && !\in_array($part, $zipCodes, true)) {
+            // Mindestens zwei Zeichen (kürzere Postleitzahlen gibt es in den Lieferländern nicht), höchstens so lang, wie
+            // der Rechner annimmt; eine längere ließe sich dort gar nicht eingeben.
+            if (preg_match('/^[A-Za-z0-9-]{2,' . EstimateInputValidator::ZIP_MAX_LENGTH . '}$/', $part) === 1 && !\in_array($part, $zipCodes, true)) {
                 $zipCodes[] = $part;
             }
         }
@@ -488,5 +487,20 @@ class ConfigService implements ResetInterface
         }
 
         return $this->cache[$cacheKey];
+    }
+
+    /**
+     * Eine Liste von Kennungen aus der Konfiguration; leere und fremde Einträge fallen heraus.
+     *
+     * @return list<string>
+     */
+    private function idList(string $key, ?string $salesChannelId): array
+    {
+        $value = $this->get($key, [], $salesChannelId);
+        if (!\is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter($value, static fn ($id): bool => \is_string($id) && $id !== ''));
     }
 }

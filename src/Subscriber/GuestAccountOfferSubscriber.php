@@ -24,7 +24,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * beim Abmelden die ganze Sitzung (`invalidateSessionOnLogOut`), ginge die Vormerkung mit verloren;
  * dann wird nichts angeboten, statt ein Formular zu zeigen, das nicht funktionieren kann.
  */
-class GuestAccountOfferSubscriber implements EventSubscriberInterface
+final class GuestAccountOfferSubscriber implements EventSubscriberInterface
 {
     public const EXTENSION = 'rcGuestAccount';
 

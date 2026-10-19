@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Ruhrcoder\RcCheckoutEnhancer\Tests\Unit\Twig;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService;
 use Ruhrcoder\RcCheckoutEnhancer\Service\PickupDocumentNote;
 use Ruhrcoder\RcCheckoutEnhancer\Twig\PickupDocumentNoteExtension;
@@ -48,7 +49,7 @@ final class PickupDocumentNoteExtensionTest extends TestCase
         $configService = $this->createMock(ConfigService::class);
         $configService->method('getNonDeliveryMethodIds')->willReturn(['sm-abholung']);
 
-        return new PickupDocumentNoteExtension(new PickupDocumentNote($configService));
+        return new PickupDocumentNoteExtension(new PickupDocumentNote($configService, new NullLogger()));
     }
 
     private function order(string $shippingMethodId): OrderEntity

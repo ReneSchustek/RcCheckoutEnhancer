@@ -11,7 +11,7 @@
         {{ "rc-checkout.freightHint.title"|trans }}
     </p>
 
-    {% if hint.reason == 'length' %}
+    {% if hint.reason == constant('Ruhrcoder\\RcCheckoutEnhancer\\Struct\\FreightHint::REASON_LENGTH') %}
         <p class="rc-freight-hint__reason">{{ "rc-checkout.freightHint.reasonLength"|trans({ '%measure%': hint.measure }) }}</p>
     {% elseif hint.reason == 'weight' %}
         <p class="rc-freight-hint__reason">{{ "rc-checkout.freightHint.reasonWeight"|trans({ '%measure%': hint.measure }) }}</p>
@@ -43,7 +43,7 @@
 
     {# Ist der Rechner der Produktseite aktiv, rechnet der für jedes Land und jede Menge; ein zweiter Rechner im Kasten
        hieße zwei Eingabefelder für dieselbe Frage. #}
-    {% if not config('RcCheckoutEnhancer.config.productShippingEstimateEnabled') %}
+    {% if not (rcProductCalculatorActive ?? false) %}
         <details class="rc-freight-hint__calc">
             <summary class="rc-freight-hint__toggle">{{ "rc-checkout.freightHint.toggle"|trans }}</summary>
 
@@ -55,7 +55,7 @@
                            id="{{ zipId }}"
                            data-rc-freight-hint-zip
                            required="required"
-                           maxlength="12"
+                           maxlength="{{ constant('Ruhrcoder\\RcCheckoutEnhancer\\Service\\EstimateInputValidator::ZIP_MAX_LENGTH') }}"
                            autocomplete="postal-code"
                            inputmode="numeric">
                     <button type="button" class="btn btn-primary" data-rc-freight-hint-submit>

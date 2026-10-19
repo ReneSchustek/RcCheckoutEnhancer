@@ -15,7 +15,7 @@ use Shopware\Core\Checkout\Shipping\ShippingMethodCollection;
  * an der Seite, ließe sie sich mit einem direkten Aufruf des Endpunkts umgehen: Abholung bestätigen
  * und bestellen, obwohl der Shop für diese Ware die Anfrage vorsieht.
  */
-class ShippingEnquiryRule
+final class ShippingEnquiryRule
 {
     public function __construct(private readonly ConfigService $configService)
     {

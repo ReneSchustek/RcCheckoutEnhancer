@@ -200,8 +200,8 @@ final class FreeShippingReachabilityTest extends TestCase
     /**
      * Was: Die Länderbedingung schließt aus, statt einzuschließen („Land ist nicht …“).
      * Warum: Aus einer Ausschlussliste lässt sich die Menge der erlaubten Länder nicht
-     *        bestimmen. Die Antwort muss dann „unbekannt“ lauten; der Hinweis erscheint mit der Bedingung im Text, statt ein Land zu nennen, das
-     *        gar nicht gemeint ist.
+     *        bestimmen. Die Antwort muss dann „unbekannt“ lauten; der Hinweis erscheint mit der Bedingung im Text,
+     *        statt ein Land zu nennen, das gar nicht gemeint ist.
      */
     public function testAnExcludingCountryConditionMakesTheAnswerUncertain(): void
     {

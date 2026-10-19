@@ -1,5 +1,6 @@
 import Plugin from 'src/plugin-system/plugin.class';
-import HttpClient from 'src/service/http-client.service';
+import fetchHtml from '../rc-checkout-common/fetch-html';
+import { requiredZip, showEstimateError } from './estimate-form';
 import { readShippingLocation, rememberShippingLocation } from './shipping-location';
 
 /**
@@ -17,7 +18,6 @@ export default class RcShippingEstimatePlugin extends Plugin {
     };
 
     init() {
-        this._client = new HttpClient();
         this._country = this.el.querySelector('[data-rc-shipping-estimate-country]');
         this._zip = this.el.querySelector('[data-rc-shipping-estimate-zip]');
         this._button = this.el.querySelector('[data-rc-shipping-estimate-submit]');
@@ -65,33 +65,24 @@ export default class RcShippingEstimatePlugin extends Plugin {
     }
 
     _onClick() {
-        const zip = this._zip.value.trim();
-
-        // Pflichtfeld: ohne Postleitzahl wird nicht gerechnet. Die Rückmeldung
-        // steht am Feld, nicht in der Ergebnisliste — dort sucht sie niemand.
-        if (zip === '') {
-            this._zip.setAttribute('aria-invalid', 'true');
-            this._zip.focus();
-            this._zip.reportValidity();
-
+        const zip = requiredZip(this._zip);
+        if (zip === null) {
             return;
         }
 
-        this._zip.removeAttribute('aria-invalid');
         this._setLoading(true);
 
         const data = new FormData();
         data.append('countryIso', this._country.value);
         data.append('zipCode', zip);
 
-        this._client.post(this.options.url, data, (response, request) => {
+        fetchHtml(this.options.url, { method: 'POST', body: data }).then((response) => {
             this._setLoading(false);
 
-            // Eine Fehlerseite (Begrenzung, Serverfehler) gehört nicht in den Kasten; dort stünde
-            // sonst eine ganze Seite mitten im Warenkorb. Stattdessen der Satz, den der Rechner
-            // auch bei einer gescheiterten Berechnung zeigt.
-            if (!request || request.status >= 400 || request.status === 0) {
-                this._showError();
+            // Bei einer Fehlerantwort (Begrenzung, Serverfehler) der Satz, den der Rechner auch bei einer gescheiterten
+            // Berechnung zeigt.
+            if (response === null) {
+                showEstimateError(this._output, this.options.errorText);
 
                 return;
             }
@@ -103,13 +94,6 @@ export default class RcShippingEstimatePlugin extends Plugin {
             }
             window.PluginManager.initializePlugins();
         });
-    }
-
-    _showError() {
-        const message = document.createElement('p');
-        message.className = 'rc-shipping-estimate-failed alert alert-warning mb-0';
-        message.textContent = this.options.errorText;
-        this._output.replaceChildren(message);
     }
 
     _setLoading(loading) {

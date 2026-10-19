@@ -25,7 +25,7 @@ final class OnePageSelectionLoader
         private readonly AbstractCheckoutGatewayRoute $gatewayRoute,
         private readonly ShippingMethodPreselectionApplier $applier,
         private readonly ShippingPlaceholderFilter $placeholderFilter,
-        private readonly ?PaymentPlaceholderFilter $paymentPlaceholderFilter = null,
+        private readonly PaymentPlaceholderFilter $paymentPlaceholderFilter,
     ) {
     }
 
@@ -47,11 +47,10 @@ final class OnePageSelectionLoader
             $methods = $this->gatewayRoute->load($gatewayRequest, $cart, $context);
         }
 
-        // Beide Platzhalter fallen aus der Auswahl. Der Zahlart-Filter ist optional, damit die Tests ohne ihn
-        // auskommen; fehlt er, bleibt die Liste der Route unverändert.
+        // Beide Platzhalter fallen aus der Auswahl.
         return new OnePageSelection(
             $this->placeholderFilter->forDisplay($methods->getShippingMethods(), $context),
-            $this->paymentPlaceholderFilter?->forDisplay($methods->getPaymentMethods(), $context) ?? $methods->getPaymentMethods(),
+            $this->paymentPlaceholderFilter->forDisplay($methods->getPaymentMethods(), $context),
             $cart,
         );
     }

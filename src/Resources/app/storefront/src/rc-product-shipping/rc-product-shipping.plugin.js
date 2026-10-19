@@ -1,5 +1,6 @@
 import Plugin from 'src/plugin-system/plugin.class';
-import HttpClient from 'src/service/http-client.service';
+import fetchHtml from '../rc-checkout-common/fetch-html';
+import { requiredZip, showEstimateError } from '../rc-shipping-estimate/estimate-form';
 import { readShippingLocation, rememberShippingLocation } from '../rc-shipping-estimate/shipping-location';
 
 /**
@@ -17,7 +18,6 @@ export default class RcProductShippingPlugin extends Plugin {
     };
 
     init() {
-        this._client = new HttpClient();
         this._country = this.el.querySelector('[data-rc-product-shipping-country]');
         this._zip = this.el.querySelector('[data-rc-product-shipping-zip]');
         this._button = this.el.querySelector('[data-rc-product-shipping-submit]');
@@ -97,17 +97,11 @@ export default class RcProductShippingPlugin extends Plugin {
     }
 
     _estimate(auto) {
-        const zip = this._zip.value.trim();
-
-        if (zip === '') {
-            this._zip.setAttribute('aria-invalid', 'true');
-            this._zip.focus();
-            this._zip.reportValidity();
-
+        const zip = requiredZip(this._zip);
+        if (zip === null) {
             return;
         }
 
-        this._zip.removeAttribute('aria-invalid');
         this._button.disabled = true;
         this._button.setAttribute('aria-busy', 'true');
 
@@ -121,15 +115,12 @@ export default class RcProductShippingPlugin extends Plugin {
             data.append('auto', '1');
         }
 
-        this._client.post(this.options.url, data, (response, request) => {
+        fetchHtml(this.options.url, { method: 'POST', body: data }).then((response) => {
             this._button.disabled = false;
             this._button.setAttribute('aria-busy', 'false');
 
-            if (!request || request.status >= 400 || request.status === 0) {
-                const message = document.createElement('p');
-                message.className = 'rc-shipping-estimate-failed alert alert-warning mb-0';
-                message.textContent = this.options.errorText;
-                this._output.replaceChildren(message);
+            if (response === null) {
+                showEstimateError(this._output, this.options.errorText);
 
                 return;
             }

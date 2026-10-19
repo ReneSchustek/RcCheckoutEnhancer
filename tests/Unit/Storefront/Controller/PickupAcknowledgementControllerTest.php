@@ -36,9 +36,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PickupAcknowledgementControllerTest extends TestCase
 {
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
-    private const SPEDITION = 'sm-spedition';
+    private const FREIGHT = 'sm-spedition';
 
     private PickupAcknowledgementStore $store;
 
@@ -54,7 +54,7 @@ final class PickupAcknowledgementControllerTest extends TestCase
 
     public function testAHeavyPickupIsAcknowledged(): void
     {
-        $response = $this->controller(available: [self::SPEDITION, self::ABHOLUNG])->acknowledge(new Request(), $this->context(self::ABHOLUNG));
+        $response = $this->controller(available: [self::FREIGHT, self::PICKUP])->acknowledge(new Request(), $this->context(self::PICKUP));
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(['acknowledged' => true], json_decode((string) $response->getContent(), true));
@@ -69,7 +69,7 @@ final class PickupAcknowledgementControllerTest extends TestCase
      */
     public function testWhenOnlyPickupRemainsTheEnquiryApplies(): void
     {
-        $response = $this->controller(available: [self::ABHOLUNG])->acknowledge(new Request(), $this->context(self::ABHOLUNG));
+        $response = $this->controller(available: [self::PICKUP])->acknowledge(new Request(), $this->context(self::PICKUP));
 
         self::assertSame(409, $response->getStatusCode());
         self::assertSame('enquiry-required', json_decode((string) $response->getContent(), true)['reason'] ?? null);
@@ -82,7 +82,7 @@ final class PickupAcknowledgementControllerTest extends TestCase
      */
     public function testWithoutAHintThereIsNothingToAcknowledge(): void
     {
-        $response = $this->controller(available: [self::SPEDITION, self::ABHOLUNG])->acknowledge(new Request(), $this->context(self::SPEDITION));
+        $response = $this->controller(available: [self::FREIGHT, self::PICKUP])->acknowledge(new Request(), $this->context(self::FREIGHT));
 
         self::assertSame(409, $response->getStatusCode());
         self::assertSame('not-applicable', json_decode((string) $response->getContent(), true)['reason'] ?? null);
@@ -96,7 +96,7 @@ final class PickupAcknowledgementControllerTest extends TestCase
         $configService = $this->createMock(ConfigService::class);
         $configService->method('getPickupHintWeightThreshold')->willReturn(50.0);
         $configService->method('getPickupHintLengthThreshold')->willReturn(null);
-        $configService->method('getNonDeliveryMethodIds')->willReturn([self::ABHOLUNG]);
+        $configService->method('getNonDeliveryMethodIds')->willReturn([self::PICKUP]);
         $configService->method('getPickupHintText')->willReturn('Verladen und Transport übernehmen Sie selbst.');
         $configService->method('isShippingEnquiryEnabled')->willReturn(true);
         $configService->method('getShippingEnquiryCategoryId')->willReturn('kategorie-kontakt');

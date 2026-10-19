@@ -21,7 +21,7 @@ final class ShippingPlaceholderFilterTest extends TestCase
 {
     private const PLACEHOLDER = 'sm-placeholder';
 
-    private const ABHOLUNG = 'sm-abholung';
+    private const PICKUP = 'sm-abholung';
 
     /**
      * Was: Neben dem Platzhalter steht eine verfügbare Lieferart.
@@ -30,11 +30,11 @@ final class ShippingPlaceholderFilterTest extends TestCase
     public function testThePlaceholderLeavesWhenADeliveryMethodIsListed(): void
     {
         $filtered = $this->filter()->forDisplay(
-            $this->methods([self::PLACEHOLDER => null, 'sm-paket' => null, self::ABHOLUNG => null]),
+            $this->methods([self::PLACEHOLDER => null, 'sm-paket' => null, self::PICKUP => null]),
             $this->context(),
         );
 
-        self::assertSame(['sm-paket', self::ABHOLUNG], array_values($filtered->getIds()));
+        self::assertSame(['sm-paket', self::PICKUP], array_values($filtered->getIds()));
     }
 
     /**
@@ -58,11 +58,11 @@ final class ShippingPlaceholderFilterTest extends TestCase
     public function testThePlaceholderStaysWhenOnlyAPickupRemains(): void
     {
         $filtered = $this->filter()->forDisplay(
-            $this->methods([self::PLACEHOLDER => null, self::ABHOLUNG => null]),
+            $this->methods([self::PLACEHOLDER => null, self::PICKUP => null]),
             $this->context(),
         );
 
-        self::assertSame([self::PLACEHOLDER, self::ABHOLUNG], array_values($filtered->getIds()));
+        self::assertSame([self::PLACEHOLDER, self::PICKUP], array_values($filtered->getIds()));
     }
 
     /**
@@ -74,7 +74,7 @@ final class ShippingPlaceholderFilterTest extends TestCase
     public function testAnUnavailableDeliveryMethodDoesNotCount(): void
     {
         $filtered = $this->filter()->forDisplay(
-            $this->methods([self::PLACEHOLDER => null, 'sm-paket' => 'rule-bis-5-kg', self::ABHOLUNG => null]),
+            $this->methods([self::PLACEHOLDER => null, 'sm-paket' => 'rule-bis-5-kg', self::PICKUP => null]),
             $this->context(),
         );
 
@@ -97,7 +97,7 @@ final class ShippingPlaceholderFilterTest extends TestCase
     {
         $configService = $this->createMock(ConfigService::class);
         $configService->method('getShippingPlaceholderMethodId')->willReturn($placeholder);
-        $configService->method('getNonDeliveryMethodIds')->willReturn([self::ABHOLUNG]);
+        $configService->method('getNonDeliveryMethodIds')->willReturn([self::PICKUP]);
 
         return new ShippingPlaceholderFilter($configService);
     }

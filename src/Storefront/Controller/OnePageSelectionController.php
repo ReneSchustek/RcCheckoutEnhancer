@@ -23,7 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * Seite zurück, stünde sie mitten im Adressformular.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class OnePageSelectionController extends StorefrontController
+final class OnePageSelectionController extends StorefrontController
 {
     public const TEMPLATE = '@RcCheckoutEnhancer/storefront/component/rc-checkout/one-page-selection.html.twig';
 

@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Ruhrcoder\RcCheckoutEnhancer\Service;
 
+use Ruhrcoder\RcCheckoutEnhancer\Checkout\AccessoryChoice;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\LineItem\LineItem;
-use Shopware\Core\Content\Product\ProductCollection;
 use Shopware\Core\Content\Product\SalesChannel\CrossSelling\AbstractProductCrossSellingRoute;
+use Shopware\Core\Content\Product\SalesChannel\Detail\ProductDetailRoute;
 use Shopware\Core\Content\Product\SalesChannel\SalesChannelProductCollection;
 use Shopware\Core\Content\Product\SalesChannel\SalesChannelProductEntity;
+use Shopware\Core\Framework\DataAbstractionLayer\Cache\EntityCacheKeyGenerator;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 /**
  * Zubehör im Warenkorb: „Dazu passt" und „Haben Sie an alles gedacht?".
@@ -27,16 +31,21 @@ use Symfony\Component\HttpFoundation\Request;
  * Zubehörblock der Produktseite.
  *
  * Gelesen wird über die Querverkaufs-Route des Kerns: dieselben Produkte, die die Produktseite zeigt, mit denselben
- * Regeln für Sichtbarkeit und Verfügbarkeit, gepflegte Listen wie dynamische Produktgruppen.
+ * Regeln für Sichtbarkeit und Verfügbarkeit, gepflegte Listen wie dynamische Produktgruppen. Zwischengespeichert werden
+ * nur Gruppen und Produktkennungen; die Vorschläge selbst werden je Aufruf frisch geladen.
  */
-class CartAccessoryService
+final class CartAccessoryService
 {
     // Eine Kachelreihe auf der Warenkorbseite (vier Spalten), am Telefon zwei Zeilen zu zwei.
     private const SUGGESTION_LIMIT = 4;
     // Mehr als vier Erinnerungen liest unter den Positionen niemand mehr.
     private const CHECKLIST_LIMIT = 4;
-    // Jeder Hauptartikel kostet eine Abfrage der Querverkaufs-Route; bei großen Warenkörben reichen die ersten zehn.
+    // Jeder Hauptartikel kostet ohne Zwischenspeicher eine Abfrage der Querverkaufs-Route; bei großen Warenkörben
+    // reichen die ersten zehn.
     private const PRODUCT_LIMIT = 10;
+    // Die Leiste geht nach jedem Hinzufügen auf. Ändert jemand den Querverkauf, löscht der Kern den Eintrag über den
+    // Tag; die Stunde begrenzt nur, wie lange eine dynamische Produktgruppe auf dem alten Stand bleibt.
+    private const CACHE_SECONDS = 3600;
 
     /**
      * @param SalesChannelRepository<SalesChannelProductCollection> $productRepository
@@ -45,25 +54,51 @@ class CartAccessoryService
         private readonly AbstractProductCrossSellingRoute $crossSellingRoute,
         private readonly SalesChannelRepository $productRepository,
         private readonly ConfigService $configService,
+        private readonly TagAwareCacheInterface $cache,
     ) {
     }
 
     /**
-     * @return array{suggestions: list<SalesChannelProductEntity>, checklist: list<array{name: string, productId: string, productName: string}>}|null
+     * @return array{
+     *     suggestions: list<SalesChannelProductEntity>,
+     *     checklist: list<array{name: string, productId: string, productName: string}>
+     * }|null
      */
     public function load(Cart $cart, SalesChannelContext $context): ?array
     {
-        $ids = array_values(array_unique(array_filter(array_map(
-            static fn (LineItem $item): ?string => $item->getType() === LineItem::PRODUCT_LINE_ITEM_TYPE ? $item->getReferencedId() : null,
-            $cart->getLineItems()->getFlat(),
-        ))));
+        $ids = self::productIds($cart);
         if ($ids === []) {
             return null;
         }
 
-        $inCart = $this->productRepository->search(new Criteria($ids), $context)->getEntities();
-        // Eine Variante im Warenkorb gilt auch für ihren Hauptartikel als vorhanden. Querverkauf und Kategorien
-        // hängen am Hauptartikel; die erste Variante je Hauptartikel steht für ihn.
+        [$owned, $mains] = self::ownedAndMains($this->productRepository->search(new Criteria($ids), $context)->getEntities());
+        [$bought, $checklist] = $this->collect($mains, $owned, $context);
+
+        $suggestions = $this->suggestions(AccessoryChoice::mix($bought, $owned, self::SUGGESTION_LIMIT), $context);
+        $checklist = \array_slice($checklist, 0, self::CHECKLIST_LIMIT);
+
+        return $suggestions === [] && $checklist === [] ? null : ['suggestions' => $suggestions, 'checklist' => $checklist];
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function productIds(Cart $cart): array
+    {
+        return array_values(array_unique(array_filter(array_map(
+            static fn (LineItem $item): ?string => $item->getType() === LineItem::PRODUCT_LINE_ITEM_TYPE ? $item->getReferencedId() : null,
+            $cart->getLineItems()->getFlat(),
+        ))));
+    }
+
+    /**
+     * Eine Variante im Warenkorb gilt auch für ihren Hauptartikel als vorhanden. Querverkauf und Kategorien hängen am
+     * Hauptartikel; die erste Variante je Hauptartikel steht für ihn.
+     *
+     * @return array{0: array<string, true>, 1: array<string, SalesChannelProductEntity>}
+     */
+    private static function ownedAndMains(SalesChannelProductCollection $inCart): array
+    {
         $owned = [];
         $mains = [];
         foreach ($inCart as $product) {
@@ -73,126 +108,111 @@ class CartAccessoryService
             $mains[$main] ??= $product;
         }
 
+        return [$owned, $mains];
+    }
+
+    /**
+     * „Oft zusammen gekauft" speist „Dazu passt"; jede andere Gruppe eines Bausatzes wird zur Erinnerung, solange aus
+     * ihr nichts im Warenkorb liegt.
+     *
+     * @param array<string, SalesChannelProductEntity> $mains
+     * @param array<string, true>                      $owned
+     *
+     * @return array{0: list<list<array{id: string, parentId: ?string}>>, 1: list<array{name: string, productId: string, productName: string}>}
+     */
+    private function collect(array $mains, array $owned, SalesChannelContext $context): array
+    {
         $kitCategories = $this->configService->getCartAccessoryKitCategoryIds($context->getSalesChannelId());
         // Verglichen wird kleingeschrieben mit dem übersetzten Namen der Gruppe; die Namen je Sprache kommen aus den
         // Einstellungen, sonst fiele die Gruppe in einem englischen Kanal unter „Haben Sie an alles gedacht?".
         $alsoBought = $this->configService->getCartAccessoryGroupNames($context->getSalesChannelId());
+
         $bought = [];
         $checklist = [];
         foreach (\array_slice(array_keys($mains), 0, self::PRODUCT_LIMIT) as $mainId) {
-            $isKit = self::isKit(array_values($mains[$mainId]->getCategoryTree() ?? []), $kitCategories);
-            $elements = $this->crossSellingRoute->load($mainId, new Request(), $context, new Criteria())->getResult();
+            $isKit = AccessoryChoice::isKit(array_values($mains[$mainId]->getCategoryTree() ?? []), $kitCategories);
 
-            foreach ($elements as $element) {
+            foreach ($this->groups($mainId, $context) as $group) {
+                if (\in_array(mb_strtolower($group['name']), $alsoBought, true)) {
+                    $bought[] = $group['products'];
+                } elseif ($isKit && $group['name'] !== '' && $group['products'] !== [] && !AccessoryChoice::anyOwned($group['products'], $owned)) {
+                    $checklist[] = [
+                        'name' => $group['name'],
+                        'productId' => $mainId,
+                        'productName' => (string) ($mains[$mainId]->getTranslation('name') ?? $mains[$mainId]->getName()),
+                    ];
+                }
+            }
+        }
+
+        return [$bought, $checklist];
+    }
+
+    /**
+     * Die Querverkaufsgruppen eines Hauptartikels mit den Kennungen ihrer Produkte, zwischengespeichert je Kanal,
+     * Sprache, Währung und Regeln. Die Regeln gehören dazu, weil die Route Produkte nach Sichtbarkeit und Preisregeln
+     * auswählt.
+     *
+     * @return list<array{name: string, products: list<array{id: string, parentId: ?string}>}>
+     */
+    private function groups(string $mainId, SalesChannelContext $context): array
+    {
+        $ruleIds = $context->getRuleIds();
+        sort($ruleIds);
+        $key = 'rc-checkout-accessory-' . md5(implode('|', [
+            $mainId,
+            $context->getSalesChannelId(),
+            $context->getLanguageId(),
+            $context->getCurrencyId(),
+            implode(',', $ruleIds),
+        ]));
+
+        /** @var list<array{name: string, products: list<array{id: string, parentId: ?string}>}> $groups */
+        $groups = $this->cache->get($key, function (ItemInterface $item) use ($mainId, $context): array {
+            $item->expiresAfter(self::CACHE_SECONDS);
+            // Der Kern löscht diese Tags, wenn Querverkauf oder Produkt sich ändern.
+            $item->tag([ProductDetailRoute::buildName($mainId), EntityCacheKeyGenerator::buildProductTag($mainId)]);
+
+            $groups = [];
+            foreach ($this->crossSellingRoute->load($mainId, new Request(), $context, new Criteria())->getResult() as $element) {
                 $crossSelling = $element->getCrossSelling();
-                $name = trim((string) ($crossSelling->getTranslation('name') ?? $crossSelling->getName()));
-                $products = self::idPairs($element->getProducts());
-
-                // „Oft zusammen gekauft" speist „Dazu passt"; jede andere Gruppe eines Bausatzes wird zur Erinnerung,
-                // solange aus ihr nichts im Warenkorb liegt.
-                if (\in_array(mb_strtolower($name), $alsoBought, true)) {
-                    $bought[] = $products;
-                } elseif ($isKit && $name !== '' && $products !== [] && !self::anyOwned($products, $owned)) {
-                    $checklist[] = ['name' => $name, 'productId' => $mainId, 'productName' => (string) ($mains[$mainId]->getTranslation('name') ?? $mains[$mainId]->getName())];
-                }
+                $groups[] = [
+                    'name' => trim((string) ($crossSelling->getTranslation('name') ?? $crossSelling->getName())),
+                    'products' => AccessoryChoice::idPairs($element->getProducts()),
+                ];
             }
+
+            return $groups;
+        });
+
+        return $groups;
+    }
+
+    /**
+     * Die gewählten Vorschläge mit Bild, in der abwechselnden Reihenfolge aus {@see AccessoryChoice::mix()}; die Suche liefert in eigener.
+     *
+     * @param list<string> $ids
+     *
+     * @return list<SalesChannelProductEntity>
+     */
+    private function suggestions(array $ids, SalesChannelContext $context): array
+    {
+        if ($ids === []) {
+            return [];
         }
 
-        $suggestionIds = self::mix($bought, $owned, self::SUGGESTION_LIMIT);
+        $criteria = new Criteria($ids);
+        $criteria->addAssociation('cover.media');
+        $found = $this->productRepository->search($criteria, $context)->getEntities();
+
         $suggestions = [];
-        if ($suggestionIds !== []) {
-            $criteria = new Criteria($suggestionIds);
-            $criteria->addAssociation('cover.media');
-            $found = $this->productRepository->search($criteria, $context)->getEntities();
-            // Die Suche liefert in eigener Reihenfolge; die abwechselnde Reihenfolge aus mix() bleibt maßgeblich.
-            foreach ($suggestionIds as $id) {
-                $product = $found->get($id);
-                if ($product instanceof SalesChannelProductEntity) {
-                    $suggestions[] = $product;
-                }
+        foreach ($ids as $id) {
+            $product = $found->get($id);
+            if ($product instanceof SalesChannelProductEntity) {
+                $suggestions[] = $product;
             }
         }
 
-        $checklist = \array_slice($checklist, 0, self::CHECKLIST_LIMIT);
-
-        return $suggestions === [] && $checklist === [] ? null : ['suggestions' => $suggestions, 'checklist' => $checklist];
-    }
-
-    /**
-     * Liegt der Artikel in einer der Bausatz-Kategorien oder darunter?
-     *
-     * @param list<string> $categoryTree
-     * @param list<string> $kitCategories
-     */
-    public static function isKit(array $categoryTree, array $kitCategories): bool
-    {
-        return $kitCategories !== [] && array_intersect(array_map('strtolower', $categoryTree), array_map('strtolower', $kitCategories)) !== [];
-    }
-
-    /**
-     * Abwechselnd aus jeder Liste der nächste, der weder im Warenkorb liegt noch schon gewählt ist. Varianten
-     * zählen über ihren Hauptartikel, damit nicht zwei Längen desselben Rohrs nebeneinanderstehen.
-     *
-     * @param list<list<array{id: string, parentId: ?string}>> $lists
-     * @param array<string, true>                             $owned
-     *
-     * @return list<string>
-     */
-    public static function mix(array $lists, array $owned, int $limit): array
-    {
-        $chosen = [];
-        $seen = $owned;
-        for ($round = 0; \count($chosen) < $limit; ++$round) {
-            $any = false;
-            foreach ($lists as $list) {
-                if (!isset($list[$round])) {
-                    continue;
-                }
-                $any = true;
-                $pair = $list[$round];
-                $main = $pair['parentId'] ?? $pair['id'];
-                if (isset($seen[$pair['id']]) || isset($seen[$main])) {
-                    continue;
-                }
-                $seen[$pair['id']] = $seen[$main] = true;
-                $chosen[] = $pair['id'];
-                if (\count($chosen) === $limit) {
-                    break;
-                }
-            }
-            if (!$any) {
-                break;
-            }
-        }
-
-        return $chosen;
-    }
-
-    /**
-     * @param list<array{id: string, parentId: ?string}> $products
-     * @param array<string, true>                         $owned
-     */
-    private static function anyOwned(array $products, array $owned): bool
-    {
-        foreach ($products as $pair) {
-            if (isset($owned[$pair['id']]) || ($pair['parentId'] !== null && isset($owned[$pair['parentId']]))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @return list<array{id: string, parentId: ?string}>
-     */
-    private static function idPairs(ProductCollection $products): array
-    {
-        $pairs = [];
-        foreach ($products as $product) {
-            $pairs[] = ['id' => $product->getId(), 'parentId' => $product->getParentId()];
-        }
-
-        return $pairs;
+        return $suggestions;
     }
 }

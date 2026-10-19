@@ -20,8 +20,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Neu gerechnet wird nur auf Klick; beim Öffnen der Leiste zeigt sie die gespeicherte
  * Auskunft, solange sie zum Warenkorb passt.
  */
-class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
+final class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
 {
+    /** Keine frühere Auskunft: nur der Rechner. */
+    public const STATE_NONE = 'none';
+    /** Die gemerkte Auskunft passt zum Warenkorb. */
+    public const STATE_VALID = 'valid';
+    /** Der Warenkorb hat sich seitdem geändert; die Leiste sagt, dass neu zu rechnen ist. */
+    public const STATE_STALE = 'stale';
+
     public function __construct(
         private readonly ConfigService $configService,
         private readonly LastShippingEstimateStore $lastEstimateStore,
@@ -66,7 +73,7 @@ class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
         // Ohne frühere Auskunft steht nur der Rechner da, kein leerer Kasten.
         if ($lastEstimate === null) {
             $event->getPage()->addExtension('rcOffcanvasShipping', new ArrayStruct([
-                'state' => 'none',
+                'state' => self::STATE_NONE,
             ]));
 
             return;
@@ -79,7 +86,7 @@ class OffcanvasShippingEstimateSubscriber implements EventSubscriberInterface
         $stillValid = $lastEstimate->cartFingerprint === $this->cartFingerprint->of($cart);
 
         $event->getPage()->addExtension('rcOffcanvasShipping', new ArrayStruct([
-            'state' => $stillValid ? 'valid' : 'stale',
+            'state' => $stillValid ? self::STATE_VALID : self::STATE_STALE,
             'estimate' => $lastEstimate,
         ]));
     }

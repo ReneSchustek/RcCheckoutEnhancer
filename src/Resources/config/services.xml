@@ -46,8 +46,13 @@
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquirySubscriber">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
-            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Checkout\ShippingEnquiryRule"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\ShippingEnquiryContactSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEnquiryStore"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -212,6 +217,7 @@
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Service\PickupDocumentNote">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="logger"/>
         </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Twig\SummaryDiscountExtension">
@@ -256,12 +262,16 @@
         </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\FreeShippingThresholdSubscriber">
+            <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingHint"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingHint">
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingService"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\FreeShippingReachability"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ShippingEstimateService"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\RcAbTestingFreeShippingSwitchGate"/>
-            <tag name="kernel.event_subscriber"/>
         </service>
 
         <!-- Versandkostenrechner -->
@@ -345,6 +355,7 @@
             <argument type="service" id="Shopware\Core\Content\Product\SalesChannel\CrossSelling\ProductCrossSellingRoute"/>
             <argument type="service" id="sales_channel.product.repository"/>
             <argument type="service" id="Ruhrcoder\RcCheckoutEnhancer\Service\ConfigService"/>
+            <argument type="service" id="cache.object"/>
         </service>
 
         <service id="Ruhrcoder\RcCheckoutEnhancer\Subscriber\CartAccessorySubscriber">

@@ -39,7 +39,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
  * nichts, ein Programm kann ihn also nicht nutzen. Ein Rätsel träfe nur den Kunden.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class GuestAccountController extends StorefrontController
+final class GuestAccountController extends StorefrontController
 {
     public const PAGE_TEMPLATE = '@RcCheckoutEnhancer/storefront/page/rc-checkout/guest-account.html.twig';
 

@@ -1,5 +1,5 @@
 import Plugin from 'src/plugin-system/plugin.class';
-import HttpClient from 'src/service/http-client.service';
+import fetchHtml from '../rc-checkout-common/fetch-html';
 
 /**
  * Zeigt den Abhol-Hinweis als Dialog und meldet die Bestätigung an den Server.
@@ -34,16 +34,23 @@ export default class RcPickupAcknowledgementPlugin extends Plugin {
             return;
         }
 
-        this._client = new HttpClient();
-
         this._onConfirm = this._onConfirm.bind(this);
         this._onKeydown = this._onKeydown.bind(this);
+        this._close = this._close.bind(this);
+        this._open = this._open.bind(this);
 
         this._confirmButton.addEventListener('click', this._onConfirm);
-        this._closeButton?.addEventListener('click', () => this._close());
-        this._reopenButton?.addEventListener('click', () => this._open());
+        this._closeButton?.addEventListener('click', this._close);
+        this._reopenButton?.addEventListener('click', this._open);
 
         this._open();
+    }
+
+    destroy() {
+        this._confirmButton?.removeEventListener('click', this._onConfirm);
+        this._closeButton?.removeEventListener('click', this._close);
+        this._reopenButton?.removeEventListener('click', this._open);
+        document.removeEventListener('keydown', this._onKeydown);
     }
 
     _open() {
@@ -144,8 +151,8 @@ export default class RcPickupAcknowledgementPlugin extends Plugin {
     _onConfirm() {
         this._confirmButton.disabled = true;
 
-        this._client.post(this.options.acknowledgeUrl, null, (response, request) => {
-            if (request.status !== 200) {
+        fetchHtml(this.options.acknowledgeUrl, { method: 'POST' }).then((response) => {
+            if (response === null) {
                 // Die Bestätigung ist nicht angekommen. Ein geschlossener Dialog ließe den Kunden
                 // glauben, er habe bestätigt, und er liefe in die Sperre, ohne zu verstehen warum.
                 this._confirmButton.disabled = false;
