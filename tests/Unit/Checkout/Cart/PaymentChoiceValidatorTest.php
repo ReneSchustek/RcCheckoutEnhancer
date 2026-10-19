@@ -33,13 +33,13 @@ final class PaymentChoiceValidatorTest extends TestCase
     private const PLACEHOLDER = 'placeholder-id';
 
     /**
-     * Was: Platzhalter im Kontext, auf der Bestellseite, beim Absenden und auf einer unbekannten Route.
+     * Was: Platzhalter im Kontext, beim Absenden der Bestellung und auf einer unbekannten Route.
      * Warum: Ohne Wahl darf keine Bestellung durchgehen, auch nicht, wenn Shopware eine Route umbenennt.
      * Erwartet: je eine sperrende, nicht dauerhafte Meldung.
      */
     public function testItBlocksOutsideTheCartViews(): void
     {
-        foreach (['frontend.checkout.confirm.page', 'frontend.checkout.finish.order', 'frontend.some.renamed.route'] as $route) {
+        foreach (['frontend.checkout.finish.order', 'frontend.some.renamed.route'] as $route) {
             $errors = new ErrorCollection();
             $this->validator($route)->validate(new Cart('token'), $errors, $this->context(self::PLACEHOLDER));
 
@@ -53,13 +53,15 @@ final class PaymentChoiceValidatorTest extends TestCase
     }
 
     /**
-     * Was: Platzhalter im Kontext, in Warenkorb, Leiste und Warenkorb-Zähler.
-     * Warum: Dort gibt es keine Zahlartwahl; die Meldung führte ins Leere.
+     * Was: Platzhalter im Kontext, in Warenkorb, Leiste, Warenkorb-Zähler, auf der Kundendaten- und der
+     *      Bestätigungsseite beim Laden.
+     * Warum: Im Warenkorb gibt es keine Zahlartwahl; auf den beiden Seiten wählt der Kunde erst noch. Die Meldung kommt
+     *        erst mit dem Klick auf „Bestellen" (Rene, 19.10.).
      * Erwartet: keine Meldung.
      */
-    public function testItStaysQuietInTheCartViews(): void
+    public function testItStaysQuietBeforeThePaymentChoice(): void
     {
-        foreach (['frontend.checkout.cart.page', 'frontend.cart.offcanvas', 'frontend.checkout.info'] as $route) {
+        foreach (['frontend.checkout.cart.page', 'frontend.cart.offcanvas', 'frontend.checkout.info', 'frontend.checkout.confirm.page', 'frontend.checkout.register.page'] as $route) {
             $errors = new ErrorCollection();
             $this->validator($route)->validate(new Cart('token'), $errors, $this->context(self::PLACEHOLDER));
 
@@ -74,7 +76,7 @@ final class PaymentChoiceValidatorTest extends TestCase
     public function testAChosenPaymentPasses(): void
     {
         $errors = new ErrorCollection();
-        $this->validator('frontend.checkout.confirm.page')->validate(new Cart('token'), $errors, $this->context('prepayment'));
+        $this->validator('frontend.checkout.finish.order')->validate(new Cart('token'), $errors, $this->context('prepayment'));
 
         self::assertCount(0, $errors);
     }

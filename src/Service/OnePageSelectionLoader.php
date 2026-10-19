@@ -38,7 +38,7 @@ final class OnePageSelectionLoader
         $gatewayRequest = $request->duplicate(['onlyAvailable' => true]);
 
         $methods = $this->gatewayRoute->load($gatewayRequest, $cart, $context);
-        $switched = $this->applier->apply($methods->getShippingMethods(), $context);
+        $switched = $this->applier->apply($methods->getShippingMethods(), $context, false, $cart);
 
         // Nach dem Umschalten können andere Zahlarten verfügbar sein, weil ihre Regeln am
         // Warenkorb hängen. Die Liste von vorhin stimmt dann nicht mehr.

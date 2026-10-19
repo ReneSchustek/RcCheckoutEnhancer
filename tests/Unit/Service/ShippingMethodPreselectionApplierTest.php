@@ -16,6 +16,7 @@ use Shopware\Core\Checkout\Payment\PaymentMethodCollection;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\Checkout\Payment\SalesChannel\AbstractPaymentMethodRoute;
 use Shopware\Core\Checkout\Payment\SalesChannel\PaymentMethodRouteResponse;
+use Shopware\Core\Checkout\Shipping\Cart\Error\ShippingMethodBlockedError;
 use Shopware\Core\Checkout\Shipping\ShippingMethodCollection;
 use Shopware\Core\Checkout\Shipping\ShippingMethodEntity;
 use Shopware\Core\Framework\Context;
@@ -41,6 +42,10 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
     private const ABHOLUNG = 'sm-abholung';
 
     private const PAKET = 'sm-paket';
+
+    private const SPEDITION = 'sm-spedition';
+
+    private const PLATZHALTER = 'sm-platzhalter';
 
     private const BAR = 'pm-bar';
 
@@ -79,6 +84,48 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         ], $switched);
     }
 
+    /**
+     * Was: Gast ohne Adresse, im Kontext der Platzhalter. Die Vorauswahl nimmt die Spedition, deren Preise an
+     *      PLZ-Zonen hängen; der Warenkorb findet keinen Preis und meldet sie als gesperrt.
+     * Warum: Im Warenkorb stünde sonst rot „nicht verfügbar" und 0,00 € Versand (BRIEF059).
+     * Erwartet: Zurück auf den Platzhalter, sein Warenkorb ist das Ergebnis.
+     */
+    public function testABlockedMethodIsSkippedAndThePlaceholderStays(): void
+    {
+        $blocked = new Cart('token');
+        $blocked->addErrors(new ShippingMethodBlockedError('Spedition', self::SPEDITION, 'no shipping costs found'));
+        $placeholderCart = new Cart('token');
+        $switched = [];
+
+        $result = $this->applier($switched, [$blocked, $placeholderCart], placeholder: self::PLATZHALTER)
+            ->apply($this->listed([self::PLATZHALTER => 1, self::SPEDITION => 5, self::ABHOLUNG => 200]), $this->context(self::PLATZHALTER));
+
+        self::assertSame($placeholderCart, $result);
+        self::assertSame([
+            [SalesChannelContextService::SHIPPING_METHOD_ID => self::SPEDITION],
+            [SalesChannelContextService::SHIPPING_METHOD_ID => self::PLATZHALTER],
+        ], $switched);
+    }
+
+    /**
+     * Was: Die eingestellte Spedition ist schon im gespeicherten Warenkorb gesperrt, der Paketversand hat einen Preis.
+     * Warum: Eine gesperrte Versandart darf nicht stehen bleiben, nur weil die Regel sie zulässt.
+     * Erwartet: Umschalten auf den Paketversand, ohne die Spedition noch einmal zu versuchen.
+     */
+    public function testABlockedCurrentMethodIsLeft(): void
+    {
+        $stored = new Cart('token');
+        $stored->addErrors(new ShippingMethodBlockedError('Spedition', self::SPEDITION, 'no shipping costs found'));
+        $paket = new Cart('token');
+        $switched = [];
+
+        $result = $this->applier($switched, [$paket])
+            ->apply($this->listed([self::SPEDITION => 5, self::PAKET => 10, self::ABHOLUNG => 200]), $this->context(self::SPEDITION), false, $stored);
+
+        self::assertSame($paket, $result);
+        self::assertSame([[SalesChannelContextService::SHIPPING_METHOD_ID => self::PAKET]], $switched);
+    }
+
     public function testWhenSwitchedOffNothingHappens(): void
     {
         $switched = [];
@@ -91,12 +138,12 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
      * @param list<array<string, string>> $switched
      * @param list<Cart>                  $carts
      */
-    private function applier(array &$switched, array $carts, bool $enabled = true): ShippingMethodPreselectionApplier
+    private function applier(array &$switched, array $carts, bool $enabled = true, ?string $placeholder = null): ShippingMethodPreselectionApplier
     {
         $configService = $this->createMock(ConfigService::class);
         $configService->method('isShippingPreselectEnabled')->willReturn($enabled);
         $configService->method('getNonDeliveryMethodIds')->willReturn([self::ABHOLUNG]);
-        $configService->method('getShippingPlaceholderMethodId')->willReturn(null);
+        $configService->method('getShippingPlaceholderMethodId')->willReturn($placeholder);
 
         $switchRoute = $this->recordingSwitchRoute($switched);
 
@@ -147,10 +194,13 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         return $route;
     }
 
-    private function listed(): ShippingMethodCollection
+    /**
+     * @param array<string, int> $positions
+     */
+    private function listed(array $positions = [self::PAKET => 10, self::ABHOLUNG => 200]): ShippingMethodCollection
     {
         $methods = new ShippingMethodCollection();
-        foreach ([self::PAKET => 10, self::ABHOLUNG => 200] as $id => $position) {
+        foreach ($positions as $id => $position) {
             $method = new ShippingMethodEntity();
             $method->setId($id);
             $method->setUniqueIdentifier($id);
@@ -171,10 +221,10 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         return $payment;
     }
 
-    private function context(): SalesChannelContext
+    private function context(string $currentId = self::ABHOLUNG): SalesChannelContext
     {
         $current = new ShippingMethodEntity();
-        $current->setId(self::ABHOLUNG);
+        $current->setId($currentId);
 
         $salesChannel = new SalesChannelEntity();
         $salesChannel->setId('sc-id');
@@ -184,7 +234,15 @@ final class ShippingMethodPreselectionApplierTest extends TestCase
         $context = $this->createMock(SalesChannelContext::class);
         $context->method('getSalesChannelId')->willReturn('sc-id');
         $context->method('getSalesChannel')->willReturn($salesChannel);
-        $context->method('getShippingMethod')->willReturn($current);
+        // Wie der echte Kontext: Nach dem Umschalten trägt er die neue Versandart.
+        $context->method('getShippingMethod')->willReturnCallback(static function () use (&$current): ShippingMethodEntity {
+            return $current;
+        });
+        $context->method('assign')->willReturnCallback(static function (array $values) use (&$current, &$context): SalesChannelContext {
+            $current = $values['shippingMethod'] ?? $current;
+
+            return $context;
+        });
         $context->method('getPaymentMethod')->willReturn($this->payment(self::BAR));
         $context->method('getToken')->willReturn('token');
         $context->method('getRuleIds')->willReturn([]);

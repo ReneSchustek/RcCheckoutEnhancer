@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.39.1] - 2026-10-19 — Vorauswahl überspringt Versandarten ohne Preis, Zahlart-Hinweis erst beim Bestellen
+
+> **Deployment:** `php bin/console cache:clear`.
+
+### Behoben
+
+- Die Versandart-Vorauswahl nahm für einen Gast ohne Adresse die Spedition, obwohl deren Preise an PLZ-Zonen hängen
+  und der Warenkorb ohne Postleitzahl keinen findet. Im Warenkorb stand dann rot „nicht verfügbar" und 0,00 € Versand.
+  Versandarten, die der Warenkorb als gesperrt meldet (`shipping-method-blocked`), überspringt die Vorauswahl jetzt;
+  bleibt keine mit Preis, bleibt der Platzhalter gewählt.
+- „Bitte wählen Sie oben eine Zahlungsart …" stand auf der Bestätigungsseite schon beim Laden rot da und sperrte den
+  Bestellknopf. Die Sperre greift jetzt erst beim Absenden: Klickt der Kunde ohne Zahlart auf „Bestellen", erscheint
+  der Hinweis oben auf der Bestätigungsseite. Im Warenkorb, auf der Kundendatenseite und beim Laden der
+  Bestätigungsseite erscheint er nie.
+
+
 ## [1.39.0] - 2026-10-15 — Versandrechner nennt die gerechnete Menge, „Dazu passt" je Sprache
 
 > **Deployment:** `php bin/console plugin:update RcCheckoutEnhancer`, `bin/build-storefront.sh`, `php bin/console cache:clear`.

@@ -69,7 +69,7 @@ final class ShippingMethodPreselectionSubscriber implements EventSubscriberInter
         SalesChannelContext $context,
     ): void {
         $isConfirmPage = $page instanceof CheckoutConfirmPage;
-        $cart = $this->applier->apply($page->getShippingMethods(), $context, $isConfirmPage);
+        $cart = $this->applier->apply($page->getShippingMethods(), $context, $isConfirmPage, $page->getCart());
 
         if ($cart !== null) {
             // Die Adressprüfung hängt der Kern erst nach der Berechnung an den Seiten-Warenkorb, eine
